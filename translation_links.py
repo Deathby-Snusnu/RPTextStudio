@@ -14,7 +14,10 @@ def pool_id(relative_path: str, key: tuple[str, ...]) -> str:
     parts = Path(relative_path).parts
     if len(parts) < 4 or parts[-2] not in LANGS:
         raise ValueError('Unrecognized locale text path')
-    return json.dumps([parts[-4], parts[-1], list(key)], ensure_ascii=False)
+    normalized=list(key)
+    if len(normalized)>1 and normalized[0]=='localeData' and normalized[1] in LANGS:
+        normalized[1]='*'
+    return json.dumps([parts[-4], parts[-1], normalized], ensure_ascii=False)
 
 def resolve(entries: list[str], ref: dict | None) -> int | None:
     if not ref or not isinstance(ref.get('text'), str):
@@ -45,7 +48,21 @@ def read_links(root: Path) -> dict:
         for group in groups:
             if not isinstance(group, dict) or not all(k in LANGS for k in group):
                 raise ValueError('Invalid translation language')
-    return pools
+    # Migrate version-1 identifiers that embedded a locale in the Lua key.
+    # They previously split one translation pool into separate DE/EN/FR identities.
+    normalized={}
+    for identifier, groups in pools.items():
+        try:
+            addon, filename, key=json.loads(identifier)
+            if isinstance(key,list) and len(key)>1 and key[0]=='localeData' and key[1] in LANGS:
+                key[1]='*'
+            identity=json.dumps([addon,filename,key],ensure_ascii=False)
+        except (TypeError,ValueError,IndexError):
+            identity=identifier
+        target=normalized.setdefault(identity,[])
+        for group in groups:
+            if group not in target:target.append(group)
+    return normalized
 
 def write_links(root: Path, pools: dict) -> None:
     file = root / FILE_NAME

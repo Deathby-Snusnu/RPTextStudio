@@ -3,7 +3,7 @@ setlocal EnableExtensions
 cd /d "%~dp0"
 
 echo =============================================
-echo   RP Text Studio 0.1.8 - Start
+echo   RP Text Studio 0.1.9 - Start
  echo =============================================
 
 set "VENV_DIR=%~dp0.venv"

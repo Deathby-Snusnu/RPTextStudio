@@ -1,3 +1,14 @@
+## 0.1.10
+- Sprachvergleich: Sprachsegment in Lua-Pool-Schlüsseln wird beim Zugriff auf DE/EN/FR korrekt angepasst.
+- Übersetzungsgruppen erhalten sprachübergreifende IDs; bestehende JSON-IDs werden beim Laden migriert.
+- Speichern in fremden Sprachspalten verwendet nun den richtigen Lua-Schlüssel.
+
+## 0.1.9 (2026-10-19)
+- Sprachvarianten per Dropdown mit Textvorschau statt Zeilennummern wählen.
+- Korrektur: Die Sprach-Editoren bearbeiten jetzt tatsächlich die ausgewählte Variante.
+- Explizite Sprachwahl, Mindestanzahl zwei Sprachen, Konfliktprüfung vor Änderung.
+- Hilfe, README und Startskript aktualisiert.
+
 ## 0.1.8 (Startskript-Aktualisierung)
 - `Start.bat` richtet `.venv` bei Bedarf ein, aktiviert sie, prüft/installiert `requirements.txt` und startet die Anwendung.
 - `start_windows.bat` bleibt als Alias erhalten.

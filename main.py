@@ -23,7 +23,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.8')
+        self.setWindowTitle('RP Text Studio 0.1.10')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -69,7 +69,7 @@ class Studio(QMainWindow):
         splitter.addWidget(self.tree)
         middle=QWidget();m=QVBoxLayout(middle)
         m.addWidget(QLabel('Texte (Doppelklick zur Auswahl)'))
-        self.list=QListWidget();self.list.setToolTip('Textzeile auswählen; dieselbe Zeilenposition wird im Sprachvergleich angezeigt.');self.list.currentRowChanged.connect(self.select_row);m.addWidget(self.list,1)
+        self.list=QListWidget();self.list.setToolTip('Ausgangstext auswählen. Andere Sprachen werden im Sprachvergleich ausdrücklich über deren Dropdowns zugeordnet.');self.list.currentRowChanged.connect(self.select_row);m.addWidget(self.list,1)
         row=QHBoxLayout()
         for label,func in [('Neu',self.add_entry),('Duplizieren',self.duplicate),('Entfernen',self.remove_entry),('↑',lambda:self.move_entry(-1)),('↓',lambda:self.move_entry(1))]:
             b=QPushButton(label);b.clicked.connect(func);row.addWidget(b)
@@ -86,8 +86,8 @@ class Studio(QMainWindow):
         r.addWidget(QLabel('Konvention: *Handlung* = /me · normaler Text = /say · %s = Ziel · %p = Pet/Dämon'))
         splitter.addWidget(right)
         splitter.setSizes([350,430,520]);main.addWidget(splitter,2)
-        compare_group=QGroupBox('Sprachvergleich DE | EN | FR (ausgewählte Zeilennummer)')
-        compare_group.setToolTip('Gleichen Textpool in drei Sprachen nebeneinander bearbeiten. Zeilennummern sind nur eine Orientierung, keine semantisch garantierte Übersetzung.')
+        compare_group=QGroupBox('Übersetzungen zuordnen · DE | EN | FR')
+        compare_group.setToolTip('In jeder Sprache eine Textvariante aus der Liste auswählen. Angezeigt und bearbeitet wird genau diese Variante. Gleiche Zeilennummer bedeutet nicht automatisch Übersetzung.')
         compare_layout=QHBoxLayout(compare_group)
         for lang in LANGS:
             column=QVBoxLayout()
@@ -96,8 +96,9 @@ class Studio(QMainWindow):
             edit.setPlaceholderText('Kein entsprechender Textpool oder keine Zeile vorhanden.')
             edit.setToolTip('Einzelne Zeile direkt in dieser Sprachfassung bearbeiten. Änderungen werden erst mit „Änderungen speichern“ auf die Festplatte geschrieben.')
             edit.textChanged.connect(lambda lang=lang:self.compare_changed(lang))
-            position=QSpinBox();position.setRange(0,9999);position.setSpecialValueText('Keine')
-            position.setToolTip('Zeilennummer für die manuelle Übersetzungszuordnung wählen. 0 bedeutet keine Zuordnung. Zum Verknüpfen die Schaltfläche unterhalb benutzen.')
+            position=QComboBox()
+            position.setToolTip('Gewünschte Textvariante anhand des Textanfangs auswählen. Die Vorschau darunter wechselt sofort. „Keine Auswahl“ verknüpft diese Sprache nicht.')
+            position.currentIndexChanged.connect(lambda _index, lang=lang:self.preview_selected_translation(lang))
             column.addWidget(info);column.addWidget(position);column.addWidget(edit,1)
             self.compare_positions[lang]=position
             container=QWidget();container.setLayout(column)
@@ -105,12 +106,12 @@ class Studio(QMainWindow):
             self.compare_editors[lang]=edit;self.compare_labels[lang]=info
         main.addWidget(compare_group,1)
         assoc=QHBoxLayout()
-        self.link_switch=QCheckBox('Verknüpfte Übersetzungen anzeigen')
-        self.link_switch.setToolTip('Zeigt explizit zugeordnete Texte statt identischer Zeilennummern. Ohne Verknüpfung erscheinen keine vermuteten Übersetzungen.')
+        self.link_switch=QCheckBox('Gespeicherte Verknüpfung anzeigen')
+        self.link_switch.setToolTip('Bei Auswahl einer links markierten Zeile werden nur die bereits gespeicherten Übersetzungsvarianten vorausgewählt.')
         self.link_switch.toggled.connect(self.toggle_links)
         assoc.addWidget(self.link_switch)
         for label, func, hint in [
-            ('Ausgewählte Zeilen verknüpfen',self.link_selected,'Verbindet den aktuellen Text mit den ausgewählten Zeilen in den anderen Sprachpools. Bestehende Zuordnungen werden nicht automatisch überschrieben.'),
+            ('Diese Texte verknüpfen',self.link_selected,'Verbindet den aktuellen Text mit den ausgewählten Zeilen in den anderen Sprachpools. Bestehende Zuordnungen werden nicht automatisch überschrieben.'),
             ('Zuordnung lösen',self.unlink_selected,'Entfernt nur die Übersetzungszuordnung zur aktuellen Textzeile, niemals die Lua-Texte.'),
         ]:
             button=QPushButton(label);button.clicked.connect(func);button.setToolTip(hint);assoc.addWidget(button)
@@ -181,7 +182,15 @@ class Studio(QMainWindow):
         self.statusBar().showMessage(f'{len(files)} Textdateien geladen. {len(errors)} Fehler.',10000)
         if errors:QMessageBox.warning(self,'Lesefehler','\n'.join(errors[:12]))
 
+    def locale_key(self, path, key):
+        # The parsed Lua key contains its language: ('localeData', 'deDE', ...).
+        # Map that segment to the requested sibling language before lookup or saving.
+        if len(key) > 1 and key[0] == 'localeData' and key[1] in LANGS:
+            return (key[0], path.parent.name, *key[2:])
+        return key
+
     def get_entries(self,p,key):
+        key=self.locale_key(p,key)
         return self.changes.get(p,{}).get(key,self.files[p][key].entries)
 
     def rebuild_tree(self):
@@ -285,7 +294,7 @@ class Studio(QMainWindow):
         if self.current is None:return None
         p,key=self.current
         other=p.parent.parent / lang / p.name
-        return other if other in self.files and key in self.files[other] else None
+        return other if other in self.files and self.locale_key(other,key) in self.files[other] else None
 
     def link_key(self):
         if self.current is None or self.root is None:return None
@@ -307,29 +316,46 @@ class Studio(QMainWindow):
         self.refresh_compare()
 
     def link_selected(self):
-        if self.current is None or self.current_row<0 or self.root is None:return
+        if self.current is None or self.current_row < 0 or self.root is None:
+            QMessageBox.information(self,'Text wählen','Bitte zuerst links einen Ausgangstext auswählen.')
+            return
         pk=self.link_key()
         current_lang=self.current[0].parent.name
         groups=self.links.setdefault(pk,[])
-        current_ref=reference(self.get_entries(*self.current),self.current_row)
-        existing=self.group_at_current()
-        group=existing if existing is not None else {current_lang:current_ref}
-        if existing is None:groups.append(group)
+        selected={current_lang:reference(self.get_entries(*self.current),self.current_row)}
         for lang in LANGS:
             if lang==current_lang:continue
             path=self.translation_path(lang)
+            row=self.compare_positions[lang].currentData()
+            if path is None or row is None:continue
+            entries=self.get_entries(path,self.current[1])
+            if 0<=row<len(entries):selected[lang]=reference(entries,row)
+        if len(selected)<2:
+            QMessageBox.information(self,'Übersetzung auswählen',
+                'Wähle mindestens eine weitere Sprache im Dropdown aus.\n'
+                'Die angezeigten Texte werden anschließend miteinander verbunden.')
+            if not groups:self.links.pop(pk,None)
+            return
+        existing=self.group_at_current()
+        for lang,ref in selected.items():
+            path=self.translation_path(lang)
             if path is None:continue
-            entry_list=self.get_entries(path,self.current[1])
-            # In ordinary mode editors display same position. In link mode they display linked row.
-            row=self.compare_positions[lang].value()-1
-            if not 0<=row<len(entry_list):continue
-            candidate=reference(entry_list,row)
-            if any(other is not group and resolve(entry_list,other.get(lang))==row for other in groups):
-                QMessageBox.warning(self,'Bereits zugeordnet',f'{lang}: Zeile {row+1} gehört bereits zu einer anderen Übersetzungsgruppe.');continue
-            group[lang]=candidate
+            entries=self.get_entries(path,self.current[1])
+            for other in groups:
+                if other is existing:continue
+                if resolve(entries,other.get(lang))==ref['index']:
+                    QMessageBox.warning(self,'Bereits verknüpft',
+                        f'{lang}: Diese Variante gehört bereits zu einer anderen Übersetzungsgruppe.\n'
+                        'Bitte zuerst deren Zuordnung lösen.')
+                    return
+        if existing is None:
+            groups.append(selected)
+        else:
+            existing.update(selected)
         self.links_dirty=True
+        self.link_switch.setChecked(True)
         self.refresh_compare()
-        self.statusBar().showMessage('Übersetzungszuordnung geändert. Zum Speichern „Änderungen speichern“ wählen.')
+        self.statusBar().showMessage('Übersetzungen verknüpft. Mit „Änderungen speichern“ dauerhaft sichern.')
 
     def unlink_selected(self):
         group=self.group_at_current()
@@ -342,11 +368,20 @@ class Studio(QMainWindow):
 
     def comparison_row(self,lang):
         if self.current is None:return -1
-        if not self.link_mode:return self.current_row
-        group=self.group_at_current()
+        row=self.compare_positions[lang].currentData()
+        return row if isinstance(row,int) else -1
+
+    def preview_selected_translation(self,lang):
+        if self.compare_loading or self.current is None:return
         path=self.translation_path(lang)
-        if group is None or path is None:return -1
-        return resolve(self.get_entries(path,self.current[1]),group.get(lang)) if group.get(lang) else -1
+        row=self.comparison_row(lang)
+        entries=self.get_entries(path,self.current[1]) if path is not None else []
+        editor=self.compare_editors[lang]
+        editor.blockSignals(True)
+        selected=0<=row<len(entries)
+        editor.setEnabled(selected)
+        editor.setPlainText(entries[row] if selected else '')
+        editor.blockSignals(False)
 
     def update_link_text(self,path,key,row,text):
         if self.root is None:return
@@ -360,21 +395,32 @@ class Studio(QMainWindow):
     def refresh_compare(self):
         self.compare_loading=True
         try:
+            group=self.group_at_current() if self.current is not None else None
+            current_lang=self.current[0].parent.name if self.current else None
             for lang,edit in self.compare_editors.items():
                 path=self.translation_path(lang)
-                row=self.comparison_row(lang)
                 entries=self.get_entries(path,self.current[1]) if path is not None else []
-                available=path is not None and isinstance(row,int) and 0<=row<len(entries)
-                edit.setEnabled(available)
-                edit.setPlainText(entries[row] if available else '')
                 selector=self.compare_positions[lang]
                 selector.blockSignals(True)
-                selector.setMaximum(len(entries))
-                selector.setValue(row+1 if available else 0)
+                selector.clear()
+                selector.addItem('Keine Auswahl',None)
+                for index,value in enumerate(entries):
+                    snippet=' '.join(value.split())[:75]
+                    selector.addItem(f'{index+1:02d} · {snippet}',index)
+                row=None
+                if group and lang in group and path is not None:
+                    row=resolve(entries,group[lang])
+                elif lang==current_lang and 0<=self.current_row<len(entries):
+                    row=self.current_row
+                selector.setCurrentIndex(row+1 if row is not None else 0)
                 selector.blockSignals(False)
-                self.compare_labels[lang].setText(f'{lang}  ·  {len(entries)} Texte' if path else f'{lang}  ·  kein Pool')
-            group=self.group_at_current()
-            self.link_state.setText('Verknüpft: '+', '.join(group.keys()) if group else 'Keine explizite Übersetzungsgruppe')
+                self.compare_labels[lang].setText(f'{lang} · {len(entries)} Varianten' if path else f'{lang} · kein Textpool')
+                available=row is not None and 0<=row<len(entries)
+                edit.blockSignals(True)
+                edit.setEnabled(available)
+                edit.setPlainText(entries[row] if available else '')
+                edit.blockSignals(False)
+            self.link_state.setText('Verbunden: '+', '.join(group.keys()) if group else 'Noch keine bestätigte Übersetzung')
         finally:self.compare_loading=False
 
     def compare_changed(self,lang):
@@ -388,7 +434,7 @@ class Studio(QMainWindow):
         if value==entries[row]:return
         entries[row]=value
         self.update_link_text(p,key,row,value)
-        self.changes.setdefault(p,{})[key]=entries
+        self.changes.setdefault(p,{})[self.locale_key(p,key)]=entries
         self.statusBar().showMessage(f'{sum(len(x) for x in self.changes.values())} geänderte Textpools, noch nicht gespeichert')
         if p==self.current[0] and row==self.current_row:
             self.active_entries=list(entries)
@@ -693,7 +739,7 @@ class Studio(QMainWindow):
         dlg.exec()
 
     def show_about(self):
-        QMessageBox.information(self,'Über RP Text Studio','RP Text Studio 0.1.8\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
+        QMessageBox.information(self,'Über RP Text Studio','RP Text Studio 0.1.10\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
 
     def add_entry(self):
         if self.current is None:return

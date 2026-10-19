@@ -27,19 +27,18 @@
 - **Vorschau:** Veranschaulicht `/say` beziehungsweise `/me` mit beispielhaften Namen.
 - **Sprachvergleich:** Drei bearbeitbare Felder für `deDE`, `enUS`, `frFR`. Sie zeigen die **gleiche Zeilennummer**, sofern dort ein entsprechender Pool und eine Zeile vorhanden sind. Fehlende Zeilen werden deaktiviert; lege sie bei Bedarf in der betreffenden Navigationssprache über **Neu** an.
 
-### Übersetzungsgruppen ab 0.1.5
+### Übersetzungsgruppen (verbessert in 0.1.9)
 
-Das Studio verknüpft **nur von dir ausgewählte** Sprachvarianten, auch bei unterschiedlichen Zeilenpositionen.
+1. **Projekt öffnen** und einen Textpool (z. B. `SHADOW_BOLT/ziel`) auswählen.
+2. In der Textliste einen **Ausgangstext** anklicken. Dessen Sprache ist bereits vorausgewählt.
+3. In den Dropdowns von `deDE`, `enUS`, `frFR` die passenden Varianten auswählen. Die Dropdowns zeigen jeweils **Nummer und Textanfang**. Sobald du eine Variante auswählst, steht **genau dieser Text** im Editor darunter. „Keine Auswahl“ lässt eine Sprache aus.
+4. **Diese Texte verknüpfen** klicken. Mindestens zwei Sprachen müssen ausgewählt sein. Ein Text, der bereits in einer anderen Gruppe vorkommt, wird nicht stillschweigend neu verknüpft.
+5. **Gespeicherte Verknüpfung anzeigen** aktiviert die Anzeige der tatsächlich verbundenen Varianten beim Wechsel des Ausgangstexts.
+6. **Änderungen speichern** sichert die Zuordnungen im Projektordner.
 
-1. Gewünschten Textpool und eine Variante in der Textliste wählen.
-2. Die drei **Zeilennummern-Felder** unter dem Sprachvergleich passend einstellen: z. B. deDE 2, enUS 7, frFR 4. **0 = keine Verknüpfung** dieser Sprache.
-3. Auf **Ausgewählte Zeilen verknüpfen** klicken.
-4. **Verknüpfte Übersetzungen anzeigen** aktivieren. Jetzt zeigen die drei Texteditoren die wirklich zugeordneten Varianten. Ohne Zuordnung bleiben die Felder leer/deaktiviert.
-5. Über **Änderungen speichern** die Zuordnung sichern.
+**Wichtig:** Der Sprach-Editor bearbeitet immer exakt die Variante aus dem Dropdown darüber. Eine Auswahl ist **keine automatische Übersetzung**. „Zuordnung lösen“ löscht ausschließlich die Verbindung, nicht die RP-Texte.
 
-**Zuordnung lösen** entfernt nur die Verbindung; kein Lua-Text wird dabei gelöscht.
-
-Die Daten liegen in `.rptextstudio-translations.json` im Projektordner und werden **niemals** vom WoW-Addon geladen. Die Originaltexte bleiben in den bisherigen Lua-Dateien. Bei widersprüchlichen, mehrdeutigen oder entfernten Texten wird eine Verbindung nicht blind anhand der Zeilennummer wiederhergestellt. Vorhandene Zuordnungen werden beim manuellen Verschieben soweit eindeutig möglich aktualisiert. Bereits anderswo zugeordnete Zeilen werden nicht stillschweigend übernommen.
+Gespeichert wird separat in `.rptextstudio-translations.json`; die Lua-Dateien enthalten weiterhin ausschließlich ihre bisherigen RP-Texte. Es werden keine neuen Übersetzungen erfunden. Wenn Sätze oder ihre Position verändert werden, lässt sich eine Verknüpfung nur wiederfinden, wenn die Textreferenz eindeutig ist. Backups werden beim Speichern angelegt.
 
 ### Wichtig zum Sprachvergleich
 
@@ -142,3 +141,7 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 - `start_windows.bat` ist aus Kompatibilitätsgründen weiterhin nutzbar.
 - Bei Fehlern stoppt das Skript und zeigt die Meldung bis zum Tastendruck an.
 - Zur vollständigen Neuerstellung der Umgebung RP Text Studio schließen, den Ordner `.venv` löschen und `Start.bat` erneut starten.
+
+### Fehlerbehebung: „kein Textpool“ in Englisch/Französisch
+
+In Version 0.1.9 lag ein Fehler beim sprachübergreifenden Vergleich verschachtelter `localeData`-Schlüssel vor. Version 0.1.10 korrigiert die Zuordnung. Bestehende Übersetzungszuordnungen werden beim Laden auf sprachunabhängige Poolkennungen umgestellt. Speichere das Projekt anschließend, um die migrierte Zuordnung dauerhaft in der JSON-Datei zu sichern.

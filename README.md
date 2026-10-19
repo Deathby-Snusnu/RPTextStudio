@@ -1,10 +1,11 @@
-# RP Text Studio 0.1.7
+# RP Text Studio 0.1.9
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
 ## Installation (Windows)
 
 **Empfohlen:** `Start.bat` doppelklicken. Das Skript erstellt bei Bedarf `.venv`, aktiviert die Umgebung, installiert bzw. prüft `requirements.txt` mit pip und startet `main.py`. Bei weiteren Starts wird `.venv` wiederverwendet. `start_windows.bat` ruft denselben Starter auf. Python 3.11 bis 3.13 muss bereits installiert sein und über den Python Launcher `py` oder `python` erreichbar sein. Bei einem Fehler bleibt das Fenster zur Diagnose geöffnet.
+
 
 ```powershell
 py -m pip install -r requirements.txt
@@ -22,11 +23,11 @@ Alternativ `Start.bat` verwenden. `start_windows.bat` ist ein kompatibler Alias.
 
 **Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird `HANDBUCH.md` im Programm angezeigt. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
 
-## Version 0.1.5
+## Übersetzungszuordnung (überarbeitet in 0.1.9)
 
 - Explizite Übersetzungsgruppen für unterschiedliche Zeilenpositionen in deDE/enUS/frFR.
-- „Verknüpfte Übersetzungen anzeigen“ nutzt ausschließlich bestätigte Zuordnungen, keine automatischen Vermutungen.
-- Zeilenpositionen je Sprache wählen und dann „Ausgewählte Zeilen verknüpfen“ anklicken.
+- „Gespeicherte Verknüpfung anzeigen“ nutzt ausschließlich bestätigte Zuordnungen, keine automatischen Vermutungen.
+- Textvarianten per Dropdown mit sofortiger Vorschau auswählen und dann „Diese Texte verknüpfen“ anklicken.
 - Mit „Zuordnung lösen“ die Gruppe entfernen, ohne den RP-Text zu löschen.
 - Zuordnungen werden getrennt in `.rptextstudio-translations.json` im Projektordner gespeichert. Lua-Dateien bleiben kompatibel.
 - Alte oder nicht mehr eindeutig auffindbare Referenzen gelten als nicht zugeordnet, statt falsche Übersetzungen anzuzeigen.
@@ -101,3 +102,15 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 Über **Rassen-/Klassen-Manager** neue redaktionelle Profile mit Anzeigenamen, interner ID und RP-Sprachstil anlegen. Beispiel: `Nachtelf` / `NightElf` / `Naturverbunden, geheimnisvoll, traditionsbewusst`. Das neue Projektregister `.rptextstudio-races-classes.json` hält diese Metadaten unabhängig von den WoW-Dateien. Optional wird in vorhandenen `Racial.lua` oder `Classes.lua` des gewählten AddOns in allen verfügbaren Sprachen ein neuer Textzweig mit `RP_GREETING` erstellt. Eingaben werden validiert; vor Lua-Änderungen erfolgen Testläufe auf temporären Kopien und Backups.
 
 **Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe `HANDBUCH.md`.
+
+### Verbesserungen in 0.1.9
+
+- Textauswahl erfolgt über Dropdowns mit Nummer und Satzanfang statt unklarer Nummernfelder.
+- Die gewählte Variante erscheint sofort und ist genau die Variante, die in der jeweiligen Spalte bearbeitet wird.
+- Andere Sprachen starten ohne Auswahl; keine versehentliche Verbindung gleicher Indizes.
+- Verknüpfung erfordert mindestens zwei Sprachvarianten und lehnt Konflikte vollständig ab.
+- Für die Lua-Dateien ändert sich nichts; gespeichert wird die Zuordnung separat.
+
+### Sprachvergleich (ab 0.1.10)
+
+Wähle links einen Textpool. Der Editor zeigt dieselbe Kategorie aus deDE, enUS und frFR an, auch wenn die zugrunde liegenden Lua-Schlüssel unterschiedliche Sprachteile enthalten. Wähle pro Sprache eine Variante im Dropdown und verbinde mindestens zwei Sprachen mit „Diese Texte verknüpfen“. Änderungen am Text werden stets im richtigen Sprachpool gespeichert.
