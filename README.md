@@ -6,7 +6,6 @@ Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, Hexe
 
 **Empfohlen:** `Start.bat` doppelklicken. Das Skript erstellt bei Bedarf `.venv`, aktiviert die Umgebung, installiert bzw. prüft `requirements.txt` mit pip und startet `main.py`. Bei weiteren Starts wird `.venv` wiederverwendet. `start_windows.bat` ruft denselben Starter auf. Python 3.11 bis 3.13 muss bereits installiert sein und über den Python Launcher `py` oder `python` erreichbar sein. Bei einem Fehler bleibt das Fenster zur Diagnose geöffnet.
 
-
 ```powershell
 py -m pip install -r requirements.txt
 py main.py
