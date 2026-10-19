@@ -52,10 +52,15 @@ Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen in [HAN
 
 ## Tests
 
+Im Ordner `RPTextStudio` mit der projektlokalen Python-Umgebung ausführen.
+Voraussetzung ist, dass `pytest` in dieser Umgebung installiert ist; es ist
+nicht in den Laufzeitabhängigkeiten aus `requirements.txt` enthalten.
+
 ```powershell
-py -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
+Pytest kann die vorhandenen `unittest.TestCase`-Tests ohne Umschreiben ausführen.
 Die Parser-/Speichertests und Python-Kompilierung können automatisiert ausgeführt werden. Die GUI ist auf einem Windows-System mit installiertem PySide6 zu testen.
 
 ### Neu in 0.1.5
