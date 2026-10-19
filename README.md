@@ -1,18 +1,41 @@
-# RP Text Studio 0.1.9
+# RP Text Studio 0.1.10
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
+## Dokumentation
+
+[Sammlungsübersicht](../README.md) · [Bedienungsanleitung](HANDBUCH.md) ·
+[Changelog](CHANGELOG.md) · [Verpackung](../VERPACKUNG.md)
+
 ## Installation (Windows)
 
-**Empfohlen:** `Start.bat` doppelklicken. Das Skript erstellt bei Bedarf `.venv`, aktiviert die Umgebung, installiert bzw. prüft `requirements.txt` mit pip und startet `main.py`. Bei weiteren Starts wird `.venv` wiederverwendet. `start_windows.bat` ruft denselben Starter auf. Python 3.11 bis 3.13 muss bereits installiert sein und über den Python Launcher `py` oder `python` erreichbar sein. Bei einem Fehler bleibt das Fenster zur Diagnose geöffnet.
+**Voraussetzungen:** Windows, Python und die Laufzeitabhängigkeit
+`PySide6>=6.8,<7` aus [requirements.txt](requirements.txt). Der bisher
+dokumentierte Python-Bereich ist 3.11–3.13; eine vollständig ausgeführte
+Testmatrix für diese Versionen ist nicht nachgewiesen.
 
+**Automatischer Start:** [Start.bat](Start.bat) doppelklicken. Das Skript
+erstellt bei Bedarf `.venv`, aktiviert sie, ruft bei jedem Start pip mit
+`requirements.txt` auf und startet `main.py`. [start_windows.bat](start_windows.bat)
+ist ein Alias. Python muss über `py` oder `python` erreichbar sein.
+`py -3` wählt die verfügbare Python-3-Installation, nicht ausdrücklich eine
+Version aus dem oben genannten Bereich. Bei Fehlern bleibt das Fenster offen.
+
+**Manuelle Einrichtung:** PowerShell im Ordner `RPTextStudio` öffnen.
+Beispiel mit installiertem Python 3.13:
 
 ```powershell
-py -m pip install -r requirements.txt
-py main.py
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
 ```
 
-Alternativ `Start.bat` verwenden. `start_windows.bat` ist ein kompatibler Alias. Vorausgesetzt wird Python 3.11–3.13.
+Die Umgebung nur erstellen, wenn noch keine passende `.venv` existiert.
+Bei bereits installierten Abhängigkeiten kann der letzte Befehl den Editor
+ohne den pip-Schritt des Starters öffnen. Es wird keine Aktivierung der
+Umgebung und keine Änderung der PowerShell-Ausführungsrichtlinie benötigt.
+Der Starter zeigt noch `0.1.9` an; maßgeblich für die Anwendung ist der
+Fenstertitel `0.1.10`. Das Startskript wurde bei dieser Doku-Pflege nicht geändert.
 
 ## Einstieg
 
@@ -23,7 +46,7 @@ Alternativ `Start.bat` verwenden. `start_windows.bat` ist ein kompatibler Alias.
 
 **Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird `HANDBUCH.md` im Programm angezeigt. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
 
-## Übersetzungszuordnung (überarbeitet in 0.1.9)
+## Übersetzungszuordnung
 
 - Explizite Übersetzungsgruppen für unterschiedliche Zeilenpositionen in deDE/enUS/frFR.
 - „Gespeicherte Verknüpfung anzeigen“ nutzt ausschließlich bestätigte Zuordnungen, keine automatischen Vermutungen.
@@ -32,17 +55,17 @@ Alternativ `Start.bat` verwenden. `start_windows.bat` ist ein kompatibler Alias.
 - Zuordnungen werden getrennt in `.rptextstudio-translations.json` im Projektordner gespeichert. Lua-Dateien bleiben kompatibel.
 - Alte oder nicht mehr eindeutig auffindbare Referenzen gelten als nicht zugeordnet, statt falsche Übersetzungen anzuzeigen.
 
-## Version 0.1.3
+## Sprachvergleich
 
-- Dreispaltige, bearbeitbare Ansicht für `deDE`, `enUS`, `frFR` zum ausgewählten Textpool und Zeilenindex.
-- Keine automatische Zuordnung von Übersetzungen: Zufallsvarianten können je Sprache unterschiedlich sortiert sein. Fehlende Zeilen bleiben im Vergleich deaktiviert.
+- Dreispaltige, bearbeitbare Ansicht für `deDE`, `enUS`, `frFR` zum ausgewählten Textpool.
+- Varianten pro Sprache ausdrücklich über das Dropdown wählen; gleiche Zeilenindizes werden nicht automatisch verknüpft.
+- Die Sprachsegmente der Lua-Schlüssel werden seit `0.1.10` beim Lesen und Speichern auf die jeweilige Sprache angepasst.
 - Integrierte Hilfe (F1), Tooltips, erweitertes Handbuch.
-- Vorhandene Funktionen für Bearbeitung, Suche, Prüfung, Sicherung und selektives Speichern bleiben erhalten.
 
 ## Textformat und Grenzen
 
-- `*Handlung*` kennzeichnet `/me`; gewöhnlicher Text `/say`.
-- `%s` = Ziel, `%p` = Begleiter/Dämon.
+- `*Handlung*` kennzeichnet `/me`; gewöhnlicher Text wird in der Vorschau als `/say` gezeigt. Im Spiel gilt der konfigurierte Sprachkanal.
+- `%s` = aufgelöster Name, `%p` = Begleiter/Dämon in HexerRP. Die tatsächliche Ersetzung hängt vom AddOn ab.
 - Nur wörtliche Stringlisten in `*/locales/{deDE,enUS,frFR}/*.lua` werden bearbeitet. `Expansion.lua`, Core/Config/TOC sowie dynamische Lua-Ausdrücke bleiben ausgenommen.
 - Bei Änderungen einer Stringliste gehen Kommentare **innerhalb** der Liste möglicherweise verloren. Nicht bearbeitete Listen und übrige Dateibereiche werden beibehalten.
 - **Alles prüfen** ersetzt keinen vollständigen Lua-Syntaxtest und keinen Spieltest.
@@ -53,21 +76,34 @@ Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen in [HAN
 ## Tests
 
 Im Ordner `RPTextStudio` mit der projektlokalen Python-Umgebung ausführen.
-Voraussetzung ist, dass `pytest` in dieser Umgebung installiert ist; es ist
-nicht in den Laufzeitabhängigkeiten aus `requirements.txt` enthalten.
+`pytest` ist eine zusätzliche Testabhängigkeit und nicht in den
+Laufzeitabhängigkeiten aus `requirements.txt` enthalten. Bei Bedarf einmalig
+in der projektlokalen Umgebung installieren:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install pytest
+```
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-Pytest kann die vorhandenen `unittest.TestCase`-Tests ohne Umschreiben ausführen.
-Die Parser-/Speichertests und Python-Kompilierung können automatisiert ausgeführt werden. Die GUI ist auf einem Windows-System mit installiertem PySide6 zu testen.
+Pytest führt auch die vorhandenen `unittest.TestCase`-Tests aus; die
+Testimplementierung muss dafür nicht umgeschrieben werden. Die Tests decken
+Parser/Speichern, Schlüsselverwaltung, Rassendateien, Sprachvergleich,
+Übersetzungsgruppen und beide Manager ab. GUI-Interaktionen und das Verhalten
+im WoW-Client sind zusätzlich manuell zu prüfen. Tests fehlen im Installations-ZIP.
+Auf übersprungene Tests achten: Ein erfolgreicher pytest-Lauf bedeutet nicht,
+dass jede GUI-/Sprachvergleichsprüfung tatsächlich ausgeführt wurde.
 
-### Neu in 0.1.5
+## Filter
 
-Textart- und Rassenfilter zur getrennten Pflege allgemeiner Texte, Rassentexte und Ambient-Pools. Passend zu HexerRP 0.3.0.
+Textart- und Rassenfilter trennen allgemeine Texte, Rassentexte und
+Ambient-Pools. **Alle Textarten** zeigt auch andere Dateien, etwa
+Paladin-Segen oder die sozialen RPChatMod-Kategorien. **Allgemein (Texts.lua)**
+filtert dagegen ausschließlich auf Dateien dieses Namens.
 
-## Version 0.1.6: Schlüsselverwaltung
+## Schlüsselverwaltung
 
 Über **Neuen Schlüssel anlegen** lassen sich neue Zauber-/Aktionsschlüssel in bestehenden Lua-Texttabellen erzeugen:
 
@@ -77,14 +113,25 @@ Textart- und Rassenfilter zur getrennten Pflege allgemeiner Texte, Rassentexte u
 - **Allgemein** in `Texts.lua` (falls vorhanden).
 
 Der Editor erstellt die Schlüssel in allen vorhandenen Sprachdateien dieser Art und prüft die Änderungen vorab an temporären Kopien. Bestehende Dateien werden vor jeder Änderung gesichert. Je nach vorhandenem Schema schreibt er entweder direkte Textlisten oder `ziel`/`gruppe`-Listen. Neu erzeugte Texte heißen zunächst `Neuer RP-Text` und sind vor Verwendung anzupassen.
+Die Strukturerstellung schreibt bereits beim Bestätigen des Dialogs in die
+Lua-Dateien. Anschließende Textbearbeitungen werden erst mit
+**Änderungen speichern** geschrieben.
 
-**Wichtig:** Das Anlegen eines Schlüssels erzeugt **keine neue Zaubererkennung**. Ob der Schlüssel im Spiel aufgerufen wird, hängt von den vorhandenen Event-, Makro- und Spell-Mappings des betreffenden AddOns ab. Auch Rassen- und Klassen-IDs müssen den tatsächlich vom AddOn erwarteten IDs entsprechen. Bestehende Dateien und deren Strukturen werden nicht pauschal geändert.
+**Wichtig:** Das Anlegen eines Schlüssels erzeugt **keine neue Zaubererkennung**.
+Die Klassen-AddOns werden manuell per Slash-Befehl oder `TryText` aufgerufen.
+Ob ein neuer Schlüssel nutzbar ist, hängt zusätzlich von der vorhandenen
+Poolauswahl ab. Rassen- und Klassen-IDs müssen zu den vom AddOn erwarteten IDs
+passen. Der Editor ändert weder Core-Handler noch TOCs und erzeugt keine
+fehlenden Sprachdateien.
 
-## Zauber-Manager (0.1.7)
+## Zauber-Manager
 
 Über **Zauber-Manager** lassen sich vorhandene RP-Schlüssel für die AddOns
-HexerRP, PaladinRP, JaegerRP und DruidenRP anzeigen und mit einem WoW-Zaubernamen
-verknüpfen. Nur Schlüssel, die in geladenen Textlisten vorkommen, werden angeboten.
+HexerRP, PaladinRP, JaegerRP und DruidenRP mit einem WoW-Zaubernamen
+verknüpfen. Angeboten werden aus geladenen `Texts.lua`, `Racial.lua`,
+`Classes.lua` und `RaceClass.lua` ermittelte Schlüssel. Andere Kategorien,
+etwa reine Paladin-Segen aus `Blessings.lua`, werden derzeit nicht generell
+erfasst; der Dialog ist keine vollständige Laufzeit-Schlüsselliste.
 
 1. Projektordner mit AddOns öffnen.
 2. **Zauber-Manager** anklicken und AddOn auswählen.
@@ -102,20 +149,40 @@ belegt **keinen erfolgreichen Zaubertreffer**. Chatbeschränkungen, Cooldowns un
 Würfelchance gelten weiter. Bei veränderten Textschlüsseln die Zuordnung erneut prüfen.
 Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 
-### Neu in 0.1.8: Rassen- und Klassen-Manager
+## Rassen- und Klassen-Manager
 
 Über **Rassen-/Klassen-Manager** neue redaktionelle Profile mit Anzeigenamen, interner ID und RP-Sprachstil anlegen. Beispiel: `Nachtelf` / `NightElf` / `Naturverbunden, geheimnisvoll, traditionsbewusst`. Das neue Projektregister `.rptextstudio-races-classes.json` hält diese Metadaten unabhängig von den WoW-Dateien. Optional wird in vorhandenen `Racial.lua` oder `Classes.lua` des gewählten AddOns in allen verfügbaren Sprachen ein neuer Textzweig mit `RP_GREETING` erstellt. Eingaben werden validiert; vor Lua-Änderungen erfolgen Testläufe auf temporären Kopien und Backups.
 
-**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe `HANDBUCH.md`.
+**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe [Handbuch](HANDBUCH.md).
 
-### Verbesserungen in 0.1.9
+## Projektdateien und Sicherungen
 
-- Textauswahl erfolgt über Dropdowns mit Nummer und Satzanfang statt unklarer Nummernfelder.
-- Die gewählte Variante erscheint sofort und ist genau die Variante, die in der jeweiligen Spalte bearbeitet wird.
-- Andere Sprachen starten ohne Auswahl; keine versehentliche Verbindung gleicher Indizes.
-- Verknüpfung erfordert mindestens zwei Sprachvarianten und lehnt Konflikte vollständig ab.
-- Für die Lua-Dateien ändert sich nichts; gespeichert wird die Zuordnung separat.
+| Datei | Inhalt | Wirkung im Spiel |
+| --- | --- | --- |
+| `.rptextstudio-translations.json` | Explizite Übersetzungsgruppen | Keine |
+| `.rptextstudio-spells.json` | Zauber-/Schlüsselzuordnungen für Makros | Erst durch Nutzung des erzeugten Makros |
+| `.rptextstudio-races-classes.json` | Redaktionelle Rassen-/Klassenprofile | Keine; optionale Lua-Zweige sind separat |
 
-### Sprachvergleich (ab 0.1.10)
+Die Register liegen im geöffneten Projektordner, nicht zwingend neben dem
+Editor. Das Sammlungspaket lässt versteckte Punktdateien aus; bei einem
+Projektumzug diese Register bei Bedarf separat sichern und mitnehmen.
+Lua-Sicherungen tragen einen Zeitstempel vor `.bak`; JSON-Sicherungen
+verwenden den Namen der jeweiligen Datei mit zusätzlichem `.bak`.
+Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 
-Wähle links einen Textpool. Der Editor zeigt dieselbe Kategorie aus deDE, enUS und frFR an, auch wenn die zugrunde liegenden Lua-Schlüssel unterschiedliche Sprachteile enthalten. Wähle pro Sprache eine Variante im Dropdown und verbinde mindestens zwei Sprachen mit „Diese Texte verknüpfen“. Änderungen am Text werden stets im richtigen Sprachpool gespeichert.
+## Module
+
+| Modul | Zuständigkeit |
+| --- | --- |
+| [main.py](main.py) | GUI, Projekt-/ZIP-Öffnen, Filter, Sprachvergleich und Speichervorgänge |
+| [lua_text.py](lua_text.py) | Statischer Lua-Listenparser, Validierung, gezieltes Schreiben und Sicherungen |
+| [key_creation.py](key_creation.py) | Neue Schlüssel in bestehenden statischen Texttabellen |
+| [translation_links.py](translation_links.py) | Sprachübergreifende Poolkennungen, Textreferenzen und JSON-Speicherung |
+| [spell_manager.py](spell_manager.py) | Schlüsselvorschläge, Makroerzeugung und Zuordnungsregister |
+| [race_class_manager.py](race_class_manager.py) | Profilregister und optionale Lua-Textzweige |
+
+## Lizenz
+
+Der Editor steht laut [LICENSE](LICENSE) unter **MPL-2.0**.
+Die Lizenz der bearbeiteten RP-Texte wird dadurch nicht geändert; für die
+AddOn-Textdaten gelten die jeweiligen Lizenz- und SPDX-Hinweise.
