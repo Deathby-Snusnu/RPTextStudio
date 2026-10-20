@@ -1,7 +1,7 @@
 # Changelog
 
 Die dokumentierte Historie wird nach Versionen geordnet. Undatierte
-Versionen erhalten kein nachtraeglich angenommenes Release-Datum.
+Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## [Unreleased]
 
@@ -16,62 +16,70 @@ Versionen erhalten kein nachtraeglich angenommenes Release-Datum.
 
 ### Behoben
 
-- Sprachvergleich: Sprachsegment in Lua-Pool-Schlüsseln wird beim Zugriff auf DE/EN/FR korrekt angepasst.
-- Übersetzungsgruppen erhalten sprachübergreifende IDs; bestehende JSON-IDs werden beim Laden migriert.
+- Sprachvergleich: Sprachsegment in Lua-Pool-Schlüsseln wird beim Zugriff auf
+  DE/EN/FR korrekt angepasst.
+- Übersetzungsgruppen erhalten sprachübergreifende IDs; bestehende JSON-IDs
+  werden beim Laden migriert.
 - Speichern in fremden Sprachspalten verwendet nun den richtigen Lua-Schlüssel.
 
 ## [0.1.9] - 2026-10-19
 
-### Geaendert
+### Geändert
 
 - Sprachvarianten per Dropdown mit Textvorschau statt Zeilennummern wählen.
-- Korrektur: Die Sprach-Editoren bearbeiten jetzt tatsächlich die ausgewählte Variante.
+- Korrektur: Die Sprach-Editoren bearbeiten jetzt tatsächlich die
+  ausgewählte Variante.
 - Explizite Sprachwahl, Mindestanzahl zwei Sprachen, Konfliktprüfung vor Änderung.
 - Hilfe, README und Startskript aktualisiert.
 
 ## [0.1.8] - 2026-10-19
 
-### Hinzugefuegt
+### Hinzugefügt
 
 - Rassen- und Klassen-Manager mit Name, ID, Sprachstil und Projektregister.
-- Optionale Lua-Textzweige in vorhandenen Racial.lua / Classes.lua, mit Vorabprüfung und Backups.
+- Optionale Lua-Textzweige in vorhandenen `Racial.lua`- und `Classes.lua`-Dateien,
+  mit Vorabprüfung und Backups.
 - Tooltips, Hilfetexte, Dokumentation und zusätzliche Tests.
 - Keine Änderung der AddOn-Laufzeit oder der vom Spiel unterstützten Rassen/Klassen.
 
-### Geaendert
+### Geändert
 
-- `Start.bat` richtet `.venv` bei Bedarf ein, aktiviert sie, prüft/installiert `requirements.txt` und startet die Anwendung.
+- `Start.bat` richtet `.venv` bei Bedarf ein, aktiviert sie,
+  prüft/installiert `requirements.txt` und startet die Anwendung.
 - `start_windows.bat` bleibt als Alias erhalten.
 - README und Handbuch um Einrichtung und Fehlersuche erweitert.
 
 ## [0.1.7]
 
-### Hinzugefuegt
+### Hinzugefügt
 
-- Zauber-Manager mit vorhandenen RP-Schlüsseln, Zuordnung lokalisierter Zaubernamen und Makro-Vorschau.
+- Zauber-Manager mit vorhandenen RP-Schlüsseln, Zuordnung lokalisierter
+  Zaubernamen und Makro-Vorschau.
 - Projektbezogene JSON-Speicherung samt Backup, Hilfetexte und Tests.
 - Keine automatische Cast-/Spell-ID-Erkennung oder Änderung an AddOn-Core-Dateien.
 
 ## [0.1.6] - 2026-10-19
 
-### Hinzugefuegt
+### Hinzugefügt
 
-- Dialog zum Anlegen neuer Rassen-, Klassen-, Rassen-Klassen- und allgemeiner Text-/Zauberschlüssel.
-- Neue Schlüssel in den vorhandenen DE/EN/FR-Lua-Textdateien, mit Prüfung gegen doppelte und ungültige Namen.
+- Dialog zum Anlegen neuer Rassen-, Klassen-, Rassen-Klassen- und allgemeiner
+  Text-/Zauberschlüssel.
+- Neue Schlüssel in den vorhandenen DE/EN/FR-Lua-Textdateien, mit Prüfung
+  gegen doppelte und ungültige Namen.
 - Unterstützt direkte Textlisten und `ziel`/`gruppe`-Tabellen anhand des bestehenden Dateischemas.
 - Testlauf an temporären Kopien, Sicherungen vor Schreibvorgängen, neu geladene Textpools nach Erstellung.
 - Tooltips, README und Handbuch erweitert.
 
 ## [0.1.5] - 2026-10-19
 
-### Hinzugefuegt
+### Hinzugefügt
 
-- Filter fuer Textart und Rasse sowie Tooltip-Ergaenzungen.
-- Anleitung fuer HexerRP-Rassentexte erweitert.
+- Filter für Textart und Rasse sowie Tooltip-Ergänzungen.
+- Anleitung für HexerRP-Rassentexte erweitert.
 
 ## [0.1.4] - 2026-10-18
 
-### Hinzugefuegt
+### Hinzugefügt
 
 - Explizite Übersetzungsgruppen für beliebige Zeilenindizes in drei Sprachen.
 - Separates, versioniertes JSON-Speicherformat mit optionalem Backup.
@@ -80,7 +88,7 @@ Versionen erhalten kein nachtraeglich angenommenes Release-Datum.
 
 ## [0.1.3] - 2026-10-18
 
-### Hinzugefuegt
+### Hinzugefügt
 
 - Bearbeitbarer dreispaltiger Vergleich deDE/enUS/frFR pro Textzeile.
 - Integrierte Hilfe mit F1, Menü und Tooltips.
@@ -89,6 +97,6 @@ Versionen erhalten kein nachtraeglich angenommenes Release-Datum.
 
 ## [0.1.2]
 
-### Geaendert
+### Geändert
 
 - Kompatibilitätsanpassung und Speichern nur bei echten Änderungen.
