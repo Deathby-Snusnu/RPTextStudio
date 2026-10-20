@@ -143,7 +143,6 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 
 **Wichtige Grenzen:** Das Register ist nur eine Verwaltung für den Editor. Es erweitert weder WoW Forever um neue spielbare Rassen/Klassen noch die im AddOn zur Laufzeit erkannten Rassen-IDs. Die internen IDs müssen exakt zur jeweiligen AddOn-Logik bzw. den WoW-Rassenkennungen passen, einschließlich Groß-/Kleinschreibung. `NightElf` ist ein Beispiel und wird *nicht* automatisch als gültige Kennung des Clients nachgewiesen. Bestehende AddOn-Core-Dateien werden nicht umgeschrieben. Es werden nur bereits vorhandene, statisch erkennbare Texttabellen unterstützt; fehlende oder mehrdeutige Dateistrukturen werden abgelehnt. Für einen neuen Zauber ist ggf. eine Registrierung im AddOn-Handler weiterhin nötig. Der Dialog verwaltet aktuell das **Anlegen**, nicht das Umbenennen oder Löschen vorhandener Profile. Sprachstil-Beschreibungen erzeugen keine automatischen Übersetzungen. JSON-Profil und Lua-Dateien werden separat gespeichert; bei einem seltenen Schreibfehler kann eine manuelle Wiederherstellung aus `.bak` nötig sein.
 
-
 ## Automatischer Windows-Start
 
 - `Start.bat` verwendet das eigene `.venv` neben `main.py` und verändert keine global installierten Python-Pakete.
