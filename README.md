@@ -190,3 +190,7 @@ AddOn-Textdaten gelten die jeweiligen Lizenz- und SPDX-Hinweise.
 ## Ambient-Texte (Version 0.1.11)
 
 Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.
+
+### Falsch angelegte Schlüssel entfernen (0.1.12)
+
+Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe `HANDBUCH.md`.

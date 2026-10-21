@@ -178,3 +178,14 @@ Anschließend die betroffenen AddOns im passenden WoW-Client testen.
 ## Ambient-Texte (Version 0.1.11)
 
 Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.
+
+## Text-/Zauberschlüssel sicher löschen (ab 0.1.12)
+
+1. Projekt öffnen und einen Textpool des zu entfernenden Schlüssels auswählen, beispielsweise `JaegerRP → Racial.lua → NightElf → SERPENT_STING → ziel`.
+2. Auf **Schlüssel löschen** klicken. Der Editor ermittelt denselben Schlüssel in den vorhandenen Sprachdateien und zeigt die betroffenen Dateien und die Anzahl der Textpools an.
+3. Vorschau sorgfältig prüfen und die Sicherheitsabfrage bestätigen.
+4. Bei Bedarf die automatisch angelegten `*.bak`-Sicherungskopien zurückspielen.
+
+Es wird **der gesamte ausgewählte Zauber-/Aktionsschlüssel** entfernt, also bei `ziel`/`gruppe` beide Listen; die Rassen- und Klassen-Elternzweige bleiben bestehen. Die Löschung betrifft keine anderen AddOns und keine gleichnamigen Schlüssel unter anderen Rassen. Ausstehende Änderungen werden vorher zur Speicherung angeboten. Bei Fehlern in der Vorabprüfung wird keine Sprachdatei geändert. Die vorhandenen Makro-Zuordnungen aus `.rptextstudio-spells.json` und Übersetzungsverknüpfungen werden **nicht** stillschweigend gelöscht; kontrolliere sie danach gesondert. Neue im Spiel geladene Schlüssel verschwinden nach einem `/reload` aus den dynamischen Listen.
+
+**Achtung:** Lösche keine von der AddOn-Logik erwarteten Schlüssel, ohne ihre Verwendung zu prüfen. Die Funktion entfernt Texttabellen, nicht ausführbare Lua-Befehle.

@@ -6,6 +6,7 @@ from translation_links import LANGS, pool_id, read_links, write_links, reference
 from pathlib import Path
 from lua_text import parse_pools,update_file,validate_file,ParseError
 from key_creation import new_spell
+from key_deletion import spell_path, delete_from_files, prepare_deletion
 from race_class_manager import load_registry, register, add_lua_profile, discover_targets
 from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings, make_macro
 try:
@@ -23,7 +24,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.11')
+        self.setWindowTitle('RP Text Studio 0.1.12')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -45,9 +46,9 @@ class Studio(QMainWindow):
         center=QWidget();self.setCentralWidget(center)
         main=QVBoxLayout(center)
         bar=QHBoxLayout()
-        for label,cb in [('Projektordner öffnen',self.open_folder),('ZIP als Projekt entpacken',self.open_zip),('Änderungen speichern',self.save_all),('Alles prüfen',self.validate_all),('Neuen Schlüssel anlegen',self.create_key),('Zauber-Manager',self.open_spell_manager),('Rassen-/Klassen-Manager',self.open_race_class_manager)]:
+        for label,cb in [('Projektordner öffnen',self.open_folder),('ZIP als Projekt entpacken',self.open_zip),('Änderungen speichern',self.save_all),('Alles prüfen',self.validate_all),('Neuen Schlüssel anlegen',self.create_key),('Schlüssel löschen',self.delete_key),('Zauber-Manager',self.open_spell_manager),('Rassen-/Klassen-Manager',self.open_race_class_manager)]:
             b=QPushButton(label);b.clicked.connect(cb);bar.addWidget(b)
-            b.setToolTip({"Projektordner öffnen":"Vorhandenen entpackten AddOn-Projektordner laden.","ZIP als Projekt entpacken":"AddOn-ZIP in ein leeres Arbeitsverzeichnis entpacken und dort bearbeiten.","Änderungen speichern":"Geänderte Textpools speichern. Vorher wird je Datei ein Backup angelegt.","Alles prüfen":"Alle Texte einschließlich ungespeicherter Änderungen auf häufige Probleme kontrollieren.","Neuen Schlüssel anlegen":"Neuen Rassen-, Klassen-, Rasse-Klasse- oder allgemeinen Zauberschlüssel in den vorhandenen Locale-Dateien anlegen.","Zauber-Manager":"Ordnet WoW-Zaubern RP-Textschlüssel zu und erzeugt passende manuelle Makros.","Rassen-/Klassen-Manager":"Verwaltet Rassen und Klassen samt RP-Stilprofil und legt auf Wunsch Textzweige in vorhandenen Lua-Dateien an."}[label])
+            b.setToolTip({"Projektordner öffnen":"Vorhandenen entpackten AddOn-Projektordner laden.","ZIP als Projekt entpacken":"AddOn-ZIP in ein leeres Arbeitsverzeichnis entpacken und dort bearbeiten.","Änderungen speichern":"Geänderte Textpools speichern. Vorher wird je Datei ein Backup angelegt.","Alles prüfen":"Alle Texte einschließlich ungespeicherter Änderungen auf häufige Probleme kontrollieren.","Neuen Schlüssel anlegen":"Neuen Rassen-, Klassen-, Rasse-Klasse- oder allgemeinen Zauberschlüssel in den vorhandenen Locale-Dateien anlegen.","Schlüssel löschen":"Entfernt den gewählten Text-/Zauberschlüssel nach Vorschau und Bestätigung in den entsprechenden Sprachdateien. Erstellt Backups.","Zauber-Manager":"Ordnet WoW-Zaubern RP-Textschlüssel zu und erzeugt passende manuelle Makros.","Rassen-/Klassen-Manager":"Verwaltet Rassen und Klassen samt RP-Stilprofil und legt auf Wunsch Textzweige in vorhandenen Lua-Dateien an."}[label])
         bar.addStretch()
         main.addLayout(bar)
         filters=QHBoxLayout()
@@ -524,6 +525,52 @@ class Studio(QMainWindow):
         QMessageBox.information(self,'Schlüssel angelegt',f'{key} wurde in {len(targets)} Sprachdatei(en) hinzugefügt.\n'
             'Bitte die Platzhaltertexte jetzt bearbeiten und danach speichern.\n'
             'Hinweis: Ein neuer Zauberschlüssel muss von der AddOn-Logik erkannt werden, um im Spiel verwendet zu werden.')
+
+    def delete_key(self):
+        if self.root is None or self.current is None:
+            QMessageBox.warning(self,'Keine Auswahl','Bitte einen Textpool im Projekt auswählen.');return
+        if not self.maybe_save():return
+        if self.changes or self.links_dirty:self.load(self.root)
+        if self.current is None:
+            QMessageBox.warning(self,'Auswahl verloren','Bitte nach dem Speichern den zu löschenden Textpool erneut wählen.');return
+        path,pool=self.current
+        try:
+            target=spell_path(pool)
+            parent=target[:-1];key=target[-1]
+            targets=[];preview=[]
+            for p in sorted(self.files):
+                if p.parts[-4]!=path.parts[-4] or p.name!=path.name:continue
+                localized=(target[0],p.parent.name,*target[2:]) if target[0]=='localeData' else target
+                localized_parent=localized[:-1]
+                # It is valid for a translation to be missing in a language.
+                try:
+                    raw=p.read_text(encoding='utf-8')
+                    _,number=prepare_deletion(raw,localized_parent,key)
+                except ValueError as exc:
+                    if 'Parent-Schluessel fehlt' in str(exc) or 'Kein eigenstaendiger Textpool' in str(exc):continue
+                    raise
+                targets.append((p,localized_parent,key))
+                preview.append(f'{p.parent.name}: {p.name} ({number} Textpools)')
+            if not targets:raise ValueError('Dieser Schlüssel wurde in keiner passenden Sprachdatei gefunden.')
+            # Do not silently delete stored macro mappings or translation groups.
+            known=load_mappings(self.root)
+            matches=[m for m in known if m['addon']==path.parts[-4] and m['key']==key]
+            warning=('\nACHTUNG: '+str(len(matches))+' Makro-Zuordnung(en) verweisen noch auf diesen Schlüssel. '
+                     'Sie werden NICHT automatisch gelöscht.\n' if matches else '')
+            message=(f'Folgenden Schlüssel wirklich löschen?\n\n{path.parts[-4]} / {key}\n'
+                     +'/'.join(target[2:-1])+'\n\nBetroffene Dateien:\n'+'\n'.join(preview)
+                     +warning+'\nVor der Änderung werden Sicherungskopien (*.bak) angelegt.\n'
+                     'Andere Rassen-/Klassenzweige bleiben erhalten.')
+            answer=QMessageBox.warning(self,'Schlüssel endgültig aus Lua entfernen',message,
+                                       QMessageBox.Yes|QMessageBox.Cancel,QMessageBox.Cancel)
+            if answer!=QMessageBox.Yes:return
+            delete_from_files(targets)
+            root=self.root
+            self.load(root)
+            QMessageBox.information(self,'Schlüssel gelöscht',f'{key} aus {len(targets)} Sprachdatei(en) entfernt.\n'
+                                    'Bei Bedarf aus den .bak-Dateien wiederherstellen.')
+        except (ValueError,ParseError,OSError) as exc:
+            QMessageBox.critical(self,'Schlüssel nicht gelöscht',str(exc))
 
     def open_race_class_manager(self):
         if self.root is None:

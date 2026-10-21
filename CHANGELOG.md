@@ -104,3 +104,9 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 ## Ambient-Texte (Version 0.1.11)
 
 Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.
+
+## 0.1.12
+- Kontextbezogenes **Schlüssel löschen** mit Vorschau für alle vorhandenen Sprachen, Sicherheitsdialog und Backups.
+- Entfernt den vollständigen ausgewählten RP-Schlüssel, bewahrt Geschwister- und Elternzweige.
+- Mehrdateien-Vorabprüfung und Regressionstests für alle fünf RP-AddOn-Strukturen.
+- Handbuch, README und Tooltips ergänzt.
