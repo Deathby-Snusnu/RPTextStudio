@@ -23,7 +23,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.10')
+        self.setWindowTitle('RP Text Studio 0.1.11')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -54,8 +54,8 @@ class Studio(QMainWindow):
         self.addonfilter=QComboBox();self.addonfilter.addItem('Alle AddOns');self.addonfilter.setToolTip('Nur Textpools dieses AddOns anzeigen.')
         self.addonfilter.currentIndexChanged.connect(self.rebuild_tree)
         self.language=QComboBox();self.language.addItems(LANGS);self.language.setToolTip('Sprache für die Textpool-Navigation. Im Sprachvergleich werden alle drei Sprachen gezeigt.');self.language.currentIndexChanged.connect(self.rebuild_tree)
-        self.racefilter=QComboBox();self.racefilter.addItem('Alle Rassen');self.racefilter.setToolTip('Rassenspezifische Textpools in Racial.lua filtern. Allgemeine Texte sind separat über Dateityp wählbar.');self.racefilter.currentIndexChanged.connect(self.rebuild_tree)
-        self.kindfilter=QComboBox();self.kindfilter.addItems(['Alle Textarten','Allgemein (Texts.lua)','Rassen (Racial.lua)','Ambient (Ambient.lua)']);self.kindfilter.setToolTip('Nur allgemeine, rassenbezogene oder Ambient-Textpools anzeigen.');self.kindfilter.currentIndexChanged.connect(self.rebuild_tree)
+        self.racefilter=QComboBox();self.racefilter.addItem('Alle Rassen');self.racefilter.setToolTip('Rassenspezifische Textpools in Racial.lua und AmbientRacial.lua filtern. Allgemeine Texte sind separat über Dateityp wählbar.');self.racefilter.currentIndexChanged.connect(self.rebuild_tree)
+        self.kindfilter=QComboBox();self.kindfilter.addItems(['Alle Textarten','Allgemein (Texts.lua)','Rassen (Racial.lua)','Ambient (Ambient.lua)','Ambient nach Rasse (AmbientRacial.lua)']);self.kindfilter.setToolTip('Nur allgemeine, rassenbezogene oder Ambient-Textpools anzeigen.');self.kindfilter.currentIndexChanged.connect(self.rebuild_tree)
         self.search=QLineEdit();self.search.setPlaceholderText('Schlüssel oder Text suchen ...');self.search.setToolTip('Filtert die Textpool-Liste nach Schlüsseln und Textinhalt der gewählten Navigationssprache.');self.search.textChanged.connect(self.rebuild_tree)
         filters.addWidget(QLabel('Addon:'));filters.addWidget(self.addonfilter)
         filters.addWidget(QLabel('Sprache:'));filters.addWidget(self.language)
@@ -206,7 +206,8 @@ class Studio(QMainWindow):
                 if kind==1 and p.name!='Texts.lua':continue
                 if kind==2 and p.name!='Racial.lua':continue
                 if kind==3 and p.name!='Ambient.lua':continue
-                if race!='Alle Rassen' and (p.name!='Racial.lua' or len(key)<4 or key[3]!=race):continue
+                if kind==4 and p.name!='AmbientRacial.lua':continue
+                if race!='Alle Rassen' and (p.name not in ('Racial.lua','AmbientRacial.lua') or len(key)<4 or key[3]!=race):continue
                 entries=self.get_entries(p,key)
                 friendly='/'.join(key[2:]) if len(key)>2 else '/'.join(key)
                 if query and query not in friendly.casefold() and not any(query in s.casefold() for s in entries):continue
@@ -739,7 +740,7 @@ class Studio(QMainWindow):
         dlg.exec()
 
     def show_about(self):
-        QMessageBox.information(self,'Über RP Text Studio','RP Text Studio 0.1.10\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
+        QMessageBox.information(self,'Über RP Text Studio','RP Text Studio 0.1.11\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
 
     def add_entry(self):
         if self.current is None:return

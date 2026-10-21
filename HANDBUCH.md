@@ -174,3 +174,7 @@ eine Modulübersicht steht unter [Module](README.md#module).
 Nach GUI-Änderungen oder Textpflege zusätzlich Öffnen, Variantenwahl,
 Verknüpfen/Lösen, Speichern und Wiederöffnen an einer Projektkopie prüfen.
 Anschließend die betroffenen AddOns im passenden WoW-Client testen.
+
+## Ambient-Texte (Version 0.1.11)
+
+Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.

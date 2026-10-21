@@ -100,3 +100,7 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 ### Geändert
 
 - Kompatibilitätsanpassung und Speichern nur bei echten Änderungen.
+
+## Ambient-Texte (Version 0.1.11)
+
+Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.

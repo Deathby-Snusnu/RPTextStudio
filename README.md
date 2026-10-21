@@ -186,3 +186,7 @@ Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 Der Editor steht laut [LICENSE](LICENSE) unter **MPL-2.0**.
 Die Lizenz der bearbeiteten RP-Texte wird dadurch nicht geändert; für die
 AddOn-Textdaten gelten die jeweiligen Lizenz- und SPDX-Hinweise.
+
+## Ambient-Texte (Version 0.1.11)
+
+Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.
