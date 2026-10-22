@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.10 – Bedienungsanleitung
+# RP Text Studio 0.1.13 – Bedienungsanleitung
 
 [Editor-Übersicht und Installation](README.md) · [Changelog](CHANGELOG.md) ·
 [Sammlungsübersicht](../README.md)
@@ -201,3 +201,11 @@ Es wird **der gesamte ausgewählte Zauber-/Aktionsschlüssel** entfernt, also be
 7. Im Hauptfenster **Änderungen speichern** nutzen. Erst dann werden die Lua-Textdateien auf dem Datenträger aktualisiert.
 
 Die Validierung blockiert fehlende oder zusätzliche `%s`, `%p`, `%%`, fehlende Emote-Sternchen und Zeilenumbrüche. Es werden ausschließlich ausgewählte RP-Texte und Charakterhinweise an die API gesendet, niemals der ganze AddOn-Ordner. Der Schlüssel bleibt nur im Speicher, wird in der Eingabe maskiert und nicht in den Projektdaten abgelegt. API-Fehler werden ohne Serverantwort-Inhalt angezeigt. Wenn für die Zielsprache der Textpool fehlt, muss dieser zuerst angelegt werden. Dieser Branch wurde nicht gegen den echten Online-Dienst oder die Windows-GUI getestet.
+
+## Menüleiste und Statusleiste (0.1.13)
+
+**Datei:** Projektordner öffnen, ZIP importieren, Änderungen speichern, Beenden. **Bearbeiten:** neue Textzeile, Duplizieren, Entfernen und Suche. **Projekt:** Schlüssel anlegen/löschen, Zauber-Manager, Rassen-/Klassen-Manager und Prüfung. **Übersetzungen:** Verknüpfen, Lösen und OpenAI-Vorschläge. **Ansicht:** Suchfokus und Statusleiste ein-/ausblenden. **Hilfe:** Handbuch und Programmversion.
+
+Die kompakte Symbolleiste enthält Öffnen, Speichern, Text hinzufügen, Prüfung und KI-Übersetzung. Häufige Tastenkürzel: Strg+O, Strg+S, Strg+N, Strg+D, Strg+F, F7 und F1. Nicht verfügbare Funktionen wie projektweites Rückgängig werden bewusst nicht als Menüaktionen angezeigt.
+
+Die Statusleiste unten zeigt den Projektnamen, die Navigationssprache, die Textanzahl und Zeilenauswahl sowie ausstehende Änderungen. Bei offenen Änderungen steht zudem ein Sternchen im Fenstertitel. Meldungen zu Aktionen erscheinen weiterhin kurzzeitig links in der Statusleiste. Der geplante Workflow-Assistent folgt erst in einer späteren Version.
