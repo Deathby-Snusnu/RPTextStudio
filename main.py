@@ -9,7 +9,9 @@ from key_creation import new_spell
 from key_deletion import spell_path, delete_from_files, prepare_deletion
 from race_class_manager import load_registry, register, add_lua_profile, discover_targets
 from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings, make_macro
+from ai_translation import inspect_translation
 try:
+    from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QAction
     from PySide6.QtWidgets import (QApplication,QMainWindow,QWidget,QVBoxLayout,QHBoxLayout,
@@ -120,6 +122,10 @@ class Studio(QMainWindow):
         self.link_state.setToolTip('Übersetzungsgruppen werden in einer eigenen JSON-Datei im Projektordner gespeichert.')
         assoc.addWidget(self.link_state,1)
         main.addLayout(assoc)
+        ai_button=QPushButton("KI-Übersetzung …")
+        ai_button.setToolTip("Deutschen Text mit OpenAI nach enUS und frFR übersetzen; Vorschläge vor dem Übernehmen prüfen.")
+        ai_button.clicked.connect(self.open_ai_translation)
+        main.addWidget(ai_button)
         help_menu=self.menuBar().addMenu('Hilfe')
         help_action=QAction('Bedienungsanleitung',self);help_action.setShortcut('F1');help_action.triggered.connect(self.show_help)
         help_menu.addAction(help_action)
@@ -446,6 +452,78 @@ class Studio(QMainWindow):
             item=self.list.item(row)
             if item:item.setText(f'{row+1:02d}  {"⚡ /me" if value.startswith("*") and value.endswith("*") else "💬"}  {value[:115]}')
             self.preview_update()
+
+    def open_ai_translation(self):
+        if self.current is None or self.current_row < 0 or self.root is None:
+            QMessageBox.information(self, "Ausgangstext wählen", "Bitte zuerst einen deutschen RP-Text auswählen.")
+            return
+        path, key = self.current
+        if path.parent.name != "deDE":
+            QMessageBox.information(self, "Deutsch auswählen", "Bitte deDE als Navigationssprache wählen.")
+            return
+        source_entries = self.get_entries(path, key)
+        if not 0 <= self.current_row < len(source_entries):
+            return
+        source = source_entries[self.current_row]
+        addon = next((part for part in path.parts if part in
+                      ("RPChatMod", "HexerRP", "PaladinRP", "JaegerRP", "DruidenRP")), "")
+        race = ""
+        if "racial" in key:
+            try:
+                race = key[key.index("racial") + 1]
+            except (ValueError, IndexError):
+                pass
+
+        def accept_results(results):
+            pk = self.link_key()
+            if pk is None:
+                return False
+            if self.group_at_current() is not None:
+                QMessageBox.warning(self, "Bereits verknüpft",
+                    "Dieser deutsche Text hat bereits eine Übersetzungsgruppe. Bitte vorhandene Zuordnung zuerst prüfen.")
+                return False
+            planned = {}
+            groups = self.links.get(pk, [])
+            for lang, value in results.items():
+                problems = inspect_translation(source, value)
+                if problems:
+                    QMessageBox.warning(self, "Ungültige Übersetzung", "\\n".join(problems))
+                    return False
+                target = self.translation_path(lang)
+                if target is None:
+                    QMessageBox.warning(self, "Textpool fehlt",
+                        f"{lang}: Dieser Sprach-Textpool fehlt. Bitte zuerst den Schlüssel anlegen.")
+                    return False
+                entries = list(self.get_entries(target, key))
+                matches = [i for i, text in enumerate(entries) if text == value]
+                if len(matches) > 1:
+                    QMessageBox.warning(self, "Mehrdeutige Übersetzung",
+                        f"{lang}: identischer Text mehrfach vorhanden. Bitte manuell zuordnen.")
+                    return False
+                row = matches[0] if matches else len(entries)
+                if not matches:
+                    entries.append(value)
+                for group in groups:
+                    if resolve(entries, group.get(lang)) == row:
+                        QMessageBox.warning(self, "Bereits verknüpft",
+                            f"{lang}: Dieser Text gehört bereits zu einer anderen Gruppe.")
+                        return False
+                planned[lang] = (target, entries, row)
+            # Mutate only after ALL targets and collisions were validated.
+            group = {"deDE": reference(source_entries, self.current_row)}
+            for lang, (target, entries, row) in planned.items():
+                if entries != list(self.get_entries(target, key)):
+                    self.changes.setdefault(target, {})[self.locale_key(target, key)] = entries
+                group[lang] = reference(entries, row)
+            self.links.setdefault(pk, []).append(group)
+            self.links_dirty = True
+            self.link_switch.setChecked(True)
+            self.refresh_compare()
+            self.statusBar().showMessage(
+                "Freigegebene KI-Übersetzungen übernommen. Bitte Änderungen speichern.", 12000)
+            return True
+
+        TranslationDialog(self, source, addon, race, accept_results).exec()
 
     def create_key(self):
         if self.root is None:
@@ -845,7 +923,7 @@ class Studio(QMainWindow):
                     if not s.strip():problems.append(f'{p.name}:{key}[{i}]: leer')
                     if s.startswith('*') != s.endswith('*'):problems.append(f'{p.name}:{key}[{i}]: ungleiche Sternchen')
                     import re
-                    if re.search(r'%(?![%sp])',s):problems.append(f'{p.name}:{key}[{i}]: unbekannter Platzhalter')
+                    if '%' in re.sub(r'%(?:%|s|p)', '', s):problems.append(f'{p.name}:{key}[{i}]: unbekannter Platzhalter')
         if problems:
             box=QMessageBox(self);box.setWindowTitle('Prüfbericht');box.setText(f'{len(problems)} Auffälligkeit(en) in {n} Pools')
             box.setDetailedText('\n'.join(problems));box.exec()

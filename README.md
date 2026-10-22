@@ -194,3 +194,11 @@ Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP.
 ### Falsch angelegte Schlüssel entfernen (0.1.12)
 
 Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe `HANDBUCH.md`.
+
+## KI-Übersetzung mit OpenAI (Feature-Branch)
+
+Im Sprachvergleich einen **deutschen** Text auswählen und **KI-Übersetzung …** anklicken. In dem Dialog einen eigenen OpenAI API-Key eingeben oder `OPENAI_API_KEY` als Umgebungsvariable setzen; Modell und RP-Stil können angepasst werden. Erst **Vorschläge erzeugen** sendet Originaltext, AddOn, Rasse und Stil über die OpenAI Responses API an den Dienst (API-Nutzung kann Kosten verursachen).
+
+Die Vorschläge für `enUS` und `frFR` werden zunächst nur angezeigt. Sie können korrigiert und **einzeln freigegeben** werden. Der Editor prüft dabei `%s`, `%p`, `%%`, `*...*` und Zeilenumbrüche. Erst nach Freigabe werden Varianten in die vorhandenen Sprachpools übernommen und dem deutschen Text zugeordnet. Bestehende Sprachvarianten werden **nicht überschrieben**. Abschließend **Änderungen speichern** wählen, um Lua-Änderungen und Übersetzungsverknüpfungen mit Backups zu sichern.
+
+**Sicherheit und Grenzen:** API-Schlüssel werden nicht in Projektdateien gespeichert. Es gibt keine automatische Stapelverarbeitung. Zielsprach-Textpools müssen schon existieren. Ein vorhandener Übersetzungslink wird nicht automatisch geändert. Es fand noch kein echter API- oder Windows-GUI-Test statt; der API-Test nutzt ein Mock.
