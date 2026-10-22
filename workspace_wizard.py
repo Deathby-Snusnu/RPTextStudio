@@ -264,14 +264,22 @@ class WorkspaceWizard(QDialog):
         if not self.api.text().strip():
             QMessageBox.warning(self, "API-Schlüssel fehlt", "Bitte OpenAI-Schlüssel eintragen.")
             return
-        self.generate.setEnabled(False)
+        locked_widgets = (
+            self.generate, self.pool, self.line, self.source,
+            *self.translations.values(), *self.approve.values(),
+        )
+        for widget in locked_widgets:
+            widget.setEnabled(False)
         self.message.setText("OpenAI-Anfrage läuft …")
         self.worker = Worker(self.source.toPlainText(), dict(
             api_key=self.api.text(), model=self.model.text(),
             addon=path.parts[-4], race="", character_style=self.style.text()))
         self.worker.translated.connect(self.show_suggestions)
         self.worker.failed.connect(self.show_api_error)
-        self.worker.finished.connect(lambda: self.generate.setEnabled(True))
+        def request_finished():
+            for widget in locked_widgets:
+                widget.setEnabled(True)
+        self.worker.finished.connect(request_finished)
         self.worker.start()
 
     def show_suggestions(self, translations):
