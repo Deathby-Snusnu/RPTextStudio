@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.14
+# RP Text Studio 0.1.15
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
@@ -213,3 +213,16 @@ Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählt
 Über **Hilfe → Workflow-Assistent…** oder **F2** startet ein dreistufiger Assistent. Er bietet **Text bearbeiten**, **Zauber ergänzen**, **KI-Übersetzung** und **Projekt prüfen**. Der Dialog beschreibt Voraussetzungen (geöffnetes Projekt, markierter Textpool, markierte Textzeile und bei KI-Übersetzung `deDE`). Nach **Fertigstellen** wird das entsprechende bestehende Werkzeug geöffnet. Es erfolgen **keine automatischen Schreibvorgänge** und **keine API-Anfragen**, bis du diese Aktionen im jeweiligen Werkzeug ausdrücklich auslöst.
 
 Hinweis: Der Assistent ist bewusst eine geführte Navigation. Ein vollständig transaktionaler Mehrschritt-Assistent und die Rassen-/Klassen-Neuanlage innerhalb desselben Dialogs bleiben Folgeschritte.
+
+## Arbeitsassistent mit Schrittnavigation (0.1.15)
+
+Der neue **große Arbeitsassistent** startet über **Hilfe → Arbeitsassistent…** oder **F2**. Links befinden sich die Schritte **Text auswählen**, **Original bearbeiten**, **Übersetzen**, **Prüfen & speichern**. Rechts bleibt der jeweilige Editor sichtbar; die Eingaben werden zwischen den Schritten als Entwurf erhalten.
+
+1. Projekt laden und vorhandene Änderungen speichern.
+2. Assistent aufrufen, deutschen Textpool und Ausgangszeile auswählen.
+3. Original bearbeiten, bei Bedarf OpenAI-Vorschläge für `enUS` und `frFR` erzeugen und einzeln freigeben.
+4. Prüfbericht lesen und **Prüfen und speichern** bestätigen. Erst dann werden Lua-Dateien und Übersetzungsverknüpfungen über die vorhandene Speicherlogik geschrieben (mit Backups).
+
+Ohne API-Schlüssel können Übersetzungen manuell eingetragen werden. Fehlerhafte `%s`/`%p`/`%%`-Platzhalter oder Emote-Markierungen werden nicht übernommen. Bereits bestehende Links werden nicht ersetzt. Zielsprachpools müssen vorhanden sein. Der frühere einfache Navigationsassistent steht über **Hilfe → Einfacher Assistent…** weiterhin zur Verfügung.
+
+**Noch nicht enthalten:** Vollständig neue Zauber- und Rassenstrukturen innerhalb dieses Dialogs; diese werden bis auf Weiteres über die vorhandenen Manager angelegt. Ein Windows-GUI-Test ist noch erforderlich.
