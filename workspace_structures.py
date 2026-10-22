@@ -14,10 +14,16 @@ FILES = ("Texts.lua", "Racial.lua", "Classes.lua", "RaceClass.lua")
 def plan_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: str):
     if mode not in range(4):
         raise ValueError("Ungültiger Textstruktur-Typ.")
-    ensure_key(spell)
     branches = ((race,) if mode in (1,3) else ()) + ((klass,) if mode in (2,3) else ())
-    for branch in branches:
-        ensure_key(branch)
+    reserved = {
+        "and", "break", "do", "else", "elseif", "end", "false", "for",
+        "function", "if", "in", "local", "nil", "not", "or", "repeat",
+        "return", "then", "true", "until", "while",
+    }
+    for key in (spell, *branches):
+        ensure_key(key)
+        if key in reserved:
+            raise ValueError(f"Reserviertes Lua-Wort: {key}")
     filename = FILES[mode]
     targets = []
     for lang in ("deDE","enUS","frFR"):
