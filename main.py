@@ -10,8 +10,8 @@ from key_deletion import spell_path, delete_from_files, prepare_deletion
 from race_class_manager import load_registry, register, add_lua_profile, discover_targets
 from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings, make_macro
 from ai_translation import inspect_translation
-from workflow_wizard import WorkflowWizard, prerequisites
 try:
+    from workflow_wizard import WorkflowWizard, prerequisites
     from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QAction, QKeySequence
