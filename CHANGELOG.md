@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.14] – Geführter Workflow-Assistent
+
+- Optionaler Wizard unter Hilfe → Workflow-Assistent (F2).
+- Vier geführte Einstiege: Text bearbeiten, Zauber ergänzen, KI-Übersetzung, Projektprüfung.
+- Kontextprüfung auf geöffnetes Projekt, gewählten Textpool und deDE-Ausgangszeile.
+- Keine automatischen Schreibvorgänge oder API-Aufrufe; vorhandene Werkzeuge bleiben zuständig.
+- Dokumentation und Tests der Voraussetzungen ergänzt.
+
+
+
 ## [0.1.13] – Klassische Desktopnavigation
 
 - Menüleiste Datei / Bearbeiten / Projekt / Übersetzungen / Ansicht / Hilfe.
