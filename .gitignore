@@ -3,4 +3,6 @@ __pycache__/
 *.pyo
 *.pyd
 *.py[cod]
-
+.venv/
+build/
+dist/

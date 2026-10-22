@@ -9,12 +9,22 @@ Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, Hexe
 
 ## Installation (Windows)
 
+**Ohne Python auf dem Zielrechner:** Mit `build_exe.bat` lässt sich auf einem
+Windows-Rechner mit Python eine einzelne `dist\RPTextStudio.exe` erstellen.
+Sie enthält Python, Qt und das Handbuch und kann ohne die Python-Ordnerstruktur
+weitergegeben werden. Die bearbeiteten AddOn-Dateien bleiben separat und
+werden über **Projektordner öffnen** geladen.
+Build-Anleitung, Schreibrechte und Hinweise zur Weitergabe:
+[Windows-EXE bauen](HANDBUCH.md#windows-exe-bauen).
+`Start.bat` bevorzugt eine vorhandene `RPTextStudio.exe` im Editor-Ordner,
+danach `dist\RPTextStudio.exe`; nur ohne EXE gilt die folgende Python-Einrichtung.
+
 **Voraussetzungen:** Windows, Python und die Laufzeitabhängigkeit
 `PySide6>=6.8,<7` aus [requirements.txt](requirements.txt). Der bisher
 dokumentierte Python-Bereich ist 3.11–3.13; eine vollständig ausgeführte
 Testmatrix für diese Versionen ist nicht nachgewiesen.
 
-**Automatischer Start:** [Start.bat](Start.bat) doppelklicken. Das Skript
+**Automatischer Python-Start (ohne vorhandene EXE):** [Start.bat](Start.bat) doppelklicken. Das Skript
 erstellt bei Bedarf `.venv`, aktiviert sie, ruft bei jedem Start pip mit
 `requirements.txt` auf und startet `main.py`. [start_windows.bat](start_windows.bat)
 ist ein Alias. Python muss über `py` oder `python` erreichbar sein.
@@ -68,7 +78,7 @@ Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in dies
 - Nur wörtliche Stringlisten in `*/locales/{deDE,enUS,frFR}/*.lua` werden bearbeitet. `Expansion.lua`, Core/Config/TOC sowie dynamische Lua-Ausdrücke bleiben ausgenommen.
 - Bei Änderungen einer Stringliste gehen Kommentare **innerhalb** der Liste möglicherweise verloren. Nicht bearbeitete Listen und übrige Dateibereiche werden beibehalten.
 - **Alles prüfen** ersetzt keinen vollständigen Lua-Syntaxtest und keinen Spieltest.
-- Kein fertiges Windows-EXE und keine automatische Übersetzung.
+- Windows-EXE über `build_exe.bat` selbst erstellbar; keine automatische Übersetzung.
 
 Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen in [HANDBUCH.md](HANDBUCH.md).
 

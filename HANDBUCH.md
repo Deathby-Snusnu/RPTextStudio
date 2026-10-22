@@ -5,12 +5,60 @@
 
 ## Schnellstart
 
-1. Python installieren; bisher dokumentiert sind 3.11–3.13, ohne nachgewiesene vollständige Testmatrix. **`Start.bat`** erstellt bei Bedarf `.venv`, aktiviert sie, prüft/installiert bei jedem Start `requirements.txt` und öffnet den Editor.
+1. **Ohne Python:** Die erstellte `RPTextStudio.exe` doppelklicken. Sie enthält Python, Qt und dieses Handbuch. Nur die EXE wird zum Starten benötigt, keine Python-Quellordner. Zum Erstellen siehe [Windows-EXE bauen](#windows-exe-bauen).
 2. Alternativ nach der [manuellen Einrichtung](README.md#installation-windows) im Editor-Ordner mit `.\.venv\Scripts\python.exe main.py` starten. Das vermeidet den pip-Aufruf des Starters und ist bei bereits installierten Abhängigkeiten auch für Offline-Arbeit geeignet.
 3. **Projektordner öffnen** oder **ZIP als Projekt entpacken** auswählen. Für ZIP-Import einen leeren Arbeitsordner wählen.
 4. Oben AddOn und Navigationssprache wählen, links einen Textpool anklicken.
 5. In der mittleren Textliste eine Zeile wählen und rechts oder im Sprachvergleich bearbeiten.
 6. **Alles prüfen** ausführen und anschließend **Änderungen speichern** drücken.
+
+## Windows-EXE bauen
+
+Nur auf dem **Build-Rechner** wird Python benötigt; bisher dokumentiert sind
+Python 3.11–3.13, ohne vollständige Testmatrix. Im vollständigen Quellordner
+`build_exe.bat` doppelklicken oder in PowerShell ausführen:
+
+```powershell
+.\build_exe.bat
+```
+
+Das Skript erstellt bei Bedarf `.venv` und installiert die Laufzeit- und
+Build-Abhängigkeiten aus `requirements-build.txt` ausschließlich dort.
+Zum Herunterladen der Pakete wird Internet benötigt. PyInstaller erstellt
+anschließend `dist\RPTextStudio.exe` als einzelne Windows-GUI-Datei ohne
+Konsolenfenster. `build` enthält nur Build-Zwischendateien.
+Ein erneuter Build ersetzt die bisherige Ausgabe; eine laufende EXE vorher schließen.
+
+Die EXE kann allein in einen anderen Ordner oder auf einen anderen kompatiblen
+Windows-Rechner kopiert werden. Der Zielrechner benötigt weder Python noch
+pip, `.venv`, PySide6 oder die Python-Quelldateien. Für Veröffentlichungen
+die geltenden Lizenzhinweise für das Programm und seine Abhängigkeiten
+zusätzlich beachten. Ein Build übernimmt die Architektur des verwendeten
+Python-Interpreters; er ist kein plattformübergreifendes Installationspaket.
+
+**Projektdateien bleiben extern:** Über **Projektordner öffnen** den Ordner
+auswählen, der die AddOn-Unterordner enthält. Lua-Dateien, JSON-Register und
+Backups werden wie bisher im gewählten Projekt gespeichert, nicht in der
+EXE oder ihrem temporären Entpackordner. Dort sind Schreibrechte erforderlich.
+Bei geschützten Installationsordnern besser mit einer beschreibbaren
+Arbeitskopie arbeiten und die fertigen AddOns anschließend zurückkopieren.
+Der Projektordner kann auch als Argument übergeben werden:
+
+```powershell
+.\dist\RPTextStudio.exe "D:\RP-Projekte\Meine AddOns"
+```
+
+`Start.bat` und sein Alias `start_windows.bat` bevorzugen eine
+`RPTextStudio.exe` direkt im Editor-Ordner, danach `dist\RPTextStudio.exe`.
+Nur ohne vorhandene EXE wird wie bisher Python verwendet und bei Bedarf
+`.venv` eingerichtet. Für die Arbeit am Python-Quellcode nach einem Build
+`.\.venv\Scripts\python.exe main.py` direkt ausführen.
+
+Die Onefile-EXE entpackt ihre Laufzeit beim Start vorübergehend in den
+Windows-Tempordner; der erste Start kann deshalb etwas dauern.
+Die normale Textbearbeitung funktioniert offline. Die optionale
+KI-Übersetzung benötigt weiterhin Internet und einen eigenen API-Schlüssel;
+Schlüssel und Projektdateien werden nicht in den Build eingebettet.
 
 ## Oberfläche
 
@@ -67,7 +115,7 @@ Die RP-Texte in den Sprachen sind alternative Zufallsvarianten, **keine garantie
 - Keine Bearbeitung ausführbarer Lua-Logik oder dynamischer Texttabellen. Neue Schlüssel sind über den gesonderten Dialog in unterstützten bestehenden Tabellen möglich; neue Sprachdateien und TOC-Einträge werden nicht erstellt.
 - Beim Ändern einer Liste können Kommentare **innerhalb der Liste** verloren gehen. Code und Kommentare außerhalb der bearbeiteten Liste bleiben erhalten.
 - Keine Garantie, dass Textvarianten verschiedener Sprachen dieselbe Reihenfolge oder Anzahl besitzen. Deshalb gibt es explizite Zuordnungen. Die Anwendung übersetzt Texte nicht automatisch.
-- Kein `.exe`, keine Live-Verbindung zu WoW, keine automatische Übersetzung.
+- Keine Live-Verbindung zu WoW, keine automatische Übersetzung.
 - Pytest-Tests ersetzen keinen GUI-Test auf Windows und keinen Ingame-Test.
 - **Alles prüfen** kontrolliert nicht vollständig die Chatgrenze von 255 Bytes nach Ersetzung, die Kanalverfügbarkeit oder die Erkennung neuer Schlüssel im AddOn.
 

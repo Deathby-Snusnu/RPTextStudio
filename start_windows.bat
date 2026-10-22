@@ -1,3 +1,3 @@
 @echo off
-call "%~dp0Start.bat"
+call "%~dp0Start.bat" %*
 exit /b %errorlevel%

@@ -2,6 +2,11 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
+set "STUDIO_EXE="
+if exist "%~dp0dist\RPTextStudio.exe" set "STUDIO_EXE=%~dp0dist\RPTextStudio.exe"
+if exist "%~dp0RPTextStudio.exe" set "STUDIO_EXE=%~dp0RPTextStudio.exe"
+if defined STUDIO_EXE goto :start_exe
+
 echo =============================================
 echo   RP Text Studio 0.1.9 - Start
  echo =============================================
@@ -56,7 +61,17 @@ if errorlevel 1 (
 )
 
 echo [3/3] RP Text Studio starten ...
-"%VENV_PYTHON%" "main.py"
+"%VENV_PYTHON%" "main.py" %*
+if errorlevel 1 (
+    echo FEHLER: RP Text Studio wurde mit einem Fehler beendet.
+    goto :failed
+)
+endlocal
+exit /b 0
+
+:start_exe
+echo RP Text Studio als EXE starten ...
+"%STUDIO_EXE%" %*
 if errorlevel 1 (
     echo FEHLER: RP Text Studio wurde mit einem Fehler beendet.
     goto :failed

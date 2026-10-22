@@ -33,6 +33,12 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## [Unreleased]
 
+### Windows-Paket
+
+- `build_exe.bat` erstellt mit PyInstaller eine einzelne Windows-EXE samt Python, Qt und eingebettetem Handbuch.
+- Build-Abhängigkeiten separat in `requirements-build.txt`; Projektdateien und Backups bleiben extern bearbeitbar.
+- Windows-Starter bevorzugen eine vorhandene EXE und benötigen dann keine Python-Installation.
+
 ### Dokumentation
 
 - README und Handbuch auf den Anwendungsstand 0.1.10 abgestimmt.
