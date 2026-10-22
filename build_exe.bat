@@ -44,6 +44,10 @@ if not exist "%~dp0assets\rp_text_studio_icon.svg" (
     echo FEHLER: Das App-Icon wurde nicht gefunden.
     goto :failed
 )
+if not exist "%~dp0assets\rp_text_studio.svg" (
+    echo FEHLER: Das App-Logo wurde nicht gefunden.
+    goto :failed
+)
 
 echo [2/4] Laufzeit- und Build-Abhaengigkeiten installieren ...
 "%VENV_PYTHON%" -m pip install -r "%~dp0requirements-build.txt"
@@ -68,6 +72,7 @@ echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
     --specpath "%~dp0build" ^
     --add-data "%~dp0HANDBUCH.md;." ^
     --add-data "%~dp0assets\rp_text_studio_icon.svg;assets" ^
+    --add-data "%~dp0assets\rp_text_studio.svg;assets" ^
     "%~dp0main.py"
 if errorlevel 1 (
     echo FEHLER: Die EXE konnte nicht erstellt werden.
