@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.15 – Bedienungsanleitung
+# RP Text Studio 0.1.16 – Bedienungsanleitung
 
 [Editor-Übersicht und Installation](README.md) · [Changelog](CHANGELOG.md) ·
 [Sammlungsübersicht](../README.md)
@@ -273,3 +273,11 @@ Im Menü **Hilfe → Arbeitsassistent…** öffnet sich ein breiter Dialog mit S
 In Schritt 1 Textpool und Zeile wählen; in Schritt 2 das deutsche Original bearbeiten; in Schritt 3 die Übersetzungen ergänzen oder über OpenAI vorschlagen lassen und jede gewünschte Zielsprache per Checkbox freigeben; in Schritt 4 ausdrücklich **Prüfen und speichern** betätigen. Vorher werden keine Dateien geschrieben. Bei Platzhalterfehlern oder konfliktierenden Verknüpfungen bleibt der Dialog offen. Für einheitliche Sicherung werden die bestehenden Speicherroutinen mit Backup verwendet.
 
 Bereits offene ungespeicherte Änderungen müssen **vor** dem Start des Assistenten gesichert werden. Die bisherigen Manager für neue Zauber und Rassen bleiben erreichbar; neue Schlüssel kann diese erste integrierte Ansicht noch nicht selbst erzeugen. **Hilfe → Einfacher Assistent…** öffnet weiterhin den bisherigen Navigations-Wizard.
+
+## Neue Zauber, Rassen und Klassen im Arbeitsassistenten
+
+Öffne das Projekt, speichere offene Änderungen und starte **F2 → Strukturen anlegen**. Wähle zwischen **Zauberschlüssel**, **Rassenprofil** oder **Klassenprofil**. Für Zauberschlüssel bestimmst du AddOn, Speicherstruktur (Allgemein, Rasse, Klasse oder Rasse+Klasse), gegebenenfalls die zugehörigen IDs und den neuen Schlüssel. Für Profile gibst du ID, Anzeigename und Sprachstil ein; der optionale Haken erstellt auch einen ersten `RP_GREETING`-Zweig in vorhandenen Sprachdateien.
+
+Die Vorschau zeigt alle geplanten Dateien und Fehler. Mit **Struktur prüfen und anlegen** folgt nochmals eine Bestätigung, erst dann werden bestehende Funktionen mit Backup verwendet. Anschließend lädt der Editor die veränderten Dateien neu. Die eigentlichen RP-Sprüche kannst du nun in den neuen Pools ergänzen. Die Funktion erzeugt **keine** neuen spielbaren WoW-Rassen oder Zauberhandler; die Client-IDs müssen zur tatsächlichen Spielumgebung passen.
+
+Die Sprachzuordnung bleibt über `.rptextstudio-translations.json` und die bestehenden manuellen/ KI-Übersetzungsschritte möglich. Ein Abbruch vor der abschließenden Bestätigung verändert keine Projektdatei.

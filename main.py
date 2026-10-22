@@ -29,7 +29,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.15')
+        self.setWindowTitle('RP Text Studio 0.1.16')
         logo_path = Path(__file__).resolve().parent / 'assets' / 'rp_text_studio.svg'
         logo_renderer = QSvgRenderer(str(logo_path))
         if not logo_renderer.isValid():

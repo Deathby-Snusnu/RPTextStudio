@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.15
+# RP Text Studio 0.1.16
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
@@ -237,3 +237,11 @@ Der neue **große Arbeitsassistent** startet über **Hilfe → Arbeitsassistent�
 Ohne API-Schlüssel können Übersetzungen manuell eingetragen werden. Fehlerhafte `%s`/`%p`/`%%`-Platzhalter oder Emote-Markierungen werden nicht übernommen. Bereits bestehende Links werden nicht ersetzt. Zielsprachpools müssen vorhanden sein. Der frühere einfache Navigationsassistent steht über **Hilfe → Einfacher Assistent…** weiterhin zur Verfügung.
 
 **Noch nicht enthalten:** Vollständig neue Zauber- und Rassenstrukturen innerhalb dieses Dialogs; diese werden bis auf Weiteres über die vorhandenen Manager angelegt. Ein Windows-GUI-Test ist noch erforderlich.
+
+## Arbeitsassistent: neue Strukturen anlegen (0.1.16)
+
+Der mit **F2** erreichbare große Arbeitsassistent enthält zusätzlich **Strukturen anlegen**. Hier lassen sich neue **allgemeine, rassen- und klassenbezogene Zauberschlüssel** oder **Rassen-/Klassenprofile** vorbereiten. Ein Profil kann wahlweise nur das Projektregister erweitern oder zusätzlich vorhandene unterstützte `Racial.lua`-/`Classes.lua`-Sprachdateien ergänzen.
+
+Die Vorschau prüft Kennungen, vorhandene Dateien, eindeutige Lua-Root-Strukturen und doppelte Einträge auf temporären Kopien. Erst **Struktur prüfen und anlegen** plus eine weitere Bestätigung verändern Dateien; Lua-Dateien erhalten Backups. Danach wird das Projekt neu geladen, damit neue Schlüssel im Texteditor sichtbar sind.
+
+**Grenzen:** Neue Schlüssel sind reine RP-Textdaten. Die Zauber- oder Rassenerkennung im laufenden WoW-AddOn wird dadurch nicht automatisch erweitert. Für vorhandene Texte und Übersetzungen gelten weiterhin die getrennten Schritte **Text auswählen → Bearbeiten → Übersetzen → Prüfen & speichern**.
