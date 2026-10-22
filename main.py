@@ -13,11 +13,11 @@ from ai_translation import inspect_translation
 try:
     from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
-    from PySide6.QtGui import QAction
+    from PySide6.QtGui import QAction, QKeySequence
     from PySide6.QtWidgets import (QApplication,QMainWindow,QWidget,QVBoxLayout,QHBoxLayout,
         QTreeWidget,QTreeWidgetItem,QListWidget,QListWidgetItem,QPlainTextEdit,QPushButton,
         QFileDialog,QMessageBox,QLabel,QLineEdit,QSplitter,QComboBox,QGroupBox,
-        QFormLayout,QStatusBar,QDialog,QDialogButtonBox,QCheckBox,QTextBrowser,QSpinBox)
+        QFormLayout,QStatusBar,QDialog,QDialogButtonBox,QCheckBox,QTextBrowser,QSpinBox, QToolBar)
 except ImportError as exc:
     print('PySide6 is required. Install with: pip install -r requirements.txt')
     raise SystemExit(1) from exc
@@ -26,7 +26,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.12')
+        self.setWindowTitle('RP Text Studio 0.1.13')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -47,12 +47,7 @@ class Studio(QMainWindow):
     def setup(self):
         center=QWidget();self.setCentralWidget(center)
         main=QVBoxLayout(center)
-        bar=QHBoxLayout()
-        for label,cb in [('Projektordner öffnen',self.open_folder),('ZIP als Projekt entpacken',self.open_zip),('Änderungen speichern',self.save_all),('Alles prüfen',self.validate_all),('Neuen Schlüssel anlegen',self.create_key),('Schlüssel löschen',self.delete_key),('Zauber-Manager',self.open_spell_manager),('Rassen-/Klassen-Manager',self.open_race_class_manager)]:
-            b=QPushButton(label);b.clicked.connect(cb);bar.addWidget(b)
-            b.setToolTip({"Projektordner öffnen":"Vorhandenen entpackten AddOn-Projektordner laden.","ZIP als Projekt entpacken":"AddOn-ZIP in ein leeres Arbeitsverzeichnis entpacken und dort bearbeiten.","Änderungen speichern":"Geänderte Textpools speichern. Vorher wird je Datei ein Backup angelegt.","Alles prüfen":"Alle Texte einschließlich ungespeicherter Änderungen auf häufige Probleme kontrollieren.","Neuen Schlüssel anlegen":"Neuen Rassen-, Klassen-, Rasse-Klasse- oder allgemeinen Zauberschlüssel in den vorhandenen Locale-Dateien anlegen.","Schlüssel löschen":"Entfernt den gewählten Text-/Zauberschlüssel nach Vorschau und Bestätigung in den entsprechenden Sprachdateien. Erstellt Backups.","Zauber-Manager":"Ordnet WoW-Zaubern RP-Textschlüssel zu und erzeugt passende manuelle Makros.","Rassen-/Klassen-Manager":"Verwaltet Rassen und Klassen samt RP-Stilprofil und legt auf Wunsch Textzweige in vorhandenen Lua-Dateien an."}[label])
-        bar.addStretch()
-        main.addLayout(bar)
+        self.setup_menus_and_toolbar()
         filters=QHBoxLayout()
         self.addonfilter=QComboBox();self.addonfilter.addItem('Alle AddOns');self.addonfilter.setToolTip('Nur Textpools dieses AddOns anzeigen.')
         self.addonfilter.currentIndexChanged.connect(self.rebuild_tree)
@@ -122,17 +117,90 @@ class Studio(QMainWindow):
         self.link_state.setToolTip('Übersetzungsgruppen werden in einer eigenen JSON-Datei im Projektordner gespeichert.')
         assoc.addWidget(self.link_state,1)
         main.addLayout(assoc)
-        ai_button=QPushButton("KI-Übersetzung …")
-        ai_button.setToolTip("Deutschen Text mit OpenAI nach enUS und frFR übersetzen; Vorschläge vor dem Übernehmen prüfen.")
-        ai_button.clicked.connect(self.open_ai_translation)
-        main.addWidget(ai_button)
-        help_menu=self.menuBar().addMenu('Hilfe')
-        help_action=QAction('Bedienungsanleitung',self);help_action.setShortcut('F1');help_action.triggered.connect(self.show_help)
-        help_menu.addAction(help_action)
-        about_action=QAction('Über RP Text Studio',self);about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
         self.info=QLabel('Bitte Projektordner oder ZIP öffnen.');main.addWidget(self.info)
-        self.setStatusBar(QStatusBar())
+        status=QStatusBar(self)
+        self.setStatusBar(status)
+        self.project_status=QLabel('Kein Projekt')
+        self.language_status=QLabel('deDE')
+        self.selection_status=QLabel('Kein Text')
+        self.dirty_status=QLabel('Gespeichert')
+        for widget in (self.project_status,self.language_status,self.selection_status,self.dirty_status):
+            status.addPermanentWidget(widget)
+        self.language.currentTextChanged.connect(lambda _value:self.update_status())
+        self.list.currentRowChanged.connect(lambda _row:self.update_status())
+        self.update_status()
+
+    def setup_menus_and_toolbar(self):
+        """Conservative desktop navigation; existing handlers remain authoritative."""
+        actions={}
+        def add(menu, label, handler, shortcut=None, tooltip=None):
+            action=QAction(label,self)
+            if shortcut: action.setShortcut(QKeySequence(shortcut))
+            action.setStatusTip(tooltip or label)
+            action.triggered.connect(handler)
+            menu.addAction(action)
+            actions[label]=action
+            return action
+
+        file_menu=self.menuBar().addMenu('Datei')
+        add(file_menu,'Projekt öffnen…',self.open_folder,'Ctrl+O')
+        add(file_menu,'AddOn-ZIP importieren…',self.open_zip)
+        file_menu.addSeparator()
+        add(file_menu,'Änderungen speichern',self.save_all,'Ctrl+S')
+        file_menu.addSeparator()
+        add(file_menu,'Beenden',self.close,'Alt+F4')
+
+        edit_menu=self.menuBar().addMenu('Bearbeiten')
+        add(edit_menu,'Text hinzufügen',self.add_entry,'Ctrl+N')
+        add(edit_menu,'Text duplizieren',self.duplicate,'Ctrl+D')
+        add(edit_menu,'Text entfernen',self.remove_entry)
+        edit_menu.addSeparator()
+        add(edit_menu,'Suchen',self.search.setFocus,'Ctrl+F')
+
+        project_menu=self.menuBar().addMenu('Projekt')
+        add(project_menu,'Neuen Schlüssel anlegen…',self.create_key)
+        add(project_menu,'Schlüssel löschen…',self.delete_key)
+        project_menu.addSeparator()
+        add(project_menu,'Zauber-Manager…',self.open_spell_manager)
+        add(project_menu,'Rassen-/Klassen-Manager…',self.open_race_class_manager)
+        add(project_menu,'Projekt prüfen',self.validate_all,'F7')
+
+        translations=self.menuBar().addMenu('Übersetzungen')
+        add(translations,'Texte verknüpfen',self.link_selected)
+        add(translations,'Zuordnung lösen',self.unlink_selected)
+        translations.addSeparator()
+        add(translations,'Mit OpenAI übersetzen…',self.open_ai_translation)
+
+        view=self.menuBar().addMenu('Ansicht')
+        add(view,'Suche fokussieren',self.search.setFocus)
+        add(view,'Statusleiste ein-/ausblenden',lambda:self.statusBar().setVisible(not self.statusBar().isVisible()))
+
+        help_menu=self.menuBar().addMenu('Hilfe')
+        add(help_menu,'Bedienungsanleitung',self.show_help,'F1')
+        add(help_menu,'Über RP Text Studio',self.show_about)
+
+        toolbar=QToolBar('Standard',self)
+        toolbar.setObjectName('standardToolbar')
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
+        for label in ('Projekt öffnen…','Änderungen speichern','Text hinzufügen','Projekt prüfen','Mit OpenAI übersetzen…'):
+            toolbar.addAction(actions[label])
+
+    def update_status(self):
+        """Persistent state indicators, independent of transient status messages."""
+        if not hasattr(self,'project_status'):
+            return
+        self.project_status.setText(self.root.name if self.root else 'Kein Projekt')
+        self.language_status.setText(self.language.currentText())
+        self.selection_status.setText(
+            f'{len(self.active_entries)} Texte · {self.current_row+1 if self.current_row>=0 else 0} gewählt'
+            if self.current else 'Kein Text')
+        pending=sum(len(updates) for updates in self.changes.values())
+        self.dirty_status.setText(
+            f'{pending} Pool(s) geändert' + (' · Links' if self.links_dirty else '')
+            if pending or self.links_dirty else 'Gespeichert')
+        self.setWindowModified(bool(pending or self.links_dirty))
+        self.setWindowTitle('RP Text Studio 0.1.13' + (' *' if pending or self.links_dirty else ''))
 
     def open_folder(self):
         folder=QFileDialog.getExistingDirectory(self,'AddOns-Hauptordner auswählen')
@@ -186,6 +254,7 @@ class Studio(QMainWindow):
         races=sorted({key[3] for pools in files.values() for key in pools if len(key)>3 and key[2]=='racial'})
         self.racefilter.addItems(races);self.racefilter.blockSignals(False)
         self.rebuild_tree()
+        self.update_status()
         self.statusBar().showMessage(f'{len(files)} Textdateien geladen. {len(errors)} Fehler.',10000)
         if errors:QMessageBox.warning(self,'Lesefehler','\n'.join(errors[:12]))
 
@@ -242,6 +311,7 @@ class Studio(QMainWindow):
         self.active_entries=list(self.get_entries(p,key));self.list_refresh(0)
         self.info.setText(str(p.relative_to(self.root))+'  ·  '+' / '.join(key))
         self.refresh_compare()
+        self.update_status()
 
     def list_refresh(self,index=0):
         self.loading=True;self.list.clear()
@@ -257,7 +327,7 @@ class Studio(QMainWindow):
         if self.loading:return
         self.current_row=row;self.editor.blockSignals(True)
         self.editor.setPlainText(self.active_entries[row] if 0<=row<len(self.active_entries) else '')
-        self.editor.blockSignals(False);self.preview_update();self.refresh_compare()
+        self.editor.blockSignals(False);self.preview_update();self.refresh_compare();self.update_status()
 
     def edit_entry(self):
         if self.loading or self.current is None or not (0<=self.current_row<len(self.active_entries)):return
@@ -284,6 +354,7 @@ class Studio(QMainWindow):
                 # Ambiguous/destroyed linkage must not attach to a wrong text.
                 group.pop(lang,None)
             self.links_dirty=True
+        self.update_status()
         self.links[pk]=[group for group in self.links.get(pk,[]) if group]
 
     def mark_dirty(self):
@@ -291,6 +362,7 @@ class Studio(QMainWindow):
         p,key=self.current
         self.changes.setdefault(p,{})[key]=list(self.active_entries)
         self.statusBar().showMessage(f'{sum(len(x) for x in self.changes.values())} geänderte Textpools, noch nicht gespeichert')
+        self.update_status()
 
     def preview_update(self):
         s=self.editor.toPlainText();s=s.replace('%s','Grunzbert').replace('%p','Wichtelchen').replace('%%','%')
@@ -517,6 +589,7 @@ class Studio(QMainWindow):
                 group[lang] = reference(entries, row)
             self.links.setdefault(pk, []).append(group)
             self.links_dirty = True
+            self.update_status()
             self.link_switch.setChecked(True)
             self.refresh_compare()
             self.statusBar().showMessage(
@@ -911,6 +984,7 @@ class Studio(QMainWindow):
         self.rebuild_tree()
         self.refresh_compare()
         self.statusBar().showMessage('Gespeichert und erneut eingelesen.',10000)
+        self.update_status()
 
     def validate_all(self):
         if not self.files:return
