@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.13
+# RP Text Studio 0.1.14
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
@@ -207,3 +207,9 @@ Die Vorschläge für `enUS` und `frFR` werden zunächst nur angezeigt. Sie könn
 Die Anwendung nutzt jetzt die Menüleiste **Datei, Bearbeiten, Projekt, Übersetzungen, Ansicht, Hilfe** und eine kompakte Standardsymbolleiste. Die wichtigsten Kürzel: **Strg+O** Projekt öffnen, **Strg+S** speichern, **Strg+N** Text hinzufügen, **Strg+D** duplizieren, **Strg+F** Suche fokussieren, **F7** Projekt prüfen, **F1** Handbuch.
 
 Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählte Textzeile und ungespeicherte Textpool-/Verknüpfungsänderungen. Die bisherigen Texteditoren, Sprachvergleiche und Prüfungen bleiben erhalten. Der optionale Workflow-Assistent und eine projektweite Rückgängig-Funktion sind **nicht** Bestandteil dieser Version; sie sind für Folgeversionen vorgesehen.
+
+## Geführter Workflow-Assistent (0.1.14)
+
+Über **Hilfe → Workflow-Assistent…** oder **F2** startet ein dreistufiger Assistent. Er bietet **Text bearbeiten**, **Zauber ergänzen**, **KI-Übersetzung** und **Projekt prüfen**. Der Dialog beschreibt Voraussetzungen (geöffnetes Projekt, markierter Textpool, markierte Textzeile und bei KI-Übersetzung `deDE`). Nach **Fertigstellen** wird das entsprechende bestehende Werkzeug geöffnet. Es erfolgen **keine automatischen Schreibvorgänge** und **keine API-Anfragen**, bis du diese Aktionen im jeweiligen Werkzeug ausdrücklich auslöst.
+
+Hinweis: Der Assistent ist bewusst eine geführte Navigation. Ein vollständig transaktionaler Mehrschritt-Assistent und die Rassen-/Klassen-Neuanlage innerhalb desselben Dialogs bleiben Folgeschritte.
