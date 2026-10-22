@@ -43,6 +43,10 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## [Unreleased]
 
+### Gestaltung
+
+- Eigenständiges RP-Text-Studio-Emblem in der Programmoberfläche und als Windows-EXE-Icon.
+
 ### Windows-Paket
 
 - `build_exe.bat` erstellt mit PyInstaller eine einzelne Windows-EXE samt Python, Qt und eingebettetem Handbuch.

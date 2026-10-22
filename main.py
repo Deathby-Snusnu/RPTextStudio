@@ -15,7 +15,8 @@ try:
     from workspace_wizard import WorkspaceWizard
     from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
-    from PySide6.QtGui import QAction, QKeySequence
+    from PySide6.QtGui import QAction, QIcon, QKeySequence, QPainter, QPixmap
+    from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (QApplication,QMainWindow,QWidget,QVBoxLayout,QHBoxLayout,
         QTreeWidget,QTreeWidgetItem,QListWidget,QListWidgetItem,QPlainTextEdit,QPushButton,
         QFileDialog,QMessageBox,QLabel,QLineEdit,QSplitter,QComboBox,QGroupBox,
@@ -29,6 +30,16 @@ class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('RP Text Studio 0.1.15')
+        logo_path = Path(__file__).resolve().parent / 'assets' / 'rp_text_studio.svg'
+        logo_renderer = QSvgRenderer(str(logo_path))
+        if not logo_renderer.isValid():
+            raise RuntimeError(f'Logo konnte nicht geladen werden: {logo_path}')
+        logo_pixmap = QPixmap(128, 128)
+        logo_pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(logo_pixmap)
+        logo_renderer.render(painter)
+        painter.end()
+        self.setWindowIcon(QIcon(logo_pixmap))
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -49,6 +60,23 @@ class Studio(QMainWindow):
     def setup(self):
         center=QWidget();self.setCentralWidget(center)
         main=QVBoxLayout(center)
+        brand_widget=QWidget()
+        brand_widget.setStyleSheet('background-color: #f5f0df; border: 1px solid #d8b56d; border-radius: 8px;')
+        branding=QHBoxLayout(brand_widget)
+        branding.setContentsMargins(8,6,8,6)
+        logo=QLabel()
+        logo.setPixmap(self.windowIcon().pixmap(52,52))
+        branding.addWidget(logo)
+        brand_text=QVBoxLayout()
+        brand_title=QLabel('RP TEXT STUDIO')
+        brand_title.setStyleSheet('font-size: 18px; font-weight: 700; color: #17253f; letter-spacing: 1px;')
+        brand_subtitle=QLabel('Lua-Textpools gestalten und übersetzen')
+        brand_subtitle.setStyleSheet('color: #8a6a35;')
+        brand_text.addWidget(brand_title)
+        brand_text.addWidget(brand_subtitle)
+        branding.addLayout(brand_text)
+        branding.addStretch(1)
+        main.addWidget(brand_widget)
         filters=QHBoxLayout()
         self.addonfilter=QComboBox();self.addonfilter.addItem('Alle AddOns');self.addonfilter.setToolTip('Nur Textpools dieses AddOns anzeigen.')
         self.addonfilter.currentIndexChanged.connect(self.rebuild_tree)
