@@ -47,7 +47,6 @@ class Studio(QMainWindow):
     def setup(self):
         center=QWidget();self.setCentralWidget(center)
         main=QVBoxLayout(center)
-        self.setup_menus_and_toolbar()
         filters=QHBoxLayout()
         self.addonfilter=QComboBox();self.addonfilter.addItem('Alle AddOns');self.addonfilter.setToolTip('Nur Textpools dieses AddOns anzeigen.')
         self.addonfilter.currentIndexChanged.connect(self.rebuild_tree)
@@ -61,6 +60,7 @@ class Studio(QMainWindow):
         filters.addWidget(QLabel('Rasse:'));filters.addWidget(self.racefilter)
         filters.addWidget(self.search,1)
         main.addLayout(filters)
+        self.setup_menus_and_toolbar()
         splitter=QSplitter(Qt.Horizontal)
         self.tree=QTreeWidget();self.tree.setToolTip('Textpool auswählen: AddOn → Datei → Fähigkeit/Kategorie.');self.tree.setHeaderLabels(['Textpool','Anzahl']);self.tree.setAlternatingRowColors(True)
         self.tree.itemSelectionChanged.connect(self.change_pool)
@@ -433,6 +433,7 @@ class Studio(QMainWindow):
         else:
             existing.update(selected)
         self.links_dirty=True
+        self.update_status()
         self.link_switch.setChecked(True)
         self.refresh_compare()
         self.statusBar().showMessage('Übersetzungen verknüpft. Mit „Änderungen speichern“ dauerhaft sichern.')
@@ -444,6 +445,7 @@ class Studio(QMainWindow):
         self.links[pk].remove(group)
         if not self.links[pk]:del self.links[pk]
         self.links_dirty=True
+        self.update_status()
         self.refresh_compare()
 
     def comparison_row(self,lang):
