@@ -18,6 +18,7 @@ from ai_translation import inspect_translation
 from ai_translation_dialog import Worker
 from translation_links import LANGS, pool_id, reference, resolve
 from workspace_structures import plan_spell, create_spell, plan_profile, create_profile
+from lua_text import ParseError
 
 STEPS = ("Text auswählen", "Original bearbeiten", "Übersetzen", "Prüfen & speichern", "Strukturen anlegen")
 
@@ -250,7 +251,7 @@ class WorkspaceWizard(QDialog):
         if not hasattr(self,"structure_preview"): return
         try:
             self.structure_preview.setPlainText(self.plan_structure())
-        except (OSError,ValueError) as error:
+        except (OSError,ValueError,ParseError) as error:
             self.structure_preview.setPlainText(f"Vorabprüfung: {error}")
 
     def create_structure(self):
@@ -261,7 +262,7 @@ class WorkspaceWizard(QDialog):
             preview=self.plan_structure()
             if self.studio.changes or self.studio.links_dirty:
                 raise ValueError("Bitte zuerst offene Editor-Änderungen speichern.")
-        except (OSError,ValueError) as error:
+        except (OSError,ValueError,ParseError) as error:
             QMessageBox.warning(self,"Vorabprüfung fehlgeschlagen",str(error))
             return
         response=QMessageBox.question(self,"Struktur wirklich anlegen?",
@@ -283,7 +284,7 @@ class WorkspaceWizard(QDialog):
                 f"Struktur angelegt. {created} Lua-Sprachdatei(en) bearbeitet.\n"
                 "Bitte die neuen RP-Texte im Editor ergänzen.")
             self.accept()
-        except (OSError,ValueError) as error:
+        except (OSError,ValueError,ParseError) as error:
             QMessageBox.critical(self,"Anlegen fehlgeschlagen",str(error))
 
     def populate_pools(self):
