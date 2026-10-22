@@ -89,6 +89,9 @@ class TranslationDialog(QDialog):
         QMessageBox.warning(self,"OpenAI-Fehler",message)
 
     def apply(self):
+        if self.worker and self.worker.isRunning():
+            QMessageBox.information(self,"Anfrage läuft","Der laufende API-Aufruf muss zunächst enden.")
+            return
         selected={lang:edit.toPlainText() for lang,edit in self.texts.items()
                   if self.approvals[lang].isChecked()}
         if not selected:
