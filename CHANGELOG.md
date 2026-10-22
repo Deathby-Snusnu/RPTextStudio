@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.16] – Strukturen im Arbeitsassistenten
+
+- Integrierter fünfter Schritt zum Erstellen von Rassen, Klassen und RP-Zauberschlüsseln.
+- Vorschau, Validierung, Vorabtest auf Dateikopien und ausdrückliche Schreibfreigabe.
+- Bestehende Schlüsselanlage und Rassen-/Klassenregistrierung wiederverwendet.
+- Tests und Dokumentation ergänzt; AddOn-Spielerkennung bleibt unverändert.
+
+
+
 ## [0.1.15] – Integrierter Arbeitsassistent
 
 - F2 öffnet einen breiten Arbeitsdialog mit Schrittliste links und Editor rechts.

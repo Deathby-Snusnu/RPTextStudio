@@ -30,17 +30,16 @@ class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('RP Text Studio 0.1.15')
-        asset_root = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
-        icon_path = asset_root / 'assets' / 'rp_text_studio_icon.svg'
-        icon_renderer = QSvgRenderer(str(icon_path))
-        if not icon_renderer.isValid():
-            raise RuntimeError(f'Could not load application icon: {icon_path}')
-        icon_pixmap = QPixmap(128, 128)
-        icon_pixmap.fill(Qt.GlobalColor.transparent)
-        icon_painter = QPainter(icon_pixmap)
-        icon_renderer.render(icon_painter)
-        icon_painter.end()
-        self.setWindowIcon(QIcon(icon_pixmap))
+        logo_path = Path(__file__).resolve().parent / 'assets' / 'rp_text_studio.svg'
+        logo_renderer = QSvgRenderer(str(logo_path))
+        if not logo_renderer.isValid():
+            raise RuntimeError(f'Logo konnte nicht geladen werden: {logo_path}')
+        logo_pixmap = QPixmap(128, 128)
+        logo_pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(logo_pixmap)
+        logo_renderer.render(painter)
+        painter.end()
+        self.setWindowIcon(QIcon(logo_pixmap))
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
