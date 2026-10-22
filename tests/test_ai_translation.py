@@ -7,6 +7,7 @@ from ai_translation import inspect_translation, translate
 class TranslationTests(unittest.TestCase):
     def test_tokens(self):
         self.assertEqual(inspect_translation("Hallo %s und %p", "Bonjour %p et %s"), [])
+        self.assertEqual(inspect_translation("100%% bereit", "100%% ready"), [])
         self.assertTrue(inspect_translation("Hallo %s", "Hello"))
         self.assertTrue(inspect_translation("%% %p", "%p"))
         self.assertTrue(inspect_translation("Hallo", "Hello %q"))

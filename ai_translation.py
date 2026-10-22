@@ -16,7 +16,7 @@ def inspect_translation(source: str, result: str) -> list[str]:
         problems.append("Übersetzung ist leer.")
     if Counter(TOKENS.findall(source)) != Counter(TOKENS.findall(result)):
         problems.append("Platzhalter %s, %p oder %% sind verändert.")
-    if re.search(r"%(?![%sp])", result):
+    if "%" in TOKENS.sub("", result):
         problems.append("Ungültiger %-Platzhalter.")
     src_emote = source.startswith("*") and source.endswith("*")
     dst_emote = result.startswith("*") and result.endswith("*")

@@ -923,7 +923,7 @@ class Studio(QMainWindow):
                     if not s.strip():problems.append(f'{p.name}:{key}[{i}]: leer')
                     if s.startswith('*') != s.endswith('*'):problems.append(f'{p.name}:{key}[{i}]: ungleiche Sternchen')
                     import re
-                    if re.search(r'%(?![%sp])',s):problems.append(f'{p.name}:{key}[{i}]: unbekannter Platzhalter')
+                    if '%' in re.sub(r'%(?:%|s|p)', '', s):problems.append(f'{p.name}:{key}[{i}]: unbekannter Platzhalter')
         if problems:
             box=QMessageBox(self);box.setWindowTitle('Prüfbericht');box.setText(f'{len(problems)} Auffälligkeit(en) in {n} Pools')
             box.setDetailedText('\n'.join(problems));box.exec()

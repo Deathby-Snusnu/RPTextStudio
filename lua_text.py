@@ -148,7 +148,7 @@ def update_file(path:Path,updates:dict[tuple[str,...],list[str]], backup=True):
         for e in entries:
             if not isinstance(e,str) or not e.strip():raise ValueError(f'Empty text in {key}')
             if e.startswith('*') != e.endswith('*'):raise ValueError(f'Unbalanced emote stars in {key}: {e}')
-            if re.search(r'%(?![%sp])',e):raise ValueError(f'Invalid placeholder in {key}: {e}')
+            if '%' in re.sub(r'%(?:%|s|p)', '', e):raise ValueError(f'Invalid placeholder in {key}: {e}')
         patches.append((pool.opener.end,pool.closer.start,render_pool(pool,entries,nl)))
     dst=src
     for a,b,replacement in sorted(patches,reverse=True):dst=dst[:a]+replacement+dst[b:]
@@ -170,5 +170,5 @@ def validate_file(path:Path):
         for i,s in enumerate(pool.entries,1):
             if not s.strip():problems.append((key,i,'Empty text'))
             if s.startswith('*') != s.endswith('*'):problems.append((key,i,'Unbalanced *...*'))
-            if re.search(r'%(?![%sp])',s):problems.append((key,i,'Unsupported % placeholder'))
+            if '%' in re.sub(r'%(?:%|s|p)', '', s):problems.append((key,i,'Unsupported % placeholder'))
     return pools,problems

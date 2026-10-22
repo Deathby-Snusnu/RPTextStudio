@@ -3,7 +3,7 @@ import unittest
 import tempfile
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).parents[1]))
-from lua_text import parse_pools,update_file
+from lua_text import parse_pools,update_file,validate_file
 
 SAMPLE='''-- SPDX-License-Identifier: CC-BY-SA-4.0
 local _, addon = ...
@@ -40,6 +40,14 @@ class Tests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 
 class PreservationTests(unittest.TestCase):
+ def test_percent_tokens_can_be_saved_and_validated(self):
+  with tempfile.TemporaryDirectory() as d:
+   file=Path(d)/'Texts.lua'
+   key=('localeData','enUS','texts','TEST','ziel')
+   file.write_text('addon.localeData.enUS.texts = { TEST = { ziel = {"100% ready"}, }, }')
+   update_file(file,{key:['100%% ready']},backup=False)
+   self.assertEqual(validate_file(file)[1],[])
+
  def test_unchanged_pool_is_byte_identical(self):
   with tempfile.TemporaryDirectory() as d:
    file=Path(d)/'Texts.lua'
