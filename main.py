@@ -200,7 +200,7 @@ class Studio(QMainWindow):
             locale=self.language.currentText())
         if issues:
             QMessageBox.information(self,"Vorbereitung erforderlich",
-                "\\n".join(issues)+"\\n\\nBitte danach den Assistenten erneut starten.")
+                "\n".join(issues)+"\n\nBitte danach den Assistenten erneut starten.")
             return
         if flow=="spell":
             self.create_key()
