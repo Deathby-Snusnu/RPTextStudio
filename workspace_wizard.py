@@ -326,10 +326,10 @@ class WorkspaceWizard(QDialog):
                 if len(matches) > 1:
                     raise ValueError(f"{lang}: Text ist mehrfach vorhanden und kann nicht eindeutig verknüpft werden.")
                 idx = matches[0] if matches else len(entries)
-                if any(resolve(entries, group.get(lang)) == idx for group in groups):
-                    raise ValueError(f"{lang}: Text ist bereits einer anderen Gruppe zugeordnet.")
                 if not matches:
                     entries.append(value)
+                if any(resolve(entries, group.get(lang)) == idx for group in groups):
+                    raise ValueError(f"{lang}: Text ist bereits einer anderen Gruppe zugeordnet.")
                 planned[lang] = (other_path, other_key, entries, idx)
             if source != old_value:
                 original[row] = source
