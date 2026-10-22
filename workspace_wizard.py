@@ -17,8 +17,9 @@ from PySide6.QtWidgets import (
 from ai_translation import inspect_translation
 from ai_translation_dialog import Worker
 from translation_links import LANGS, pool_id, reference, resolve
+from workspace_structures import plan_spell, create_spell, plan_profile, create_profile
 
-STEPS = ("Text auswählen", "Original bearbeiten", "Übersetzen", "Prüfen & speichern")
+STEPS = ("Text auswählen", "Original bearbeiten", "Übersetzen", "Prüfen & speichern", "Strukturen anlegen")
 
 def draft_issues(source: str, translations: dict[str, str]) -> list[str]:
     import re
@@ -61,6 +62,7 @@ class WorkspaceWizard(QDialog):
         self._source_page()
         self._translations_page()
         self._review_page()
+        self._structure_page()
 
         nav = QHBoxLayout()
         self.message = QLabel("Entwurf: Noch nichts gespeichert.")
@@ -68,12 +70,14 @@ class WorkspaceWizard(QDialog):
         self.back = QPushButton("Zurück")
         self.next = QPushButton("Weiter")
         self.finish = QPushButton("Prüfen und speichern")
+        self.create_structure_button = QPushButton("Struktur prüfen und anlegen")
         cancel = QPushButton("Abbrechen")
         self.back.clicked.connect(lambda: self.steps.setCurrentRow(max(0, self.steps.currentRow()-1)))
-        self.next.clicked.connect(lambda: self.steps.setCurrentRow(min(3, self.steps.currentRow()+1)))
+        self.next.clicked.connect(lambda: self.steps.setCurrentRow(min(4, self.steps.currentRow()+1)))
         self.finish.clicked.connect(self.commit)
+        self.create_structure_button.clicked.connect(self.create_structure)
         cancel.clicked.connect(self.reject)
-        for button in (self.back, self.next, self.finish, cancel):
+        for button in (self.back, self.next, self.finish, self.create_structure_button, cancel):
             nav.addWidget(button)
         layout.addLayout(nav)
         self.steps.currentRowChanged.connect(self.switch_page)
@@ -161,6 +165,126 @@ class WorkspaceWizard(QDialog):
             editor.textChanged.connect(self.update_review)
         for checkbox in self.approve.values():
             checkbox.toggled.connect(self.update_review)
+
+    def _structure_page(self):
+        col = self._page("5 · Neue RP-Strukturen anlegen",
+                         "Neue Zauber sowie Rassen- und Klassenprofile direkt hier vorbereiten. "
+                         "Zuerst werden alle betroffenen Dateien geprüft; erst nach ausdrücklicher "
+                         "Bestätigung werden Lua-Backups und Textzweige angelegt.")
+        form = QFormLayout()
+        self.structure_kind = QComboBox()
+        self.structure_kind.addItems(("Zauberschlüssel", "Rassenprofil", "Klassenprofil"))
+        self.structure_addon = QComboBox()
+        self.structure_addon.addItems(sorted({p.parts[-4] for p in self.studio.files}))
+        self.structure_mode = QComboBox()
+        self.structure_mode.addItems(("Allgemein · Texts.lua", "Rasse · Racial.lua",
+                                      "Klasse · Classes.lua", "Rasse + Klasse · RaceClass.lua"))
+        self.structure_race = QLineEdit()
+        self.structure_race.setPlaceholderText("z. B. Gnome oder NightElf")
+        self.structure_class = QLineEdit()
+        self.structure_class.setPlaceholderText("z. B. WARLOCK")
+        self.structure_key = QLineEdit()
+        self.structure_key.setPlaceholderText("z. B. SHADOW_BOLT oder NightElf")
+        self.structure_name = QLineEdit()
+        self.structure_name.setPlaceholderText("Anzeigename, z. B. Nachtelf")
+        self.structure_style = QPlainTextEdit()
+        self.structure_style.setPlaceholderText("Charaktertypischer RP-Sprachstil")
+        self.structure_style.setMaximumHeight(85)
+        self.structure_with_lua = QCheckBox("Passenden Lua-Textzweig erzeugen (RP_GREETING)")
+        self.structure_with_lua.setChecked(True)
+        for label,control in (
+            ("Erstellen",self.structure_kind),("AddOn",self.structure_addon),
+            ("Struktur",self.structure_mode),("Rassen-ID",self.structure_race),
+            ("Klassen-ID",self.structure_class),("Neuer Schlüssel / ID",self.structure_key),
+            ("Anzeigename",self.structure_name),("RP-Stil",self.structure_style),
+        ):
+            form.addRow(label,control)
+        form.addRow(self.structure_with_lua)
+        col.addLayout(form)
+        self.structure_preview = QPlainTextEdit()
+        self.structure_preview.setReadOnly(True)
+        col.addWidget(self.structure_preview,1)
+        for widget in (self.structure_kind,self.structure_addon,self.structure_mode):
+            widget.currentIndexChanged.connect(self.update_structure_preview)
+        for widget in (self.structure_race,self.structure_class,self.structure_key,self.structure_name):
+            widget.textChanged.connect(self.update_structure_preview)
+        self.structure_style.textChanged.connect(self.update_structure_preview)
+        self.structure_with_lua.toggled.connect(self.update_structure_preview)
+        self.structure_kind.currentIndexChanged.connect(self.sync_structure_fields)
+        self.structure_mode.currentIndexChanged.connect(self.sync_structure_fields)
+        self.sync_structure_fields()
+        self.update_structure_preview()
+
+    def sync_structure_fields(self,*_):
+        spell=self.structure_kind.currentIndex()==0
+        mode=self.structure_mode.currentIndex()
+        self.structure_mode.setEnabled(spell)
+        self.structure_race.setEnabled(spell and mode in (1,3))
+        self.structure_class.setEnabled(spell and mode in (2,3))
+        self.structure_name.setEnabled(not spell)
+        self.structure_style.setEnabled(not spell)
+        self.structure_with_lua.setEnabled(not spell)
+
+    def plan_structure(self):
+        root=self.studio.root
+        addon=self.structure_addon.currentText()
+        key=self.structure_key.text().strip()
+        if self.structure_kind.currentIndex()==0:
+            targets,branches=plan_spell(root,addon,self.structure_mode.currentIndex(),
+                self.structure_race.text().strip(),self.structure_class.text().strip(),key)
+            return (f"Neuer Schlüssel: {key}\nAddOn: {addon}\n"
+                f"Eltern: {'/'.join(branches) or 'Allgemein'}\n"
+                "Zielsprachen:\n"+'\n'.join(str(p.relative_to(root)) for p,_,_ in targets)+
+                "\n\nDie AddOn-Logik erkennt neue Zauber NICHT automatisch.")
+        kind="race" if self.structure_kind.currentIndex()==1 else "class"
+        targets=plan_profile(root,addon,kind,key,self.structure_name.text(),
+            self.structure_style.toPlainText(),self.structure_with_lua.isChecked())
+        return (f"Neues {'Rassen' if kind=='race' else 'Klassen'}profil: {key}\n"
+                f"Anzeigename: {self.structure_name.text()}\n"
+                f"Sprachstil: {self.structure_style.toPlainText()}\n"
+                "Geplante Lua-Dateien:\n"+
+                ('\n'.join(str(p.relative_to(root)) for p,_,_ in targets) if targets else "(nur Projektregister)")+
+                "\n\nEin Profil ändert nicht die Rassen-/Klassenerkennung des WoW-Clients.")
+
+    def update_structure_preview(self,*_):
+        if not hasattr(self,"structure_preview"): return
+        try:
+            self.structure_preview.setPlainText(self.plan_structure())
+        except (OSError,ValueError) as error:
+            self.structure_preview.setPlainText(f"Vorabprüfung: {error}")
+
+    def create_structure(self):
+        if self.worker and self.worker.isRunning():
+            QMessageBox.warning(self,"Anfrage läuft","Bitte die Übersetzungsanfrage abschließen.")
+            return
+        try:
+            preview=self.plan_structure()
+            if self.studio.changes or self.studio.links_dirty:
+                raise ValueError("Bitte zuerst offene Editor-Änderungen speichern.")
+        except (OSError,ValueError) as error:
+            QMessageBox.warning(self,"Vorabprüfung fehlgeschlagen",str(error))
+            return
+        response=QMessageBox.question(self,"Struktur wirklich anlegen?",
+            preview+"\n\nJetzt mit Backups anlegen?",QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+        if response!=QMessageBox.Yes:return
+        try:
+            addon=self.structure_addon.currentText()
+            key=self.structure_key.text().strip()
+            if self.structure_kind.currentIndex()==0:
+                created=create_spell(self.studio.root,addon,self.structure_mode.currentIndex(),
+                    self.structure_race.text().strip(),self.structure_class.text().strip(),key)
+            else:
+                kind="race" if self.structure_kind.currentIndex()==1 else "class"
+                created=create_profile(self.studio.root,addon,kind,key,
+                    self.structure_name.text(),self.structure_style.toPlainText(),
+                    self.structure_with_lua.isChecked())
+            self.studio.load(self.studio.root)
+            QMessageBox.information(self,"Erstellt",
+                f"Struktur angelegt. {created} Lua-Sprachdatei(en) bearbeitet.\n"
+                "Bitte die neuen RP-Texte im Editor ergänzen.")
+            self.accept()
+        except (OSError,ValueError) as error:
+            QMessageBox.critical(self,"Anlegen fehlgeschlagen",str(error))
 
     def populate_pools(self):
         studio = self.studio
@@ -253,8 +377,9 @@ class WorkspaceWizard(QDialog):
     def switch_page(self, index):
         self.pages.setCurrentIndex(max(0,index))
         self.back.setEnabled(index > 0)
-        self.next.setEnabled(index < 3)
-        self.finish.setEnabled(index == 3)
+        self.next.setEnabled(index < 4)
+        self.finish.setVisible(index == 3)
+        self.create_structure_button.setVisible(index == 4)
         if index == 3:
             self.update_review()
 
