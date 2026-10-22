@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.14 – Bedienungsanleitung
+# RP Text Studio 0.1.15 – Bedienungsanleitung
 
 [Editor-Übersicht und Installation](README.md) · [Changelog](CHANGELOG.md) ·
 [Sammlungsübersicht](../README.md)
@@ -217,3 +217,11 @@ Unter **Hilfe → Workflow-Assistent…** (oder **F2**) kannst du einen der Abl�
 Vor der KI-Übersetzung muss eine deutsche Zeile aus `deDE` markiert sein. Dort bleiben Vorschau, Platzhalterkontrolle und manuelle Freigabe bestehen. Zum Abschluss **Änderungen speichern** wählen. Der Assistent speichert nichts automatisch, legt keine Schlüssel ungefragt an und sendet keine API-Anfrage selbstständig ab.
 
 Diese erste Ausbaustufe ist eine geführte Navigation durch die bestehenden Werkzeuge; eine umfassende mehrstufige Projektanlage folgt später.
+
+## Neuer integrierter Arbeitsassistent (F2)
+
+Im Menü **Hilfe → Arbeitsassistent…** öffnet sich ein breiter Dialog mit Schritten links und Arbeitsfläche rechts. Der Assistent arbeitet derzeit mit **bestehenden deutschen Textpools**. Er übernimmt die ausgewählte Quelle, hält die Änderungen als Entwurf, bietet manuelle Übersetzungsfelder und optional OpenAI-Vorschläge an und zeigt zuletzt einen Prüfbericht.
+
+In Schritt 1 Textpool und Zeile wählen; in Schritt 2 das deutsche Original bearbeiten; in Schritt 3 die Übersetzungen ergänzen oder über OpenAI vorschlagen lassen und jede gewünschte Zielsprache per Checkbox freigeben; in Schritt 4 ausdrücklich **Prüfen und speichern** betätigen. Vorher werden keine Dateien geschrieben. Bei Platzhalterfehlern oder konfliktierenden Verknüpfungen bleibt der Dialog offen. Für einheitliche Sicherung werden die bestehenden Speicherroutinen mit Backup verwendet.
+
+Bereits offene ungespeicherte Änderungen müssen **vor** dem Start des Assistenten gesichert werden. Die bisherigen Manager für neue Zauber und Rassen bleiben erreichbar; neue Schlüssel kann diese erste integrierte Ansicht noch nicht selbst erzeugen. **Hilfe → Einfacher Assistent…** öffnet weiterhin den bisherigen Navigations-Wizard.
