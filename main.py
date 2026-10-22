@@ -10,6 +10,7 @@ from key_deletion import spell_path, delete_from_files, prepare_deletion
 from race_class_manager import load_registry, register, add_lua_profile, discover_targets
 from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings, make_macro
 from ai_translation import inspect_translation
+from workflow_wizard import WorkflowWizard, prerequisites
 try:
     from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
@@ -26,7 +27,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.13')
+        self.setWindowTitle('RP Text Studio 0.1.14')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -178,6 +179,7 @@ class Studio(QMainWindow):
         add(view,'Statusleiste ein-/ausblenden',lambda:self.statusBar().setVisible(not self.statusBar().isVisible()))
 
         help_menu=self.menuBar().addMenu('Hilfe')
+        add(help_menu,'Workflow-Assistent…',self.open_workflow_wizard,'F2')
         add(help_menu,'Bedienungsanleitung',self.show_help,'F1')
         add(help_menu,'Über RP Text Studio',self.show_about)
 
@@ -187,6 +189,28 @@ class Studio(QMainWindow):
         self.addToolBar(toolbar)
         for label in ('Projekt öffnen…','Änderungen speichern','Text hinzufügen','Projekt prüfen','Mit OpenAI übersetzen…'):
             toolbar.addAction(actions[label])
+
+    def open_workflow_wizard(self):
+        wizard=WorkflowWizard(self)
+        if not wizard.exec():
+            return
+        flow=wizard.selected_workflow()
+        issues=prerequisites(flow,has_project=self.root is not None,
+            has_pool=self.current is not None,has_row=self.current_row>=0,
+            locale=self.language.currentText())
+        if issues:
+            QMessageBox.information(self,"Vorbereitung erforderlich",
+                "\\n".join(issues)+"\\n\\nBitte danach den Assistenten erneut starten.")
+            return
+        if flow=="spell":
+            self.create_key()
+        elif flow=="translate":
+            self.open_ai_translation()
+        elif flow=="check":
+            self.validate_all()
+        elif flow=="edit":
+            self.editor.setFocus()
+        self.update_status()
 
     def update_status(self):
         """Persistent state indicators, independent of transient status messages."""
