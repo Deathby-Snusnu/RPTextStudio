@@ -189,3 +189,15 @@ Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP.
 Es wird **der gesamte ausgewählte Zauber-/Aktionsschlüssel** entfernt, also bei `ziel`/`gruppe` beide Listen; die Rassen- und Klassen-Elternzweige bleiben bestehen. Die Löschung betrifft keine anderen AddOns und keine gleichnamigen Schlüssel unter anderen Rassen. Ausstehende Änderungen werden vorher zur Speicherung angeboten. Bei Fehlern in der Vorabprüfung wird keine Sprachdatei geändert. Die vorhandenen Makro-Zuordnungen aus `.rptextstudio-spells.json` und Übersetzungsverknüpfungen werden **nicht** stillschweigend gelöscht; kontrolliere sie danach gesondert. Neue im Spiel geladene Schlüssel verschwinden nach einem `/reload` aus den dynamischen Listen.
 
 **Achtung:** Lösche keine von der AddOn-Logik erwarteten Schlüssel, ohne ihre Verwendung zu prüfen. Die Funktion entfernt Texttabellen, nicht ausführbare Lua-Befehle.
+
+## OpenAI-KI-Übersetzung (enUS, frFR)
+
+1. Projekt öffnen und einen `deDE`-Textpool sowie die gewünschte Ausgangszeile markieren.
+2. **KI-Übersetzung …** aufrufen.
+3. API-Schlüssel nur für diese Sitzung eintragen (alternativ Umgebungsvariable `OPENAI_API_KEY`), Modell prüfen und optional Rasse sowie RP-Stil ergänzen.
+4. **Vorschläge erzeugen** anklicken. Der Online-Aufruf ist optional und kann je nach API-Tarif Kosten auslösen.
+5. Englischen und französischen Vorschlag lesen und bei Bedarf direkt korrigieren. Jede Sprache einzeln per Kontrollkästchen freigeben.
+6. **Freigegebene übernehmen** wählt vorhandene identische Texte aus oder ergänzt neue Varianten und legt die explizite Übersetzungsgruppe an. Bereits bestehende Übersetzungsgruppen werden nicht überschrieben.
+7. Im Hauptfenster **Änderungen speichern** nutzen. Erst dann werden die Lua-Textdateien auf dem Datenträger aktualisiert.
+
+Die Validierung blockiert fehlende oder zusätzliche `%s`, `%p`, `%%`, fehlende Emote-Sternchen und Zeilenumbrüche. Es werden ausschließlich ausgewählte RP-Texte und Charakterhinweise an die API gesendet, niemals der ganze AddOn-Ordner. Der Schlüssel bleibt nur im Speicher, wird in der Eingabe maskiert und nicht in den Projektdaten abgelegt. API-Fehler werden ohne Serverantwort-Inhalt angezeigt. Wenn für die Zielsprache der Textpool fehlt, muss dieser zuerst angelegt werden. Dieser Branch wurde nicht gegen den echten Online-Dienst oder die Windows-GUI getestet.
