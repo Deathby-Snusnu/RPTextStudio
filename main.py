@@ -128,6 +128,8 @@ class Studio(QMainWindow):
             status.addPermanentWidget(widget)
         self.language.currentTextChanged.connect(lambda _value:self.update_status())
         self.list.currentRowChanged.connect(lambda _row:self.update_status())
+        for editor in self.compare_editors.values():
+            editor.textChanged.connect(self.update_status)
         self.update_status()
 
     def setup_menus_and_toolbar(self):
