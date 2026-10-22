@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.13] – Klassische Desktopnavigation
+
+- Menüleiste Datei / Bearbeiten / Projekt / Übersetzungen / Ansicht / Hilfe.
+- Kompakte Symbolleiste für oft verwendete Aktionen und einheitliche Tastenkürzel.
+- Dauerhafte Statusfelder für Projekt, Navigationssprache, Textauswahl und offene Änderungen.
+- Bestehende Bearbeitungsfunktionen erhalten; Workflow-Assistent folgt später.
+- Dokumentation entsprechend ergänzt.
+
+
 
 ### Unreleased: OpenAI-RP-Übersetzungen
 

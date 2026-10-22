@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.10
+# RP Text Studio 0.1.13
 
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
@@ -34,8 +34,7 @@ Die Umgebung nur erstellen, wenn noch keine passende `.venv` existiert.
 Bei bereits installierten Abhängigkeiten kann der letzte Befehl den Editor
 ohne den pip-Schritt des Starters öffnen. Es wird keine Aktivierung der
 Umgebung und keine Änderung der PowerShell-Ausführungsrichtlinie benötigt.
-Der Starter zeigt noch `0.1.9` an; maßgeblich für die Anwendung ist der
-Fenstertitel `0.1.10`. Das Startskript wurde bei dieser Doku-Pflege nicht geändert.
+Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in diesem UI-Branch nicht verändert.
 
 ## Einstieg
 
@@ -202,3 +201,9 @@ Im Sprachvergleich einen **deutschen** Text auswählen und **KI-Übersetzung …
 Die Vorschläge für `enUS` und `frFR` werden zunächst nur angezeigt. Sie können korrigiert und **einzeln freigegeben** werden. Der Editor prüft dabei `%s`, `%p`, `%%`, `*...*` und Zeilenumbrüche. Erst nach Freigabe werden Varianten in die vorhandenen Sprachpools übernommen und dem deutschen Text zugeordnet. Bestehende Sprachvarianten werden **nicht überschrieben**. Abschließend **Änderungen speichern** wählen, um Lua-Änderungen und Übersetzungsverknüpfungen mit Backups zu sichern.
 
 **Sicherheit und Grenzen:** API-Schlüssel werden nicht in Projektdateien gespeichert. Es gibt keine automatische Stapelverarbeitung. Zielsprach-Textpools müssen schon existieren. Ein vorhandener Übersetzungslink wird nicht automatisch geändert. Es fand noch kein echter API- oder Windows-GUI-Test statt; der API-Test nutzt ein Mock.
+
+## Klassische Menüführung (0.1.13)
+
+Die Anwendung nutzt jetzt die Menüleiste **Datei, Bearbeiten, Projekt, Übersetzungen, Ansicht, Hilfe** und eine kompakte Standardsymbolleiste. Die wichtigsten Kürzel: **Strg+O** Projekt öffnen, **Strg+S** speichern, **Strg+N** Text hinzufügen, **Strg+D** duplizieren, **Strg+F** Suche fokussieren, **F7** Projekt prüfen, **F1** Handbuch.
+
+Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählte Textzeile und ungespeicherte Textpool-/Verknüpfungsänderungen. Die bisherigen Texteditoren, Sprachvergleiche und Prüfungen bleiben erhalten. Der optionale Workflow-Assistent und eine projektweite Rückgängig-Funktion sind **nicht** Bestandteil dieser Version; sie sind für Folgeversionen vorgesehen.
