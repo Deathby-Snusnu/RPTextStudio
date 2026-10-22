@@ -35,6 +35,11 @@ def draft_issues(source: str, translations: dict[str, str]) -> list[str]:
         issues.extend(f"{lang}: {message}" for message in inspect_translation(source, value))
     return issues
 
+def has_pending_text_drafts(source: str, original: str | None,
+                            translations: dict[str, str]) -> bool:
+    source_changed = source != original if original is not None else bool(source)
+    return source_changed or any(translations.values())
+
 class WorkspaceWizard(QDialog):
     def __init__(self, studio):
         super().__init__(studio)
@@ -254,14 +259,24 @@ class WorkspaceWizard(QDialog):
         except (OSError,ValueError,ParseError) as error:
             self.structure_preview.setPlainText(f"Vorabprüfung: {error}")
 
+    def has_unsaved_text_drafts(self):
+        original = None
+        try:
+            path, key, row = self.selection()
+            original = self.studio.get_entries(path, key)[row]
+        except (ValueError, IndexError):
+            pass
+        translations = {lang: editor.toPlainText() for lang, editor in self.translations.items()}
+        return has_pending_text_drafts(self.source.toPlainText(), original, translations)
+
     def create_structure(self):
         if self.worker and self.worker.isRunning():
             QMessageBox.warning(self,"Anfrage läuft","Bitte die Übersetzungsanfrage abschließen.")
             return
         try:
             preview=self.plan_structure()
-            if self.studio.changes or self.studio.links_dirty:
-                raise ValueError("Bitte zuerst offene Editor-Änderungen speichern.")
+            if self.studio.changes or self.studio.links_dirty or self.has_unsaved_text_drafts():
+                raise ValueError("Bitte zuerst offene Änderungen im Editor oder Assistenten speichern.")
         except (OSError,ValueError,ParseError) as error:
             QMessageBox.warning(self,"Vorabprüfung fehlgeschlagen",str(error))
             return
