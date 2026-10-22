@@ -59,10 +59,12 @@ def plan_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_l
     if not targets:
         raise ValueError(f"{addon} besitzt keine unterstützte Rassen-/Klassen-Datei.")
     with TemporaryDirectory() as directory:
-        for i,(path,base,direct) in enumerate(targets):
-            clone=Path(directory)/f"{i}.lua"
+        clone_root = Path(directory)
+        for path, _, _ in targets:
+            clone = clone_root / path.relative_to(root)
+            clone.parent.mkdir(parents=True, exist_ok=True)
             clone.write_bytes(path.read_bytes())
-            new_spell(clone,base,(key,),"RP_GREETING",backup=False,direct=direct)
+        add_lua_profile(clone_root, addon, kind, key)
     return targets
 
 def create_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_lua:bool):
