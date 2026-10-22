@@ -501,13 +501,13 @@ class Studio(QMainWindow):
                         f"{lang}: identischer Text mehrfach vorhanden. Bitte manuell zuordnen.")
                     return False
                 row = matches[0] if matches else len(entries)
+                if not matches:
+                    entries.append(value)
                 for group in groups:
                     if resolve(entries, group.get(lang)) == row:
                         QMessageBox.warning(self, "Bereits verknüpft",
                             f"{lang}: Dieser Text gehört bereits zu einer anderen Gruppe.")
                         return False
-                if not matches:
-                    entries.append(value)
                 planned[lang] = (target, entries, row)
             # Mutate only after ALL targets and collisions were validated.
             group = {"deDE": reference(source_entries, self.current_row)}
