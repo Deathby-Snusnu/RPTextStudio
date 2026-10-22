@@ -21,9 +21,14 @@ from translation_links import LANGS, pool_id, reference, resolve
 STEPS = ("Text auswählen", "Original bearbeiten", "Übersetzen", "Prüfen & speichern")
 
 def draft_issues(source: str, translations: dict[str, str]) -> list[str]:
+    import re
     issues = []
     if not source.strip():
         issues.append("Deutscher Ausgangstext fehlt.")
+    if source.startswith("*") != source.endswith("*"):
+        issues.append("deDE: Ungleiche Emote-Markierungen *...*.")
+    if "%" in re.sub(r"%(?:%|s|p)", "", source):
+        issues.append("deDE: Ungültiger %-Platzhalter.")
     for lang, value in translations.items():
         issues.extend(f"{lang}: {message}" for message in inspect_translation(source, value))
     return issues
