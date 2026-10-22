@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.13 – Bedienungsanleitung
+# RP Text Studio 0.1.14 – Bedienungsanleitung
 
 [Editor-Übersicht und Installation](README.md) · [Changelog](CHANGELOG.md) ·
 [Sammlungsübersicht](../README.md)
@@ -209,3 +209,11 @@ Die Validierung blockiert fehlende oder zusätzliche `%s`, `%p`, `%%`, fehlende 
 Die kompakte Symbolleiste enthält Öffnen, Speichern, Text hinzufügen, Prüfung und KI-Übersetzung. Häufige Tastenkürzel: Strg+O, Strg+S, Strg+N, Strg+D, Strg+F, F7 und F1. Nicht verfügbare Funktionen wie projektweites Rückgängig werden bewusst nicht als Menüaktionen angezeigt.
 
 Die Statusleiste unten zeigt den Projektnamen, die Navigationssprache, die Textanzahl und Zeilenauswahl sowie ausstehende Änderungen. Bei offenen Änderungen steht zudem ein Sternchen im Fenstertitel. Meldungen zu Aktionen erscheinen weiterhin kurzzeitig links in der Statusleiste. Der geplante Workflow-Assistent folgt erst in einer späteren Version.
+
+## Workflow-Assistent (F2)
+
+Unter **Hilfe → Workflow-Assistent…** (oder **F2**) kannst du einen der Abläufe **Text bearbeiten**, **Zauber ergänzen**, **KI-Übersetzung** oder **Projekt prüfen** auswählen. **Weiter** zeigt die benötigten Vorbedingungen; **Zurück** ermöglicht die Änderung des Vorhabens. Mit **Fertigstellen** öffnet der Assistent die vorhandene Bearbeitungsfunktion beziehungsweise fokussiert den Texteditor. Fehlende Projekt-, Textpool- oder Zeilenauswahl werden ausdrücklich erklärt.
+
+Vor der KI-Übersetzung muss eine deutsche Zeile aus `deDE` markiert sein. Dort bleiben Vorschau, Platzhalterkontrolle und manuelle Freigabe bestehen. Zum Abschluss **Änderungen speichern** wählen. Der Assistent speichert nichts automatisch, legt keine Schlüssel ungefragt an und sendet keine API-Anfrage selbstständig ab.
+
+Diese erste Ausbaustufe ist eine geführte Navigation durch die bestehenden Werkzeuge; eine umfassende mehrstufige Projektanlage folgt später.
