@@ -1,5 +1,7 @@
 # RP Text Studio 0.1.15
 
+![RP Text Studio – Texte gestalten. Welten erzählen.](assets/rp_text_studio_logo.svg)
+
 Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
 
 ## Dokumentation
@@ -11,8 +13,7 @@ Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, Hexe
 
 **Ohne Python auf dem Zielrechner:** Mit `build_exe.bat` lässt sich auf einem
 Windows-Rechner mit Python eine einzelne `dist\RPTextStudio.exe` erstellen.
-Sie enthält Python, Qt, das Handbuch und das RP-Text-Studio-Logo als
-Anwendungs- und Windows-Icon und kann ohne die Python-Ordnerstruktur
+Sie enthält Python, Qt und das Handbuch und kann ohne die Python-Ordnerstruktur
 weitergegeben werden. Die bearbeiteten AddOn-Dateien bleiben separat und
 werden über **Projektordner öffnen** geladen.
 Build-Anleitung, Schreibrechte und Hinweise zur Weitergabe:

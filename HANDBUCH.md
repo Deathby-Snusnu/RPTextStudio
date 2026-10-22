@@ -28,6 +28,8 @@ Zum Herunterladen der Pakete wird Internet benötigt. PyInstaller erstellt
 anschließend `dist\RPTextStudio.exe` als einzelne Windows-GUI-Datei ohne
 Konsolenfenster. `build` enthält nur Build-Zwischendateien.
 Ein erneuter Build ersetzt die bisherige Ausgabe; eine laufende EXE vorher schließen.
+Das Vektorlogo liegt unter `assets`; beim Build wird daraus ein mehrgroßes
+Windows-EXE-Icon erzeugt und auch das Programmfenster erhält das App-Symbol.
 
 Die EXE kann allein in einen anderen Ordner oder auf einen anderen kompatiblen
 Windows-Rechner kopiert werden. Der Zielrechner benötigt weder Python noch

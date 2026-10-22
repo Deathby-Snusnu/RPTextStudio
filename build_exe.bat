@@ -40,12 +40,8 @@ if not exist "%~dp0HANDBUCH.md" (
     echo FEHLER: HANDBUCH.md wurde nicht gefunden.
     goto :failed
 )
-if not exist "%~dp0assets\rp_text_studio.svg" (
-    echo FEHLER: Das Logo assets\rp_text_studio.svg wurde nicht gefunden.
-    goto :failed
-)
-if not exist "%~dp0build_icon.py" (
-    echo FEHLER: build_icon.py wurde nicht gefunden.
+if not exist "%~dp0assets\rp_text_studio_icon.svg" (
+    echo FEHLER: Das App-Icon wurde nicht gefunden.
     goto :failed
 )
 
@@ -56,14 +52,14 @@ if errorlevel 1 (
     goto :failed
 )
 
-echo [3/4] Windows-Icon aus dem Projektlogo erzeugen ...
-"%VENV_PYTHON%" "%~dp0build_icon.py" "%~dp0assets\rp_text_studio.svg" "%~dp0build\RPTextStudio.ico"
+echo [3/4] Windows-Icon aus dem Vektorlogo erstellen ...
+"%VENV_PYTHON%" "%~dp0build_icon.py"
 if errorlevel 1 (
-    echo FEHLER: Das Windows-Icon konnte nicht erzeugt werden.
+    echo FEHLER: Das Windows-Icon konnte nicht erstellt werden.
     goto :failed
 )
 
-echo [4/4] Einzelne EXE mit Python, Qt, Handbuch und Logo erstellen ...
+echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
 "%VENV_PYTHON%" -m PyInstaller --noconfirm --clean --onefile --windowed ^
     --name RPTextStudio ^
     --icon "%~dp0build\RPTextStudio.ico" ^
@@ -71,7 +67,7 @@ echo [4/4] Einzelne EXE mit Python, Qt, Handbuch und Logo erstellen ...
     --workpath "%~dp0build\pyinstaller" ^
     --specpath "%~dp0build" ^
     --add-data "%~dp0HANDBUCH.md;." ^
-    --add-data "%~dp0assets\rp_text_studio.svg;assets" ^
+    --add-data "%~dp0assets\rp_text_studio_icon.svg;assets" ^
     "%~dp0main.py"
 if errorlevel 1 (
     echo FEHLER: Die EXE konnte nicht erstellt werden.

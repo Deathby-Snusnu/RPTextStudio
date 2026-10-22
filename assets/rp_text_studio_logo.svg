@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240">
+  <defs>
+    <linearGradient id="background" x1="28" y1="18" x2="212" y2="222" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#202b48"/>
+      <stop offset="1" stop-color="#101522"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="74" y1="47" x2="158" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff8e8"/>
+      <stop offset="1" stop-color="#e4e9f4"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="108" y1="120" x2="181" y2="181" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9c7bff"/>
+      <stop offset="1" stop-color="#55d8df"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="208" height="208" rx="52" fill="url(#background)"/>
+  <rect x="17.5" y="17.5" width="205" height="205" rx="50.5" fill="none" stroke="#8292bd" stroke-opacity=".36" stroke-width="3"/>
+  <path d="M74 47h63l31 31v96a12 12 0 0 1-12 12H74a12 12 0 0 1-12-12V59a12 12 0 0 1 12-12Z" fill="url(#paper)"/>
+  <path d="M137 47v20a11 11 0 0 0 11 11h20" fill="#cbd4e7"/>
+  <path d="M84 91h45M84 105h32" fill="none" stroke="#7a86a4" stroke-linecap="round" stroke-width="6"/>
+  <path d="M95 124h73a12 12 0 0 1 12 12v20a12 12 0 0 1-12 12h-9l-15 13v-13H95a12 12 0 0 1-12-12v-20a12 12 0 0 1 12-12Z" fill="url(#bubble)"/>
+  <path d="M110 138h1m14 0h1m14 0h1" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="6"/>
+  <path d="m184 50 4 10 10 4-10 4-4 10-4-10-10-4 10-4 4-10Z" fill="#f3c76a"/>
+  <text x="270" y="111" fill="#202b48" font-family="Segoe UI, Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="3">RP TEXT STUDIO</text>
+  <path d="M272 137h104" stroke="#9c7bff" stroke-linecap="round" stroke-width="5"/>
+  <text x="270" y="181" fill="#58647f" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" letter-spacing="1.2">Texte gestalten. Welten erzählen.</text>
+</svg>
