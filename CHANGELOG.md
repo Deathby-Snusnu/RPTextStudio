@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.15] – Integrierter Arbeitsassistent
+
+- F2 öffnet einen breiten Arbeitsdialog mit Schrittliste links und Editor rechts.
+- Deutsches Original bearbeiten, Übersetzungen manuell oder mit OpenAI vorbereiten und einzeln freigeben.
+- Gesamtvorschau und Validierung vor dem expliziten Speichern mit Backups.
+- Alter Navigations-Wizard bleibt separat erreichbar.
+- Tests und Handbuch ergänzt; neue Schlüssel weiterhin über die bestehenden Manager.
+
+
+
 ## [0.1.14] – Geführter Workflow-Assistent
 
 - Optionaler Wizard unter Hilfe → Workflow-Assistent (F2).
