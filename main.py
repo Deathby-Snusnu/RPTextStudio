@@ -12,6 +12,7 @@ from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings
 from ai_translation import inspect_translation
 try:
     from workflow_wizard import WorkflowWizard, prerequisites
+    from workspace_wizard import WorkspaceWizard
     from ai_translation_dialog import TranslationDialog
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QAction, QKeySequence
@@ -27,7 +28,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.14')
+        self.setWindowTitle('RP Text Studio 0.1.15')
         self.resize(1320,800)
         self.root:Path|None=None
         self.files:dict[Path,dict]={}
@@ -179,7 +180,8 @@ class Studio(QMainWindow):
         add(view,'Statusleiste ein-/ausblenden',lambda:self.statusBar().setVisible(not self.statusBar().isVisible()))
 
         help_menu=self.menuBar().addMenu('Hilfe')
-        add(help_menu,'Workflow-Assistent…',self.open_workflow_wizard,'F2')
+        add(help_menu,'Arbeitsassistent…',self.open_workspace_wizard,'F2')
+        add(help_menu,'Einfacher Assistent…',self.open_workflow_wizard)
         add(help_menu,'Bedienungsanleitung',self.show_help,'F1')
         add(help_menu,'Über RP Text Studio',self.show_about)
 
@@ -189,6 +191,16 @@ class Studio(QMainWindow):
         self.addToolBar(toolbar)
         for label in ('Projekt öffnen…','Änderungen speichern','Text hinzufügen','Projekt prüfen','Mit OpenAI übersetzen…'):
             toolbar.addAction(actions[label])
+
+    def open_workspace_wizard(self):
+        if self.root is None:
+            QMessageBox.information(self, 'Projekt öffnen', 'Bitte zuerst einen AddOn-Projektordner öffnen.')
+            return
+        if self.changes or self.links_dirty:
+            QMessageBox.information(self, 'Ungespeicherte Änderungen',
+                'Bitte vorhandene Änderungen zuerst speichern, bevor der Arbeitsassistent gestartet wird.')
+            return
+        WorkspaceWizard(self).exec()
 
     def open_workflow_wizard(self):
         wizard=WorkflowWizard(self)
