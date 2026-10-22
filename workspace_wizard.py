@@ -331,11 +331,18 @@ class WorkspaceWizard(QDialog):
                 if any(resolve(entries, group.get(lang)) == idx for group in groups):
                     raise ValueError(f"{lang}: Text ist bereits einer anderen Gruppe zugeordnet.")
                 planned[lang] = (other_path, other_key, entries, idx)
-            if source != old_value:
-                original[row] = source
             # All validations finished; stage into the existing editor model.
             if source != old_value:
-                studio.changes.setdefault(path, {})[studio.locale_key(path,key)] = original
+                linked_groups = [
+                    group for group in groups
+                    if resolve(original, group.get("deDE")) == row
+                ]
+                original[row] = source
+                for group in linked_groups:
+                    group["deDE"] = reference(original, row)
+                if linked_groups:
+                    studio.links_dirty = True
+                studio.changes.setdefault(path, {})[studio.locale_key(path, key)] = original
             if planned:
                 group = {"deDE": reference(original, row)}
                 for lang, (other_path, other_key, entries, idx) in planned.items():
