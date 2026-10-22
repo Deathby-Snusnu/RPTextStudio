@@ -1,5 +1,14 @@
 # Changelog
 
+
+### Unreleased: OpenAI-RP-Übersetzungen
+
+- Optionaler OpenAI-Responses-API-Übersetzer für deutsche RP-Texte nach `enUS` und `frFR`.
+- Manuelle Prüfung und Freigabe pro Zielsprache; sichere Verknüpfung mit den vorhandenen Übersetzungsgruppen.
+- Schutz für RP-Platzhalter und `/me`-Markierungen, API-Schlüssel nur im Speicher.
+- Offline-Mock-Tests sowie ergänzte Anleitung.
+
+
 Die dokumentierte Historie wird nach Versionen geordnet. Undatierte
 Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
