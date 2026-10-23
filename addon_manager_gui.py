@@ -23,6 +23,9 @@ class AddonManagerDialog(QDialog):
         browse.clicked.connect(self.browse)
         row.addWidget(self.target, 1)
         row.addWidget(browse)
+        detect = QPushButton('WoW suchen…')
+        detect.clicked.connect(self.detect_wow)
+        row.addWidget(detect)
         layout.addLayout(row)
         layout.addWidget(QLabel("Ziel: ausschließlich Interface\\AddOns, niemals das Entwicklungsprojekt."))
         self.checkboxes = []
@@ -56,6 +59,12 @@ class AddonManagerDialog(QDialog):
 
     def selected(self):
         return tuple(c.text() for c in self.checkboxes if c.isChecked())
+
+    def detect_wow(self):
+        from wow_detection_dialog import WoWDetectionDialog
+        chooser = WoWDetectionDialog(self)
+        if chooser.exec() and chooser.selected_path:
+            self.target.setText(str(chooser.selected_path))
 
     def browse(self):
         folder = QFileDialog.getExistingDirectory(self, "WoW AddOns-Verzeichnis wählen")
