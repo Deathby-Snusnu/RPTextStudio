@@ -68,7 +68,7 @@ def plan_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_l
     with TemporaryDirectory() as directory:
         clone_root = Path(directory)
         for path, _, _ in targets:
-            clone = clone_root / path.relative_to(root)
+            clone = clone_root / path.relative_to(addons_root(root))
             clone.parent.mkdir(parents=True, exist_ok=True)
             clone.write_bytes(path.read_bytes())
         add_lua_profile(clone_root, addon, kind, key)

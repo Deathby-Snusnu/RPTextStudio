@@ -2,11 +2,13 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
+if exist "%~dp0..\..\addons\" goto :start_python
 set "STUDIO_EXE="
 if exist "%~dp0dist\RPTextStudio.exe" set "STUDIO_EXE=%~dp0dist\RPTextStudio.exe"
 if exist "%~dp0RPTextStudio.exe" set "STUDIO_EXE=%~dp0RPTextStudio.exe"
 if defined STUDIO_EXE goto :start_exe
 
+:start_python
 echo =============================================
 echo   RP Text Studio 0.1.9 - Start
  echo =============================================

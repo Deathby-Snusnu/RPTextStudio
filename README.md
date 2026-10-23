@@ -6,8 +6,18 @@ Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, Hexe
 
 ## Dokumentation
 
-[Sammlungsübersicht](../README.md) · [Bedienungsanleitung](HANDBUCH.md) ·
-[Changelog](CHANGELOG.md) · [Verpackung](../VERPACKUNG.md)
+[Sammlungsübersicht](../../README.md) · [Bedienungsanleitung](../../docs/RPTextStudio/HANDBUCH.md) ·
+[Changelog](CHANGELOG.md) · [Verpackung](../../docs/VERPACKUNG.md)
+
+Der Editor liegt unter `apps\RPTextStudio`, die sechs AddOns unter `addons`.
+Beim Öffnen sind sowohl der Projektstamm als auch dessen `addons`-Ordner
+möglich. Entpackte Installations-ZIPs mit direkten AddOn-Unterordnern bleiben
+unterstützt. Editor-Register werden im jeweiligen Projekt unter `data` gespeichert.
+Alte Register direkt im Projektstamm werden weiterhin gelesen, solange
+keine neuere Fassung in `data` existiert; beim Speichern entsteht die
+kanonische Datei in `data`, ohne das Original zu entfernen.
+Vorhandene EXEs wurden beim Umzug erhalten, aber nicht neu gebaut.
+Für den aktuellen Quellstand Python direkt verwenden oder die EXE neu bauen.
 
 ## Installation (Windows)
 
@@ -17,29 +27,33 @@ Sie enthält Python, Qt und das Handbuch und kann ohne die Python-Ordnerstruktur
 weitergegeben werden. Die bearbeiteten AddOn-Dateien bleiben separat und
 werden über **Projektordner öffnen** geladen.
 Build-Anleitung, Schreibrechte und Hinweise zur Weitergabe:
-[Windows-EXE bauen](HANDBUCH.md#windows-exe-bauen).
-`Start.bat` bevorzugt eine vorhandene `RPTextStudio.exe` im Editor-Ordner,
-danach `dist\RPTextStudio.exe`; nur ohne EXE gilt die folgende Python-Einrichtung.
+[Windows-EXE bauen](../../docs/RPTextStudio/HANDBUCH.md#windows-exe-bauen).
+Im vollständigen Entwicklungsprojekt startet `Start.bat` immer den aktuellen
+Python-Quellstand, damit eine alte EXE keine veralteten Pfade verwendet.
+Außerhalb dieser Struktur bevorzugt der Starter eine vorhandene
+`RPTextStudio.exe` im Editor-Ordner, danach `dist\RPTextStudio.exe`.
 
 **Voraussetzungen:** Windows, Python und die Laufzeitabhängigkeit
 `PySide6>=6.8,<7` aus [requirements.txt](requirements.txt). Der bisher
 dokumentierte Python-Bereich ist 3.11–3.13; eine vollständig ausgeführte
 Testmatrix für diese Versionen ist nicht nachgewiesen.
 
-**Automatischer Python-Start (ohne vorhandene EXE):** [Start.bat](Start.bat) doppelklicken. Das Skript
-erstellt bei Bedarf `.venv`, aktiviert sie, ruft bei jedem Start pip mit
-`requirements.txt` auf und startet `main.py`. [start_windows.bat](start_windows.bat)
+**Automatischer Python-Start:** [Start.bat](Start.bat) doppelklicken. Das Skript
+verwendet im vollständigen Projekt die gemeinsame `.venv` im Projektstamm,
+erstellt sie bei Bedarf und installiert `requirements.txt` nur bei fehlendem
+PySide6. Außerhalb dieser Struktur wird eine lokale `.venv` verwendet.
+Anschließend startet es `main.py`. [start_windows.bat](start_windows.bat)
 ist ein Alias. Python muss über `py` oder `python` erreichbar sein.
 `py -3` wählt die verfügbare Python-3-Installation, nicht ausdrücklich eine
 Version aus dem oben genannten Bereich. Bei Fehlern bleibt das Fenster offen.
 
-**Manuelle Einrichtung:** PowerShell im Ordner `RPTextStudio` öffnen.
+**Manuelle Einrichtung:** PowerShell im Projektstamm öffnen.
 Beispiel mit installiertem Python 3.13:
 
 ```powershell
 py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe main.py
+.\.venv\Scripts\python.exe -m pip install -r apps\RPTextStudio\requirements.txt
+.\.venv\Scripts\python.exe apps\RPTextStudio\main.py .
 ```
 
 Die Umgebung nur erstellen, wenn noch keine passende `.venv` existiert.
@@ -55,7 +69,7 @@ Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in dies
 3. Rechts den Text bearbeiten oder unten Deutsch, Englisch und Französisch parallel vergleichen/bearbeiten.
 4. **Alles prüfen**, dann **Änderungen speichern**. Der Editor legt Sicherungen als `.bak` an.
 
-**Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird `HANDBUCH.md` im Programm angezeigt. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
+**Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird das [Handbuch](../../docs/RPTextStudio/HANDBUCH.md) im Programm angezeigt. Beim EXE-Build wird es eingebettet. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
 
 ## Übersetzungszuordnung
 
@@ -63,7 +77,7 @@ Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in dies
 - „Gespeicherte Verknüpfung anzeigen“ nutzt ausschließlich bestätigte Zuordnungen, keine automatischen Vermutungen.
 - Textvarianten per Dropdown mit sofortiger Vorschau auswählen und dann „Diese Texte verknüpfen“ anklicken.
 - Mit „Zuordnung lösen“ die Gruppe entfernen, ohne den RP-Text zu löschen.
-- Zuordnungen werden getrennt in `.rptextstudio-translations.json` im Projektordner gespeichert. Lua-Dateien bleiben kompatibel.
+- Zuordnungen werden getrennt in `data\.rptextstudio-translations.json` im Projekt gespeichert. Lua-Dateien bleiben kompatibel.
 - Alte oder nicht mehr eindeutig auffindbare Referenzen gelten als nicht zugeordnet, statt falsche Übersetzungen anzuzeigen.
 
 ## Sprachvergleich
@@ -82,11 +96,11 @@ Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in dies
 - **Alles prüfen** ersetzt keinen vollständigen Lua-Syntaxtest und keinen Spieltest.
 - Windows-EXE über `build_exe.bat` selbst erstellbar; keine automatische Übersetzung.
 
-Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen in [HANDBUCH.md](HANDBUCH.md).
+Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen im [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
 
 ## Tests
 
-Im Ordner `RPTextStudio` mit der projektlokalen Python-Umgebung ausführen.
+Im Projektstamm mit der gemeinsamen Python-Umgebung ausführen.
 `pytest` ist eine zusätzliche Testabhängigkeit und nicht in den
 Laufzeitabhängigkeiten aus `requirements.txt` enthalten. Bei Bedarf einmalig
 in der projektlokalen Umgebung installieren:
@@ -96,7 +110,7 @@ in der projektlokalen Umgebung installieren:
 ```
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests -v
+.\.venv\Scripts\python.exe -m pytest apps\RPTextStudio\tests -v
 ```
 
 Pytest führt auch die vorhandenen `unittest.TestCase`-Tests aus; die
@@ -164,19 +178,20 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 
 Über **Rassen-/Klassen-Manager** neue redaktionelle Profile mit Anzeigenamen, interner ID und RP-Sprachstil anlegen. Beispiel: `Nachtelf` / `NightElf` / `Naturverbunden, geheimnisvoll, traditionsbewusst`. Das neue Projektregister `.rptextstudio-races-classes.json` hält diese Metadaten unabhängig von den WoW-Dateien. Optional wird in vorhandenen `Racial.lua` oder `Classes.lua` des gewählten AddOns in allen verfügbaren Sprachen ein neuer Textzweig mit `RP_GREETING` erstellt. Eingaben werden validiert; vor Lua-Änderungen erfolgen Testläufe auf temporären Kopien und Backups.
 
-**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe [Handbuch](HANDBUCH.md).
+**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
 
 ## Projektdateien und Sicherungen
 
 | Datei | Inhalt | Wirkung im Spiel |
 | --- | --- | --- |
-| `.rptextstudio-translations.json` | Explizite Übersetzungsgruppen | Keine |
-| `.rptextstudio-spells.json` | Zauber-/Schlüsselzuordnungen für Makros | Erst durch Nutzung des erzeugten Makros |
-| `.rptextstudio-races-classes.json` | Redaktionelle Rassen-/Klassenprofile | Keine; optionale Lua-Zweige sind separat |
+| `data\.rptextstudio-translations.json` | Explizite Übersetzungsgruppen | Keine |
+| `data\.rptextstudio-spells.json` | Zauber-/Schlüsselzuordnungen für Makros | Erst durch Nutzung des erzeugten Makros |
+| `data\.rptextstudio-races-classes.json` | Redaktionelle Rassen-/Klassenprofile | Keine; optionale Lua-Zweige sind separat |
 
-Die Register liegen im geöffneten Projektordner, nicht zwingend neben dem
-Editor. Das Sammlungspaket lässt versteckte Punktdateien aus; bei einem
-Projektumzug diese Register bei Bedarf separat sichern und mitnehmen.
+Die Register liegen unter `data` im geöffneten Projekt, nicht zwingend neben dem
+Editor. Bei Auswahl von `addons` im vollständigen Quellprojekt wird dafür
+der übergeordnete Projektstamm verwendet. Installationspakete lassen diese
+Register aus; bei einem Projektumzug den gesamten `data`-Ordner mitnehmen.
 Lua-Sicherungen tragen einen Zeitstempel vor `.bak`; JSON-Sicherungen
 verwenden den Namen der jeweiligen Datei mit zusätzlichem `.bak`.
 Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
@@ -186,6 +201,7 @@ Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 | Modul | Zuständigkeit |
 | --- | --- |
 | [main.py](main.py) | GUI, Projekt-/ZIP-Öffnen, Filter, Sprachvergleich und Speichervorgänge |
+| [project_paths.py](project_paths.py) | Projekt-/AddOn-Wurzeln, Metadaten- und Handbuchpfade |
 | [lua_text.py](lua_text.py) | Statischer Lua-Listenparser, Validierung, gezieltes Schreiben und Sicherungen |
 | [key_creation.py](key_creation.py) | Neue Schlüssel in bestehenden statischen Texttabellen |
 | [translation_links.py](translation_links.py) | Sprachübergreifende Poolkennungen, Textreferenzen und JSON-Speicherung |

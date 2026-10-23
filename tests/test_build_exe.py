@@ -40,6 +40,19 @@ class BuildExeTests(unittest.TestCase):
         self.assertIn("goto :failed", check.group(1))
         self.assertLess(check.start(), build.index(" -m PyInstaller"))
 
+    def test_collection_starter_uses_current_sources_before_old_executable(self):
+        start = (ROOT / "Start.bat").read_text(encoding="utf-8")
+        guard = 'if exist "%~dp0..\\..\\addons\\" goto :start_python'
+        self.assertIn(guard, start)
+        self.assertLess(start.index(guard), start.index('set "STUDIO_EXE="'))
+        self.assertIn('set "VENV_DIR=%~dp0..\\..\\.venv"', start)
+        self.assertNotIn('call "%VENV_ACTIVATE%"', start)
+
+    def test_build_bundles_manual_from_collection_docs(self):
+        build = (ROOT / "build_exe.bat").read_text(encoding="utf-8")
+        self.assertIn('set "MANUAL=%~dp0..\\..\\docs\\RPTextStudio\\HANDBUCH.md"', build)
+        self.assertIn('--add-data "%MANUAL%;."', build)
+
 
 if __name__ == "__main__":
     unittest.main()
