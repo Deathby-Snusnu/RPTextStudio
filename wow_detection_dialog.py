@@ -6,7 +6,7 @@ target. The target is not used for deployment until the separate installer appro
 from __future__ import annotations
 
 from pathlib import Path
-from PySide6.QtCore import QObject, QThread, Signal, Slot
+from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QLineEdit, QPushButton, QFileDialog, QMessageBox, QCheckBox,
@@ -116,7 +116,7 @@ class WoWDetectionDialog(QDialog):
             self.list.addItem(label)
         if not matches:
             self.list.addItem("Keine Installation erkannt. Pfad manuell auswählen.")
-            self.list.item(0).setFlags(self.list.item(0).flags() & ~self.list.item(0).flags().__class__.ItemIsSelectable)
+            self.list.item(0).setFlags(self.list.item(0).flags() & ~Qt.ItemFlag.ItemIsSelectable)
         self.select.setEnabled(bool(self.manual.text().strip()))
         self.scan.setEnabled(True)
         self.stop.setEnabled(False)
@@ -169,8 +169,8 @@ class WoWDetectionDialog(QDialog):
         self.accept()
 
     def closeEvent(self, event):
-        self.stop_scan()
-        if self.thread is not None:
-            self.thread.quit()
-            self.thread.wait(5000)
+        if self.thread is not None and self.thread.isRunning():
+            self.stop_scan()
+            event.ignore()
+            return
         super().closeEvent(event)
