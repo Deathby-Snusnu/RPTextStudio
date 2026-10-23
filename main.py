@@ -180,6 +180,8 @@ class Studio(QMainWindow):
         add(project_menu,'Zauber-Manager…',self.open_spell_manager)
         add(project_menu,'Rassen-/Klassen-Manager…',self.open_race_class_manager)
         add(project_menu,'Projekt prüfen',self.validate_all,'F7')
+        project_menu.addSeparator()
+        add(project_menu,'Neues Klassen-AddOn erstellen…',self.open_project_generator)
 
         translations=self.menuBar().addMenu('Übersetzungen')
         add(translations,'Texte verknüpfen',self.link_selected)
@@ -203,6 +205,17 @@ class Studio(QMainWindow):
         self.addToolBar(toolbar)
         for label in ('Projekt öffnen…','Änderungen speichern','Text hinzufügen','Projekt prüfen','Mit OpenAI übersetzen…'):
             toolbar.addAction(actions[label])
+
+    def open_project_generator(self):
+        from addon_project_wizard import AddonProjectWizard
+        if self.root is None:
+            QMessageBox.information(self, 'Projekt öffnen', 'Bitte zuerst die RPAddOns-Projektwurzel öffnen.')
+            return
+        if self.changes or self.links_dirty:
+            QMessageBox.information(self, 'Ungespeicherte Änderungen', 'Bitte Änderungen zuerst speichern.')
+            return
+        if AddonProjectWizard(self.root, self).exec():
+            self.load(self.root)
 
     def open_workspace_wizard(self):
         if self.root is None:
