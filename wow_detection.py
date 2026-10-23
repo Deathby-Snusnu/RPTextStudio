@@ -99,7 +99,9 @@ def inspect_client(path: Path, source: str = "scan") -> WoWInstallation | None:
     if not plausible:
         return None
     # A writable target may not yet exist; never create it during detection.
-    if (interface.exists() and not has_interface) or (addons.exists() and not has_addons):
+    if (_linked(interface) or _linked(addons) or
+            (interface.exists() and not has_interface) or
+            (addons.exists() and not has_addons)):
         return None
     reasons = []
     if exe:
