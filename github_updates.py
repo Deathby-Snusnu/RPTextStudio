@@ -137,7 +137,9 @@ def _development(name: str) -> tuple[str | None, str | None, str | None]:
 
 def _resolve_repository(name: str, project: Path | None) -> str | None:
     if project is None:
-        return name if name in ADDONS else None
+        if name not in ADDONS:
+            raise ValueError("Unbekanntes AddOn ohne Projektregister.")
+        return name
     projects = discover(project)
     if name not in projects:
         raise ValueError("Nicht bekanntes lokales AddOn.")
