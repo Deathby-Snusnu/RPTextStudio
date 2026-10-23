@@ -20,6 +20,10 @@ MAX_FILES = 10000
 MAX_BYTES = 256 * 1024 * 1024
 
 
+def _linked(path: Path) -> bool:
+    return path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction())
+
+
 class InstallError(RuntimeError):
     pass
 
@@ -45,19 +49,19 @@ def _hash(path: Path) -> str:
 
 
 def _files(folder: Path, *, runtime: bool) -> dict[str, Path]:
-    if folder.is_symlink() or not folder.is_dir():
+    if _linked(folder) or not folder.is_dir():
         raise InstallError(f"Ungültiger AddOn-Ordner: {folder}")
     result = {}
     count = total = 0
     for root, dirs, files in os.walk(folder, followlinks=False):
         here = Path(root)
         for directory in dirs:
-            if (here / directory).is_symlink():
+            if _linked(here / directory):
                 raise InstallError(f"Verknüpfung im AddOn: {here / directory}")
         dirs[:] = sorted(d for d in dirs if not runtime or d.lower() not in SKIP_DIRS)
         for filename in sorted(files):
             path = here / filename
-            if path.is_symlink() or not path.is_file():
+            if _linked(path) or not path.is_file():
                 raise InstallError(f"Ungültige Datei: {path}")
             rel = path.relative_to(folder).as_posix()
             if runtime and path.suffix.lower() not in RUNTIME_SUFFIXES:
@@ -76,7 +80,7 @@ def _validate_target(target: Path, source: Path) -> Path:
     if target.name.casefold() != "addons" or target.parent.name.casefold() != "interface":
         raise InstallError("Ziel muss der WoW-Ordner Interface/AddOns sein.")
     for folder in (target, *target.parents):
-        if folder.is_symlink():
+        if _linked(folder):
             raise InstallError(f"Symbolischer Link/Junction nicht zulässig: {folder}")
     canonical = target.resolve()
     if canonical == source or canonical in source.parents or source in canonical.parents:
@@ -94,7 +98,7 @@ def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> N
         if (target / name).exists() and not (target / name).is_dir():
             raise InstallError(f"Ziel ist kein Verzeichnis: {target / name}")
         for candidate in (folder, target / name):
-            if candidate.exists() and candidate.is_symlink():
+            if candidate.exists() and _linked(candidate):
                 raise InstallError(f"Verknüpfung nicht zulässig: {candidate}")
 
 
@@ -125,7 +129,7 @@ def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
         raise InstallError("Keine Änderungen zur Installation.")
     target.mkdir(parents=True, exist_ok=True)
     backups = target / ".addon-backups"
-    if backups.is_symlink():
+    if _linked(backups):
         raise InstallError("Unsicherer Backup-Ordner.")
     token = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:10]
     stage = Path(tempfile.mkdtemp(prefix=".rpstudio-stage-", dir=target))
@@ -172,8 +176,9 @@ def rollback(target: Path, backup: Path) -> None:
     backup = Path(backup).absolute()
     if target.name.casefold() != "addons" or target.parent.name.casefold() != "interface":
         raise InstallError("Ungültiger Installationspfad.")
+    _validate_target(target, backup)
     base = target / ".addon-backups"
-    if backup.parent != base or backup.is_symlink() or base.is_symlink():
+    if backup.parent != base or _linked(backup) or _linked(base):
         raise InstallError("Sicherung liegt außerhalb des Backup-Verzeichnisses.")
     data = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
     names = data["names"]
@@ -181,7 +186,7 @@ def rollback(target: Path, backup: Path) -> None:
     if any(n not in ADDONS for n in names):
         raise InstallError("Ungültiger Backup-Inhalt.")
     for name in names:
-        if (target / name).is_symlink() or (backup / name).is_symlink():
+        if _linked(target / name) or _linked(backup / name):
             raise InstallError("Verknüpfte Verzeichnisse sind nicht zulässig.")
         if name in previous and not (backup / name).is_dir():
             raise InstallError(f"Sicherung fehlt: {name}")
