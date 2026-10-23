@@ -63,7 +63,10 @@ def _files(folder: Path, *, runtime: bool) -> dict[str, Path]:
         raise InstallError(f"Ungültiger AddOn-Ordner: {folder}")
     result = {}
     count = total = 0
-    for root, dirs, files in os.walk(folder, followlinks=False):
+    def fail_walk(error: OSError) -> None:
+        raise error
+
+    for root, dirs, files in os.walk(folder, followlinks=False, onerror=fail_walk):
         here = Path(root)
         for directory in dirs:
             if _linked(here / directory):
