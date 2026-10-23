@@ -176,7 +176,8 @@ def rollback(target: Path, backup: Path) -> None:
     backup = Path(backup).absolute()
     if target.name.casefold() != "addons" or target.parent.name.casefold() != "interface":
         raise InstallError("Ungültiger Installationspfad.")
-    _validate_target(target, backup)
+    if any(_linked(folder) for folder in (target, *target.parents)):
+        raise InstallError("Unsicheres Installationsziel.")
     base = target / ".addon-backups"
     if backup.parent != base or _linked(backup) or _linked(base):
         raise InstallError("Sicherung liegt außerhalb des Backup-Verzeichnisses.")
