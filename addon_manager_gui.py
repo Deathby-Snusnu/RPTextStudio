@@ -71,7 +71,7 @@ class AddonManagerDialog(QDialog):
         if not self.target.text().strip():
             QMessageBox.information(self, 'Installationsziel fehlt', 'Bitte zuerst eine WoW-Installation auswählen.')
             return
-        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self).exec()
+        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self, project=self.project).exec()
 
     def detect_wow(self):
         from wow_detection_dialog import WoWDetectionDialog
