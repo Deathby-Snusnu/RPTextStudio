@@ -10,6 +10,7 @@ from pathlib import Path
 from collections import deque
 import os
 import re
+import stat
 
 CLIENT_DIRS = {
     "_retail_": "retail",
@@ -24,6 +25,7 @@ EXE_NAMES = {"wow.exe", "wowclassic.exe", "wowclassicera.exe", "wowt.exe",
              "wow-64.exe", "wowclassic-64.exe"}
 WOW_NAMES = {"world of warcraft", "wow", "wow forever", "wow-forever", "wowforever"}
 MAX_DIRECTORY_VISITS = 20000
+MAX_DIRECTORY_ENTRIES = 200000
 MAX_DEPTH = 4
 
 
@@ -40,7 +42,14 @@ class WoWInstallation:
 
 
 def _linked(path: Path) -> bool:
-    return path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction())
+    try:
+        details = path.lstat()
+    except OSError:
+        return False
+    reparse_point = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return stat.S_ISLNK(details.st_mode) or bool(
+        getattr(details, "st_file_attributes", 0) & reparse_point
+    )
 
 
 def _usable_dir(path: Path) -> bool:
@@ -140,14 +149,35 @@ def _merge(results: list[WoWInstallation]) -> list[WoWInstallation]:
     return sorted(merged.values(), key=lambda i: (not i.verified, i.client_type, str(i.client_root).casefold()))
 
 
+def _windows_drive_type(path: Path) -> int:
+    if os.name != "nt":
+        return 3
+    try:
+        import ctypes
+        return ctypes.windll.kernel32.GetDriveTypeW(str(Path(path).anchor))
+    except (AttributeError, OSError):
+        return 0
+
+
+def _local_drive_roots() -> tuple[Path, ...]:
+    if os.name != "nt":
+        return tuple(
+            path for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            if (path := Path(f"{letter}:\\")).exists()
+        )
+    return tuple(
+        path for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if _windows_drive_type(path := Path(f"{letter}:\\")) in (2, 3, 6)
+    )
+
+
 def known_locations(env: dict[str, str] | None = None,
                     drives: tuple[Path, ...] | None = None) -> list[Path]:
     env = os.environ if env is None else env
     bases = [Path(env[k]) for k in ("ProgramFiles(x86)", "ProgramFiles", "PUBLIC")
              if env.get(k)]
     if drives is None:
-        drives = tuple(Path(f"{letter}:\\") for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ"
-                       if Path(f"{letter}:\\").exists())
+        drives = _local_drive_roots()
     candidates = []
     for base in (*bases, *drives):
         for rel in ("World of Warcraft", "Games/World of Warcraft",
@@ -160,15 +190,28 @@ def known_locations(env: dict[str, str] | None = None,
 def scan_selected_drives(drives: tuple[Path, ...], *,
                          max_depth: int = MAX_DEPTH,
                          max_visits: int = MAX_DIRECTORY_VISITS,
+                         max_entries: int | None = None,
                          cancelled=None) -> list[Path]:
     """Opt-in bounded search: never traverse junctions, symlinks or network shares."""
-    if not 0 <= max_depth <= 8 or not 1 <= max_visits <= MAX_DIRECTORY_VISITS:
+    if (not 0 <= max_depth <= 8 or not 1 <= max_visits <= MAX_DIRECTORY_VISITS
+            or (max_entries is not None
+                and not 1 <= max_entries <= MAX_DIRECTORY_ENTRIES)):
         raise ValueError("Ungültige Suchgrenzen")
     found = []
     visited = 0
-    queue = deque((Path(root).absolute(), 0) for root in drives)
+    entry_limit = max_entries or min(MAX_DIRECTORY_ENTRIES, max_visits * 10)
+    queue = deque()
+    for root in drives:
+        if cancelled is not None and cancelled():
+            break
+        if len(queue) >= max_visits:
+            break
+        folder = Path(root).absolute()
+        if _windows_drive_type(folder) in (2, 3, 6):
+            queue.append((folder, 0))
     seen = set()
-    while queue and visited < max_visits:
+    entries_examined = 0
+    while queue and visited < max_visits and entries_examined < entry_limit:
         if cancelled is not None and cancelled():
             break
         folder, depth = queue.popleft()
@@ -184,9 +227,20 @@ def scan_selected_drives(drives: tuple[Path, ...], *,
             found.append(folder)
         if depth >= max_depth:
             continue
-        for child in _children(folder):
-            if _usable_dir(child):
-                queue.append((child, depth + 1))
+        try:
+            children = iter(folder.iterdir())
+            while entries_examined < entry_limit and len(queue) < max_visits:
+                if cancelled is not None and cancelled():
+                    return found
+                try:
+                    child = next(children)
+                except StopIteration:
+                    break
+                entries_examined += 1
+                if _usable_dir(child):
+                    queue.append((child, depth + 1))
+        except (OSError, PermissionError):
+            continue
     return found
 
 
