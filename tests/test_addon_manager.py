@@ -43,6 +43,16 @@ class AddonInstallerTests(unittest.TestCase):
         with self.assertRaises(InstallError):
             install(self.source, self.target, ("HexerRP",), approved=plan)
 
+    def test_changed_destination_invalidates_preview(self):
+        installed = self.target / "HexerRP"
+        installed.mkdir()
+        (installed / "HexerRP.toc").write_text("HexerRP.lua\n", encoding="utf-8")
+        (installed / "HexerRP.lua").write_text("old", encoding="utf-8")
+        plan = preview(self.source, self.target, ("HexerRP",))
+        (installed / "HexerRP.lua").write_text("changed after preview", encoding="utf-8")
+        with self.assertRaises(InstallError):
+            install(self.source, self.target, ("HexerRP",), approved=plan)
+
     def test_blocks_wrong_target(self):
         with self.assertRaises(InstallError):
             preview(self.source, self.source, ("HexerRP",))
