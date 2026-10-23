@@ -10,6 +10,7 @@ import os
 import shutil
 import tempfile
 import uuid
+from addon_registry import discover
 
 ADDONS = ("DruidenRP", "HexerRP", "JaegerRP", "PaladinRP", "RPChatMod", "RPControlCenter")
 RUNTIME_SUFFIXES = {".toc", ".lua", ".xml", ".blp", ".tga", ".dds", ".png", ".jpg",
@@ -89,7 +90,7 @@ def _validate_target(target: Path, source: Path) -> Path:
 
 
 def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> None:
-    if not names or len(names) != len(set(names)) or any(n not in ADDONS for n in names):
+    known = discover(source)\n    if not names or len(names) != len(set(names)) or any(n not in known for n in names):
         raise InstallError("Ungültige AddOn-Auswahl.")
     for name in names:
         folder = source / name
