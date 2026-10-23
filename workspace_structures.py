@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from key_creation import new_spell, ensure_key
 from race_class_manager import validate_profile, discover_targets, load_registry, register, add_lua_profile
 from lua_text import parse_pools
+from project_paths import addons_root
 
 FILES = ("Texts.lua", "Racial.lua", "Classes.lua", "RaceClass.lua")
 def plan_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: str):
@@ -27,7 +28,7 @@ def plan_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: 
     filename = FILES[mode]
     targets = []
     for lang in ("deDE","enUS","frFR"):
-        p = root / addon / "locales" / lang / filename
+        p = addons_root(root) / addon / "locales" / lang / filename
         if not p.is_file():
             continue
         pools = parse_pools(p.read_text(encoding="utf-8-sig"))

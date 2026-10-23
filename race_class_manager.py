@@ -11,12 +11,13 @@ import re
 import tempfile
 from key_creation import ensure_key, new_spell
 from lua_text import parse_pools
+from project_paths import addons_root, metadata_path
 
 REGISTRY = '.rptextstudio-races-classes.json'
 KEYS = {'race':'races', 'class':'classes'}
 
 def load_registry(root:Path)->dict:
-    file=root/REGISTRY
+    file=metadata_path(root, REGISTRY)
     if not file.exists():return {'version':1,'races':{},'classes':{}}
     raw=json.loads(file.read_text(encoding='utf-8'))
     if not isinstance(raw,dict) or not isinstance(raw.get('races'),dict) or not isinstance(raw.get('classes'),dict):
@@ -37,8 +38,8 @@ def register(root:Path,kind:str,key:str,display:str,style:str,addons:list[str]|N
     obj=load_registry(root); bucket=obj[KEYS[kind]]
     if key in bucket:raise ValueError(f'{key} ist bereits registriert')
     bucket[key]={'name':display.strip(),'style':style.strip(),'addons':addons or []}
-    target=root/REGISTRY
-    fd,temp=tempfile.mkstemp(dir=root,prefix='.rpstudio-',suffix='.tmp')
+    target=metadata_path(root, REGISTRY, write=True)
+    fd,temp=tempfile.mkstemp(dir=target.parent,prefix='.rpstudio-',suffix='.tmp')
     try:
         with os.fdopen(fd,'w',encoding='utf-8') as f:
             json.dump(obj,f,indent=2,ensure_ascii=False);f.write('\n')
@@ -51,7 +52,7 @@ def discover_targets(root:Path,addon:str,kind:str):
     filename='Racial.lua' if kind=='race' else 'Classes.lua'
     targets=[]
     for locale in ('deDE','enUS','frFR'):
-        p=root/addon/'locales'/locale/filename
+        p=addons_root(root)/addon/'locales'/locale/filename
         if not p.exists():continue
         pools=parse_pools(p.read_text(encoding='utf-8-sig'))
         roots={k[:3] for k in pools if len(k)>=4 and k[:2]==('localeData',locale)}

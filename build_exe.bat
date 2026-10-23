@@ -6,13 +6,17 @@ echo =============================================
 echo   RP Text Studio - Windows-EXE erstellen
 echo =============================================
 
-set "VENV_PYTHON=%~dp0.venv\Scripts\python.exe"
+set "VENV_DIR=%~dp0.venv"
+if exist "%~dp0..\..\addons\" set "VENV_DIR=%~dp0..\..\.venv"
+set "VENV_PYTHON=%VENV_DIR%\Scripts\python.exe"
+set "MANUAL=%~dp0..\..\docs\RPTextStudio\HANDBUCH.md"
+if exist "%~dp0HANDBUCH.md" set "MANUAL=%~dp0HANDBUCH.md"
 
 if not exist "%VENV_PYTHON%" (
     echo [1/4] Virtuelle Python-Umgebung erstellen ...
     where py >nul 2>&1
     if not errorlevel 1 (
-        py -3 -m venv "%~dp0.venv"
+        py -3 -m venv "%VENV_DIR%"
     ) else (
         where python >nul 2>&1
         if errorlevel 1 (
@@ -20,7 +24,7 @@ if not exist "%VENV_PYTHON%" (
             echo Bitte Python 3.11 bis 3.13 installieren und erneut starten.
             goto :failed
         )
-        python -m venv "%~dp0.venv"
+        python -m venv "%VENV_DIR%"
     )
     if errorlevel 1 (
         echo FEHLER: Die virtuelle Umgebung konnte nicht erstellt werden.
@@ -36,7 +40,7 @@ if not exist "%~dp0main.py" (
     echo FEHLER: main.py wurde nicht gefunden.
     goto :failed
 )
-if not exist "%~dp0HANDBUCH.md" (
+if not exist "%MANUAL%" (
     echo FEHLER: HANDBUCH.md wurde nicht gefunden.
     goto :failed
 )
@@ -66,7 +70,7 @@ echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
     --distpath "%~dp0dist" ^
     --workpath "%~dp0build\pyinstaller" ^
     --specpath "%~dp0build" ^
-    --add-data "%~dp0HANDBUCH.md;." ^
+    --add-data "%MANUAL%;." ^
     --add-data "%~dp0assets\rp_text_studio_icon.svg;assets" ^
     "%~dp0main.py"
 if errorlevel 1 (

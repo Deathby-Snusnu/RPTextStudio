@@ -6,6 +6,7 @@ matching text, so changed lists cannot silently attach an unrelated translation.
 from __future__ import annotations
 import json
 from pathlib import Path
+from project_paths import metadata_path
 
 LANGS = ('deDE', 'enUS', 'frFR')
 FILE_NAME = '.rptextstudio-translations.json'
@@ -35,7 +36,7 @@ def reference(entries: list[str], index: int) -> dict:
     return {'index': index, 'text': entries[index]}
 
 def read_links(root: Path) -> dict:
-    file = root / FILE_NAME
+    file = metadata_path(root, FILE_NAME)
     if not file.exists():
         return {}
     payload = json.loads(file.read_text(encoding='utf-8'))
@@ -65,7 +66,7 @@ def read_links(root: Path) -> dict:
     return normalized
 
 def write_links(root: Path, pools: dict) -> None:
-    file = root / FILE_NAME
+    file = metadata_path(root, FILE_NAME, write=True)
     payload = {'version': 1, 'description': 'Explicit editor-only text associations; game Lua files are unaffected.', 'pools': pools}
     data = json.dumps(payload, indent=2, ensure_ascii=False) + '\n'
     if file.exists() and file.read_text(encoding='utf-8') == data:

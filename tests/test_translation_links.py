@@ -40,10 +40,10 @@ class TranslationTests(unittest.TestCase):
             pid=pool_id('HexerRP/locales/deDE/Texts.lua',('a','b'))
             links={pid:[{'deDE':{'index':0,'text':'Hallo'},'enUS':{'index':3,'text':'Hello'}}]}
             write_links(root,links)
-            before=(root/FILE_NAME).read_bytes()
+            before=(root/'data'/FILE_NAME).read_bytes()
             self.assertEqual(read_links(root),links)
             write_links(root,links)
-            self.assertEqual((root/FILE_NAME).read_bytes(),before)
-            self.assertFalse((root/(FILE_NAME+'.bak')).exists())
+            self.assertEqual((root/'data'/FILE_NAME).read_bytes(),before)
+            self.assertFalse((root/'data'/(FILE_NAME+'.bak')).exists())
 
 if __name__=='__main__':unittest.main()

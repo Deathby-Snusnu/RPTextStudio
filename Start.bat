@@ -12,8 +12,8 @@ echo   RP Text Studio 0.1.9 - Start
  echo =============================================
 
 set "VENV_DIR=%~dp0.venv"
+if exist "%~dp0..\..\addons\" set "VENV_DIR=%~dp0..\..\.venv"
 set "VENV_PYTHON=%VENV_DIR%\Scripts\python.exe"
-set "VENV_ACTIVATE=%VENV_DIR%\Scripts\activate.bat"
 
 if not exist "%VENV_PYTHON%" (
     echo [1/3] Virtuelle Python-Umgebung erstellen ...
@@ -35,31 +35,21 @@ if not exist "%VENV_PYTHON%" (
     )
 )
 
-if not exist "%VENV_ACTIVATE%" (
-    echo FEHLER: Die virtuelle Umgebung ist unvollstaendig.
-    echo Bitte den Ordner .venv entfernen und erneut starten.
-    goto :failed
-)
-
-echo [2/3] Virtuelle Umgebung aktivieren ...
-call "%VENV_ACTIVATE%"
-if errorlevel 1 (
-    echo FEHLER: Aktivieren der virtuellen Umgebung fehlgeschlagen.
-    goto :failed
-)
-
 if not exist "requirements.txt" (
     echo FEHLER: requirements.txt wurde nicht gefunden.
     goto :failed
 )
 
 echo [2/3] Abhaengigkeiten pruefen / bei Bedarf installieren ...
+"%VENV_PYTHON%" -c "import PySide6" >nul 2>&1
+if not errorlevel 1 goto :dependencies_ready
 "%VENV_PYTHON%" -m pip install -r "requirements.txt"
 if errorlevel 1 (
     echo FEHLER: Die Python-Abhaengigkeiten konnten nicht installiert werden.
     goto :failed
 )
 
+:dependencies_ready
 echo [3/3] RP Text Studio starten ...
 "%VENV_PYTHON%" "main.py" %*
 if errorlevel 1 (

@@ -20,12 +20,12 @@ class SpellManagerTests(unittest.TestCase):
             save_mappings(p, records)
             self.assertEqual(load_mappings(p),records)
             save_mappings(p,records)
-            self.assertFalse((p/'.rptextstudio-spells.json.bak').exists())
+            self.assertFalse((p/'data'/'.rptextstudio-spells.json.bak').exists())
             save_mappings(p,[])
-            self.assertTrue((p/'.rptextstudio-spells.json.bak').exists())
+            self.assertTrue((p/'data'/'.rptextstudio-spells.json.bak').exists())
 
     def test_real_hexer_keys(self):
-        addons=Path(__file__).resolve().parents[2]/'addons'
+        addons=Path(__file__).resolve().parents[3]/'addons'
         source=addons/'HexerRP/locales/deDE/Texts.lua'
         if not source.exists():
             self.skipTest('Addon fixture not distributed with the editor')

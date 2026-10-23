@@ -4,6 +4,7 @@ import zipfile
 import copy
 from translation_links import LANGS, pool_id, read_links, write_links, reference, resolve
 from pathlib import Path
+from project_paths import addons_root, manual_path, project_root
 from lua_text import parse_pools,update_file,validate_file,ParseError
 from key_creation import new_spell
 from key_deletion import spell_path, delete_from_files, prepare_deletion
@@ -281,8 +282,9 @@ class Studio(QMainWindow):
 
     def load(self,root:Path):
         if not self.maybe_save():return
+        root=project_root(root)
         files={};errors=[]
-        for p in sorted(root.glob('*/locales/*/*.lua')):
+        for p in sorted(addons_root(root).glob('*/locales/*/*.lua')):
             if p.parent.name not in LANGS or p.name=='Expansion.lua':continue
             try:
                 content=p.read_text(encoding='utf-8-sig')
@@ -981,9 +983,9 @@ class Studio(QMainWindow):
     def show_help(self):
         dlg=QDialog(self);dlg.setWindowTitle('RP Text Studio · Hilfe');dlg.resize(760,580)
         layout=QVBoxLayout(dlg);view=QTextBrowser()
-        doc=Path(__file__).with_name('HANDBUCH.md')
+        doc=manual_path()
         if doc.exists():view.setMarkdown(doc.read_text(encoding='utf-8'))
-        else:view.setPlainText('Handbuch nicht gefunden. Bitte HANDBUCH.md im Programmordner prüfen.')
+        else:view.setPlainText(f'Handbuch nicht gefunden: {doc}')
         layout.addWidget(view)
         close=QPushButton('Schließen');close.clicked.connect(dlg.accept);layout.addWidget(close)
         dlg.exec()

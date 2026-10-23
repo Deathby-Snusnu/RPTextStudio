@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from project_paths import metadata_path
 
 FILENAME = '.rptextstudio-spells.json'
 COMMANDS = {'HexerRP': '/wrp', 'PaladinRP': '/prp', 'JaegerRP': '/jrp', 'DruidenRP': '/drp'}
@@ -46,7 +47,7 @@ def make_macro(addon: str, spell: str, key: str, known_keys: list[str]) -> str:
 
 
 def load_mappings(root: Path) -> list[dict[str,str]]:
-    p = root / FILENAME
+    p = metadata_path(root, FILENAME)
     if not p.exists():
         return []
     data = json.loads(p.read_text(encoding='utf-8'))
@@ -59,7 +60,7 @@ def load_mappings(root: Path) -> list[dict[str,str]]:
 
 
 def save_mappings(root: Path, rows: list[dict[str,str]]) -> None:
-    p = root / FILENAME
+    p = metadata_path(root, FILENAME, write=True)
     payload = json.dumps({'schema': 1, 'mappings': rows}, indent=2, ensure_ascii=False) + '\n'
     if p.exists() and p.read_text(encoding='utf-8') == payload:
         return
