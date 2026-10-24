@@ -106,6 +106,7 @@ class UserAddonManagerDialog(QDialog):
         self.worker.failed.connect(self._failed)
         self.worker.done.connect(self.thread.quit)
         self.worker.failed.connect(self.thread.quit)
+        self.thread.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self._cleanup)
         self.thread.start()
 
@@ -144,8 +145,6 @@ class UserAddonManagerDialog(QDialog):
         self.status.setText("Prüfung fehlgeschlagen: " + message)
 
     def _cleanup(self):
-        if self.worker:
-            self.worker.deleteLater()
         if self.thread:
             self.thread.deleteLater()
         self.thread = None
