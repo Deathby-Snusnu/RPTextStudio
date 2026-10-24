@@ -143,7 +143,8 @@ def _validate_zip(archive: Path, name: str) -> tuple[dict[str, zipfile.ZipInfo],
                 raise DownloadError("Ungültiger Archivpfad.")
             if root_name is None:
                 root_name = parts[0]
-            if parts[0] != root_name or info.filename.startswith("/") or ":" in parts[0]:
+            if (parts[0] != root_name or info.filename.startswith("/")
+                    or any(":" in part for part in parts)):
                 raise DownloadError("Mehrere Archivwurzeln oder absoluter Pfad.")
             mode = (info.external_attr >> 16) & 0xFFFF
             if stat.S_ISLNK(mode):
