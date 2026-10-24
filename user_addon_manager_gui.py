@@ -137,13 +137,11 @@ class UserAddonManagerDialog(QDialog):
                     self.table.setItem(i, 3, QTableWidgetItem(row.available or "—"))
                     self.table.setItem(i, 4, QTableWidgetItem(row.status + ": " + row.detail))
             self.status.setText("GitHub-Versionsvergleich abgeschlossen. Keine Installation möglich.")
-        self._set_busy(False)
         if operation == "discover" and self.candidates:
             self._scan_after_cleanup = True
 
     def _failed(self, message):
         self.status.setText("Prüfung fehlgeschlagen: " + message)
-        self._set_busy(False)
 
     def _cleanup(self):
         if self.worker:
@@ -152,6 +150,7 @@ class UserAddonManagerDialog(QDialog):
             self.thread.deleteLater()
         self.thread = None
         self.worker = None
+        self._set_busy(False)
         if self._scan_after_cleanup:
             self._scan_after_cleanup = False
             self.select_installation()
