@@ -55,6 +55,7 @@ class UserAddonManagerDialog(QDialog):
         self.candidates = []
         self.installed = {}
         self._scan_after_cleanup = False
+        self._operation = None
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Anwender-Modus: Nur lesen. Keine Dateien werden installiert oder verändert."))
         top = QHBoxLayout()
@@ -130,18 +131,23 @@ class UserAddonManagerDialog(QDialog):
             return
         self._set_busy(True)
         self.status.setText("Prüfung läuft …")
+        self._operation = operation
         self.thread = QThread(self)
         self.worker = UserScanWorker(operation, target, self.channel.currentData(), name,
                                      staging_target)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
-        self.worker.done.connect(lambda result, op=operation: self._done(op, result))
+        self.worker.done.connect(self._on_done)
         self.worker.failed.connect(self._failed)
         self.worker.done.connect(self.thread.quit)
         self.worker.failed.connect(self.thread.quit)
         self.thread.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self._cleanup)
         self.thread.start()
+
+    @Slot(object)
+    def _on_done(self, results):
+        self._done(self._operation, results)
 
     def _done(self, operation, results):
         if operation == "discover":
@@ -180,6 +186,7 @@ class UserAddonManagerDialog(QDialog):
         if operation == "discover" and self.candidates:
             self._scan_after_cleanup = True
 
+    @Slot(str)
     def _failed(self, message):
         self.status.setText("Prüfung fehlgeschlagen: " + message)
 
@@ -188,6 +195,7 @@ class UserAddonManagerDialog(QDialog):
             self.thread.deleteLater()
         self.thread = None
         self.worker = None
+        self._operation = None
         self._set_busy(False)
         if self._scan_after_cleanup:
             self._scan_after_cleanup = False
