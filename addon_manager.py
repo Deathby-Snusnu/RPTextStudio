@@ -21,7 +21,17 @@ MAX_BYTES = 256 * 1024 * 1024
 
 
 def _linked(path: Path) -> bool:
-    return path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction())
+    if path.is_symlink():
+        return True
+    if hasattr(path, "is_junction"):
+        return path.is_junction()
+    if os.name != "nt":
+        return False
+    import stat
+    try:
+        return path.lstat().st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
+    except FileNotFoundError:
+        return False
 
 
 class InstallError(RuntimeError):
