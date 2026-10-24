@@ -196,7 +196,8 @@ def stage(name: str, channel: str, destination: Path) -> StagedAddon:
     if any(p.name.casefold() == "addons" and p.parent.name.casefold() == "interface"
            for p in (dest, *dest.parents)):
         raise DownloadError("Staging im WoW-AddOns-Verzeichnis ist verboten.")
-    if not dest.parent.is_dir() or any(p.is_symlink() for p in (dest.parent, *dest.parent.parents)):
+    from addon_manager import _linked
+    if not dest.parent.is_dir() or any(_linked(p) for p in (dest.parent, *dest.parent.parents)):
         raise DownloadError("Ungültiges oder verknüpftes Staging-Ziel.")
     commit, release_version = _resolve(name, channel)
     with tempfile.TemporaryDirectory(prefix=".rpstudio-download-", dir=dest.parent) as temporary:
