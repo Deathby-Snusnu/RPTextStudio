@@ -1,26 +1,31 @@
 """User mode: read-only WoW addon overview with background discovery and GitHub checks."""
 from __future__ import annotations
 from pathlib import Path
+from uuid import uuid4
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton,
-    QTableWidget, QTableWidgetItem, QMessageBox,
+    QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog,
 )
 from addon_manager import ADDONS
 from wow_installations import load_paths
 from wow_detection import discover_wow_installations, inspect_client
 from user_addon_manager import inspect_installed, check_installed
+from github_staging import stage
 
 
 class UserScanWorker(QObject):
     done = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, operation: str, target: Path | None = None, channel: str = "stable"):
+    def __init__(self, operation: str, target: Path | None = None, channel: str = "stable",
+                 name: str | None = None, staging_target: Path | None = None):
         super().__init__()
         self.operation = operation
         self.target = target
         self.channel = channel
+        self.name = name
+        self.staging_target = staging_target
 
     @Slot()
     def run(self):
@@ -31,6 +36,8 @@ class UserScanWorker(QObject):
                 result = inspect_installed(self.target)
             elif self.operation == "github":
                 result = check_installed(self.target, channel=self.channel)
+            elif self.operation == "stage":
+                result = stage(self.name, self.channel, self.staging_target)
             else:
                 raise ValueError("Unbekannte Operation.")
             self.done.emit(result)
@@ -72,8 +79,13 @@ class UserAddonManagerDialog(QDialog):
         self.check_button = QPushButton("GitHub-Versionen prüfen")
         self.check_button.clicked.connect(lambda: self._start("github"))
         self.check_button.setEnabled(False)
+        self.stage_button = QPushButton("Paket prüfen und bereitstellen…")
+        self.stage_button.clicked.connect(self.stage_selected)
+        self.stage_button.setEnabled(False)
+        self.table.currentCellChanged.connect(lambda *_: self._set_busy(self.thread is not None))
         actions.addWidget(self.channel)
         actions.addWidget(self.check_button)
+        actions.addWidget(self.stage_button)
         actions.addStretch(1)
         layout.addLayout(actions)
         self.status = QLabel("Suche nach vorhandenen WoW-Installationen …")
@@ -85,12 +97,32 @@ class UserAddonManagerDialog(QDialog):
         self.installations.setEnabled(not busy)
         self.channel.setEnabled(not busy)
         self.check_button.setEnabled(not busy and self.current_target() is not None)
+        self.stage_button.setEnabled(not busy and self.current_target() is not None and
+                                     0 <= self.table.currentRow() < self.table.rowCount())
 
     def current_target(self):
         index = self.installations.currentIndex()
         return self.candidates[index].addons_path if 0 <= index < len(self.candidates) else None
 
-    def _start(self, operation):
+    def stage_selected(self):
+        if self.thread is not None:
+            return
+        row = self.table.currentRow()
+        if not 0 <= row < self.table.rowCount():
+            return
+        name = self.table.item(row, 0).text()
+        channel = self.channel.currentData()
+        directory = QFileDialog.getExistingDirectory(self, "Lokalen Staging-Elternordner auswählen")
+        if not directory:
+            return
+        destination = Path(directory) / (name + "-" + channel + "-" + uuid4().hex[:10])
+        if QMessageBox.question(self, "GitHub-Paket vorbereiten",
+            f"{name} aus dem GitHub-Kanal {channel} ausschließlich in diesen Ordner herunterladen "
+            f"und prüfen?\n\n{destination}\n\nDeine WoW-AddOns bleiben unverändert.") != QMessageBox.Yes:
+            return
+        self._start("stage", name=name, staging_target=destination)
+
+    def _start(self, operation, *, name=None, staging_target=None):
         if self.thread is not None:
             return
         target = self.current_target()
@@ -99,7 +131,8 @@ class UserAddonManagerDialog(QDialog):
         self._set_busy(True)
         self.status.setText("Prüfung läuft …")
         self.thread = QThread(self)
-        self.worker = UserScanWorker(operation, target, self.channel.currentData())
+        self.worker = UserScanWorker(operation, target, self.channel.currentData(), name,
+                                     staging_target)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.done.connect(lambda result, op=operation: self._done(op, result))
@@ -132,6 +165,12 @@ class UserAddonManagerDialog(QDialog):
                                           "Noch nicht geprüft", entry.state)):
                     self.table.setItem(i, j, QTableWidgetItem(value))
             self.status.setText("Lokale RP-AddOns eingelesen. Keine Änderungen vorgenommen.")
+        elif operation == "stage":
+            self.status.setText(f"Paket vorbereitet: {results.directory}")
+            QMessageBox.information(self, "Paket geprüft und bereitgestellt",
+                f"{results.name} {results.version} wurde ohne Installation vorbereitet.\n"
+                f"Commit: {results.commit}\nSHA-256 (Archiv): {results.archive_sha256}\n"
+                f"Dateien: {results.files}\nZiel: {results.directory}")
         else:
             for i, row in enumerate(results):
                 if i < self.table.rowCount():
