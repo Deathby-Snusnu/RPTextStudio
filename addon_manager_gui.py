@@ -40,6 +40,9 @@ class AddonManagerDialog(QDialog):
         self.output.setReadOnly(True)
         layout.addWidget(self.output, 1)
         buttons = QHBoxLayout()
+        self.update_button = QPushButton("GitHub-Updates prüfen…")
+        self.update_button.clicked.connect(self.check_github_updates)
+        buttons.addWidget(self.update_button)
         self.scan_button = QPushButton("Vorschau erstellen")
         self.scan_button.clicked.connect(self.scan)
         self.apply_button = QPushButton("Auswahl installieren / aktualisieren")
@@ -59,6 +62,13 @@ class AddonManagerDialog(QDialog):
 
     def selected(self):
         return tuple(c.text() for c in self.checkboxes if c.isChecked())
+
+    def check_github_updates(self):
+        from github_update_dialog import GitHubUpdateDialog
+        if not self.target.text().strip():
+            QMessageBox.information(self, 'Installationsziel fehlt', 'Bitte zuerst eine WoW-Installation auswählen.')
+            return
+        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self).exec()
 
     def detect_wow(self):
         from wow_detection_dialog import WoWDetectionDialog
