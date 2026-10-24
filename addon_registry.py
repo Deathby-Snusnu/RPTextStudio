@@ -1,6 +1,8 @@
 """Discovery and opt-in metadata for RP Text Studio projects."""
 from __future__ import annotations
+from contextlib import contextmanager
 import json
+import os
 import re
 from pathlib import Path
 from project_paths import addons_root, project_root
@@ -8,6 +10,32 @@ from project_paths import addons_root, project_root
 ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{1,63}$")
 REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 REGISTRY = "addons.json"
+
+
+@contextmanager
+def _registry_lock(root: Path):
+    path = root / f".{REGISTRY}.lock"
+    with path.open("a+b") as stream:
+        stream.seek(0, os.SEEK_END)
+        if stream.tell() == 0:
+            stream.write(b"\0")
+            stream.flush()
+        stream.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(stream.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                stream.seek(0)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
 def discover(root: Path) -> dict[str, Path]:
@@ -53,24 +81,25 @@ def register(root: Path, entry: dict, *, persist=True) -> dict:
     repo = entry.get("repository")
     if repo is not None and (not isinstance(repo, str) or not REPOSITORY.fullmatch(repo)):
         raise ValueError("Ungültiges GitHub-Repository.")
-    data = load_registry(root)
-    if any(x["id"].casefold() == name.casefold() for x in data["addons"]):
-        raise ValueError("AddOn ist bereits registriert.")
-    data["addons"].append(dict(entry))
-    data["addons"].sort(key=lambda a: a["id"].lower())
-    if persist:
-        path = project_root(root) / REGISTRY
-        import os
-        import tempfile
-        fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".addons-", suffix=".json.tmp")
-        tmp = Path(temporary)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as stream:
-                json.dump(data, stream, ensure_ascii=False, indent=2)
-                stream.write("\n")
-            tmp.replace(path)
-        finally:
-            tmp.unlink(missing_ok=True)
+    root = project_root(root)
+    with _registry_lock(root):
+        data = load_registry(root)
+        if any(x["id"].casefold() == name.casefold() for x in data["addons"]):
+            raise ValueError("AddOn ist bereits registriert.")
+        data["addons"].append(dict(entry))
+        data["addons"].sort(key=lambda a: a["id"].lower())
+        if persist:
+            path = root / REGISTRY
+            import tempfile
+            fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".addons-", suffix=".json.tmp")
+            tmp = Path(temporary)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                    json.dump(data, stream, ensure_ascii=False, indent=2)
+                    stream.write("\n")
+                tmp.replace(path)
+            finally:
+                tmp.unlink(missing_ok=True)
     return data
 
 
