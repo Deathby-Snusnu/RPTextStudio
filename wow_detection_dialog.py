@@ -91,8 +91,10 @@ class WoWDetectionDialog(QDialog):
             return
         self.scan.setEnabled(False)
         self.stop.setEnabled(True)
+        self.matches = []
         self.list.clear()
         self.list.addItem("Suche läuft …")
+        self.list.item(0).setFlags(self.list.item(0).flags() & ~Qt.ItemFlag.ItemIsSelectable)
         import string
         drives = tuple(Path(f"{letter}:\\") for letter in string.ascii_uppercase
                        if Path(f"{letter}:\\").is_dir()) if self.extended.isChecked() else ()
