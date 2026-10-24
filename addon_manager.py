@@ -193,11 +193,23 @@ def rollback(target: Path, backup: Path) -> None:
     base = target / ".addon-backups"
     if backup.parent != base or _linked(backup) or _linked(base):
         raise InstallError("Sicherung liegt außerhalb des Backup-Verzeichnisses.")
+    from addon_registry import ID
     data = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
-    names = data["names"]
-    previous = set(data["previously_installed"])
-    if any(n not in ADDONS for n in names):
+    if not isinstance(data, dict):
         raise InstallError("Ungültiger Backup-Inhalt.")
+    names = data.get("names")
+    previous_names = data.get("previously_installed")
+    if (
+        not isinstance(names, list)
+        or not names
+        or not isinstance(previous_names, list)
+        or any(not isinstance(n, str) or not ID.fullmatch(n) for n in names + previous_names)
+        or len({n.casefold() for n in names}) != len(names)
+        or len(set(previous_names)) != len(previous_names)
+        or not set(previous_names).issubset(names)
+    ):
+        raise InstallError("Ungültiger Backup-Inhalt.")
+    previous = set(previous_names)
     for name in names:
         if _linked(target / name) or _linked(backup / name):
             raise InstallError("Verknüpfte Verzeichnisse sind nicht zulässig.")
