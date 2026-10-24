@@ -60,9 +60,17 @@ def register(root: Path, entry: dict, *, persist=True) -> dict:
     data["addons"].sort(key=lambda a: a["id"].lower())
     if persist:
         path = project_root(root) / REGISTRY
-        tmp = path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        tmp.replace(path)
+        import os
+        import tempfile
+        fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".addons-", suffix=".json.tmp")
+        tmp = Path(temporary)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                json.dump(data, stream, ensure_ascii=False, indent=2)
+                stream.write("\n")
+            tmp.replace(path)
+        finally:
+            tmp.unlink(missing_ok=True)
     return data
 
 
