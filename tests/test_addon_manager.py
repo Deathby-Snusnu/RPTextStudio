@@ -2,6 +2,8 @@
 import tempfile
 import unittest
 from pathlib import Path
+import shutil
+from unittest.mock import patch
 from addon_manager import InstallError, install, preview, rollback
 
 
@@ -52,6 +54,20 @@ class AddonInstallerTests(unittest.TestCase):
         (installed / "HexerRP.lua").write_text("changed after preview", encoding="utf-8")
         with self.assertRaises(InstallError):
             install(self.source, self.target, ("HexerRP",), approved=plan)
+
+    def test_staged_files_match_approved_source_snapshot(self):
+        plan = preview(self.source, self.target, ("HexerRP",))
+        copy2 = shutil.copy2
+
+        def corrupt_copy(source, destination):
+            result = copy2(source, destination)
+            Path(destination).write_text("tampered", encoding="utf-8")
+            return result
+
+        with patch("addon_manager.shutil.copy2", side_effect=corrupt_copy):
+            with self.assertRaises(InstallError):
+                install(self.source, self.target, ("HexerRP",), approved=plan)
+        self.assertFalse((self.target / "HexerRP").exists())
 
     def test_blocks_wrong_target(self):
         with self.assertRaises(InstallError):
