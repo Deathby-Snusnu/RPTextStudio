@@ -48,8 +48,13 @@ class GeneratorTests(unittest.TestCase):
     def test_stale_preview_rejected(self):
         spec = AddonProjectSpec()
         plan = preview_project(self.root, spec)
-        with self.assertRaises(ValueError):
-            generate_project(self.root, AddonProjectSpec(version="0.1.1"), plan)
+        for changed_spec in (
+            AddonProjectSpec(version="0.1.1"),
+            AddonProjectSpec(title="Changed title"),
+            AddonProjectSpec(interface=16002),
+        ):
+            with self.subTest(spec=changed_spec), self.assertRaises(ValueError):
+                generate_project(self.root, changed_spec, plan)
 
     def test_templates_complete(self):
         files = source_files("MagierRP", "Magier RP", ("deDE", "enUS", "frFR"), "0.1.0", 16001)
