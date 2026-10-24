@@ -18,7 +18,6 @@ OutputBaseFilename=RPTextStudio-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName=RP Text Studio
