@@ -19,6 +19,10 @@ kanonische Datei in `data`, ohne das Original zu entfernen.
 Vorhandene EXEs wurden beim Umzug erhalten, aber nicht neu gebaut.
 Für den aktuellen Quellstand Python direkt verwenden oder die EXE neu bauen.
 
+## Windows-Setup (neu, derzeit Draft)
+
+Ein reguläres Windows-Setup mit Startmenü, optionaler Desktopverknüpfung und Deinstallation lässt sich mit `build_installer.bat` erzeugen. Dazu werden Python und Inno Setup 6 benötigt. Das Paket wird unter `installer-dist/` abgelegt. Die vorgesehene Setup-Version `0.2.0` ist bis zur Release-Freigabe vorläufig. Details und manuelle Abnahmeschritte stehen in [WINDOWS-INSTALLER.md](WINDOWS-INSTALLER.md). Das Setup installiert ausschließlich den Editor, keine WoW-AddOns. Der Build wurde bisher nicht auf Windows ausgeführt.
+
 ## Installation (Windows)
 
 **Ohne Python auf dem Zielrechner:** Mit `build_exe.bat` lässt sich auf einem
