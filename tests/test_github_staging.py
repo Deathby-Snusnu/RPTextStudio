@@ -65,6 +65,13 @@ class GitHubStagingTests(unittest.TestCase):
         with self.assertRaises(DownloadError):
             _validate_zip(self.archive(content), "HexerRP")
 
+    def test_staging_never_targets_wow_interface_test_folder(self):
+        interface = self.root / "_classic_era_" / "Interface"
+        (interface / "TEST").mkdir(parents=True)
+        with patch("github_staging._resolve", side_effect=AssertionError("network")):
+            with self.assertRaises(DownloadError):
+                stage("HexerRP", "development", interface / "TEST" / "candidate")
+
     def test_staging_never_targets_wow(self):
         wow = self.root / "Interface" / "AddOns"
         wow.mkdir(parents=True)
