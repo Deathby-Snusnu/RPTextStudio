@@ -22,6 +22,7 @@ import zipfile
 
 from addon_manager import ADDONS, RUNTIME_SUFFIXES, SKIP_DIRS
 from github_updates import OWNER, _api, parse_toc
+from subprocess_windows import hidden_subprocess_kwargs
 
 MAX_ARCHIVE = 64 * 1024 * 1024
 MAX_UNPACKED = 256 * 1024 * 1024
@@ -52,7 +53,8 @@ def _token() -> str:
         return token.strip()
     try:
         result = subprocess.run(["gh", "auth", "token", "--hostname", "github.com"],
-                                capture_output=True, text=True, timeout=15, check=False)
+                                capture_output=True, text=True, timeout=15, check=False,
+                                **hidden_subprocess_kwargs())
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise DownloadError("GitHub CLI / Anmeldung nicht verfügbar.") from exc
     if result.returncode or not result.stdout.strip():
@@ -193,9 +195,10 @@ def stage(name: str, channel: str, destination: Path) -> StagedAddon:
     dest = Path(destination).absolute()
     if dest.exists() or dest.is_symlink():
         raise DownloadError("Ziel existiert bereits; Staging darf nichts überschreiben.")
-    if any(p.name.casefold() == "addons" and p.parent.name.casefold() == "interface"
+    if any(p.name.casefold() == "interface" and p.parent.name.casefold() in
+           ("_classic_era_", "_classic_", "_retail_", "_ptr_", "_classic_ptr_")
            for p in (dest, *dest.parents)):
-        raise DownloadError("Staging im WoW-AddOns-Verzeichnis ist verboten.")
+        raise DownloadError("Staging im WoW-Interface-Verzeichnis ist verboten.")
     from addon_manager import _linked
     if not dest.parent.is_dir() or any(_linked(p) for p in (dest.parent, *dest.parent.parents)):
         raise DownloadError("Ungültiges oder verknüpftes Staging-Ziel.")
