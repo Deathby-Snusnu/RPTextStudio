@@ -160,6 +160,8 @@ def check_addon(name: str, target: Path, channel: str = "stable") -> VersionChec
         return VersionCheck(name, local_version, None, channel, "Nicht prüfbar", str(exc))
     if not available:
         status, detail = "Nicht prüfbar", "GitHub-Version fehlt."
+    elif local_version is None and path.is_file():
+        status, detail = "Nicht prüfbar", "Lokale TOC-Datei enthält keine Versionsnummer."
     elif local_version is None:
         status, detail = "Nicht installiert", "Lokale TOC-Datei fehlt."
     elif remote_interface and local_interface and remote_interface != local_interface:
