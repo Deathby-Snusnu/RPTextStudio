@@ -44,6 +44,8 @@ class AddonChange:
     added: tuple[str, ...]
     changed: tuple[str, ...]
     removed: tuple[str, ...]
+    source_fingerprints: tuple[tuple[str, str], ...]
+    target_fingerprints: tuple[tuple[str, str], ...]
 
     @property
     def is_changed(self) -> bool:
@@ -123,10 +125,15 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
     for name in names:
         src = _files(source / name, runtime=True)
         dst = _files(target / name, runtime=False) if (target / name).exists() else {}
+        source_fingerprints = tuple(sorted((k, _hash(path)) for k, path in src.items()))
+        target_fingerprints = tuple(sorted((k, _hash(path)) for k, path in dst.items()))
+        source_hashes = dict(source_fingerprints)
+        target_hashes = dict(target_fingerprints)
         added = sorted(set(src) - set(dst))
         removed = sorted(set(dst) - set(src))
-        changed = sorted(k for k in set(src) & set(dst) if _hash(src[k]) != _hash(dst[k]))
-        changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed)))
+        changed = sorted(k for k in set(src) & set(dst) if source_hashes[k] != target_hashes[k])
+        changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed),
+                                   source_fingerprints, target_fingerprints))
     return tuple(changes)
 
 
@@ -161,6 +168,11 @@ def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
                     raise InstallError(f"Kopierprüfung fehlgeschlagen: {item.name}/{rel}")
         if preview(source, target, names) != approved:
             raise InstallError("Dateien haben sich während der Vorbereitung geändert.")
+        for item in changed:
+            staged_files = _files(stage / item.name, runtime=False)
+            staged_fingerprints = tuple(sorted((k, _hash(path)) for k, path in staged_files.items()))
+            if staged_fingerprints != item.source_fingerprints:
+                raise InstallError(f"Staging stimmt nicht mit der freigegebenen Vorschau überein: {item.name}")
         backup.mkdir(parents=True, exist_ok=False)
         for item in changed:
             dest = target / item.name
