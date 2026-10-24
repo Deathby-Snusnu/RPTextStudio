@@ -185,6 +185,10 @@ class Studio(QMainWindow):
         add(project_menu,'WoW-Installation suchen…',self.open_wow_detection)
         add(project_menu,'AddOn-Installer / Updates…',self.open_addon_manager)
 
+        addons_menu=self.menuBar().addMenu('AddOns')
+        add(addons_menu,'Anwender: Installierte AddOns prüfen…',self.open_user_addon_manager)
+        add(addons_menu,'Entwickler: Lokale AddOns installieren…',self.open_addon_manager)
+
         translations=self.menuBar().addMenu('Übersetzungen')
         add(translations,'Texte verknüpfen',self.link_selected)
         add(translations,'Zuordnung lösen',self.unlink_selected)
@@ -224,6 +228,10 @@ class Studio(QMainWindow):
         dialog = WoWDetectionDialog(self)
         if dialog.exec() and dialog.selected_path:
             self.statusBar().showMessage(f'WoW-AddOns-Verzeichnis gespeichert: {dialog.selected_path}', 12000)
+
+    def open_user_addon_manager(self):
+        from user_addon_manager_gui import UserAddonManagerDialog
+        UserAddonManagerDialog(self).exec()
 
     def open_addon_manager(self):
         from addon_manager_gui import AddonManagerDialog
