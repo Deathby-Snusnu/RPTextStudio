@@ -1,8 +1,8 @@
 """Offline WoW discovery tests using temporary fake client trees."""
-import stat
 import tempfile
 import unittest
 from pathlib import Path
+import stat
 from types import SimpleNamespace
 from unittest import mock
 

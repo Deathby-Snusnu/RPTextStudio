@@ -44,8 +44,8 @@ class AddonChange:
     added: tuple[str, ...]
     changed: tuple[str, ...]
     removed: tuple[str, ...]
-    source_fingerprint: str = ""
-    destination_fingerprint: str = ""
+    source_fingerprints: tuple[tuple[str, str], ...]
+    target_fingerprints: tuple[tuple[str, str], ...]
 
     @property
     def is_changed(self) -> bool:
@@ -60,25 +60,15 @@ def _hash(path: Path) -> str:
     return h.hexdigest()
 
 
-def _fingerprint(files: dict[str, Path]) -> str:
-    h = sha256()
-    for rel in sorted(files):
-        name = os.fsencode(rel)
-        h.update(len(name).to_bytes(8, "big"))
-        h.update(name)
-        h.update(bytes.fromhex(_hash(files[rel])))
-    return h.hexdigest()
-
-
 def _files(folder: Path, *, runtime: bool) -> dict[str, Path]:
     if _linked(folder) or not folder.is_dir():
         raise InstallError(f"Ungültiger AddOn-Ordner: {folder}")
     result = {}
     count = total = 0
-    def fail_walk(error: OSError) -> None:
-        raise error
+    def walk_error(error: OSError) -> None:
+        raise InstallError(f"AddOn kann nicht vollständig gelesen werden: {error}") from error
 
-    for root, dirs, files in os.walk(folder, followlinks=False, onerror=fail_walk):
+    for root, dirs, files in os.walk(folder, followlinks=False, onerror=walk_error):
         here = Path(root)
         for directory in dirs:
             if _linked(here / directory):
@@ -135,11 +125,15 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
     for name in names:
         src = _files(source / name, runtime=True)
         dst = _files(target / name, runtime=False) if (target / name).exists() else {}
+        source_fingerprints = tuple(sorted((k, _hash(path)) for k, path in src.items()))
+        target_fingerprints = tuple(sorted((k, _hash(path)) for k, path in dst.items()))
+        source_hashes = dict(source_fingerprints)
+        target_hashes = dict(target_fingerprints)
         added = sorted(set(src) - set(dst))
         removed = sorted(set(dst) - set(src))
-        changed = sorted(k for k in set(src) & set(dst) if _hash(src[k]) != _hash(dst[k]))
+        changed = sorted(k for k in set(src) & set(dst) if source_hashes[k] != target_hashes[k])
         changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed),
-                                   _fingerprint(src), _fingerprint(dst)))
+                                   source_fingerprints, target_fingerprints))
     return tuple(changes)
 
 
@@ -172,10 +166,13 @@ def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
                 shutil.copy2(path, dest)
                 if _hash(path) != _hash(dest):
                     raise InstallError(f"Kopierprüfung fehlgeschlagen: {item.name}/{rel}")
-            if _fingerprint(_files(staged, runtime=False)) != item.source_fingerprint:
-                raise InstallError(f"Prüfung der vorbereiteten Dateien fehlgeschlagen: {item.name}")
         if preview(source, target, names) != approved:
             raise InstallError("Dateien haben sich während der Vorbereitung geändert.")
+        for item in changed:
+            staged_files = _files(stage / item.name, runtime=False)
+            staged_fingerprints = tuple(sorted((k, _hash(path)) for k, path in staged_files.items()))
+            if staged_fingerprints != item.source_fingerprints:
+                raise InstallError(f"Staging stimmt nicht mit der freigegebenen Vorschau überein: {item.name}")
         backup.mkdir(parents=True, exist_ok=False)
         for item in changed:
             dest = target / item.name

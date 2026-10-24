@@ -162,9 +162,10 @@ class WoWDetectionDialog(QDialog):
                     "Der manuelle Pfad enthält keine ausreichend plausiblen WoW-Clientmerkmale.")
                 return
             if len(matching) > 1:
-                QMessageBox.warning(self, "Mehrere Clients erkannt",
-                    "Der ausgewählte Ordner enthält mehrere WoW-Clients. "
-                    "Bitte wähle das konkrete Clientverzeichnis aus.")
+                QMessageBox.warning(
+                    self, "Mehrere Clients erkannt",
+                    "Mehrere WoW-Clients erkannt. Bitte den gewünschten "
+                    "Clientordner oder dessen Interface/AddOns-Verzeichnis auswählen.")
                 return
             chosen = matching[0]
         else:

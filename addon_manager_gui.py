@@ -23,6 +23,9 @@ class AddonManagerDialog(QDialog):
         browse.clicked.connect(self.browse)
         row.addWidget(self.target, 1)
         row.addWidget(browse)
+        detect = QPushButton('WoW suchen…')
+        detect.clicked.connect(self.detect_wow)
+        row.addWidget(detect)
         layout.addLayout(row)
         layout.addWidget(QLabel("Ziel: ausschließlich Interface\\AddOns, niemals das Entwicklungsprojekt."))
         self.checkboxes = []
@@ -37,6 +40,9 @@ class AddonManagerDialog(QDialog):
         self.output.setReadOnly(True)
         layout.addWidget(self.output, 1)
         buttons = QHBoxLayout()
+        self.update_button = QPushButton("GitHub-Updates prüfen…")
+        self.update_button.clicked.connect(self.check_github_updates)
+        buttons.addWidget(self.update_button)
         self.scan_button = QPushButton("Vorschau erstellen")
         self.scan_button.clicked.connect(self.scan)
         self.apply_button = QPushButton("Auswahl installieren / aktualisieren")
@@ -56,6 +62,19 @@ class AddonManagerDialog(QDialog):
 
     def selected(self):
         return tuple(c.text() for c in self.checkboxes if c.isChecked())
+
+    def check_github_updates(self):
+        from github_update_dialog import GitHubUpdateDialog
+        if not self.target.text().strip():
+            QMessageBox.information(self, 'Installationsziel fehlt', 'Bitte zuerst eine WoW-Installation auswählen.')
+            return
+        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self).exec()
+
+    def detect_wow(self):
+        from wow_detection_dialog import WoWDetectionDialog
+        chooser = WoWDetectionDialog(self)
+        if chooser.exec() and chooser.selected_path:
+            self.target.setText(str(chooser.selected_path))
 
     def browse(self):
         folder = QFileDialog.getExistingDirectory(self, "WoW AddOns-Verzeichnis wählen")
