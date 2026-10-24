@@ -195,9 +195,13 @@ def stage(name: str, channel: str, destination: Path) -> StagedAddon:
     dest = Path(destination).absolute()
     if dest.exists() or dest.is_symlink():
         raise DownloadError("Ziel existiert bereits; Staging darf nichts überschreiben.")
-    if any(p.name.casefold() == "interface" and p.parent.name.casefold() in
-           ("_classic_era_", "_classic_", "_retail_", "_ptr_", "_classic_ptr_")
-           for p in (dest, *dest.parents)):
+    from wow_detection import CLIENT_DIRS
+    if any(
+        (p.name.casefold() == "addons" and p.parent.name.casefold() == "interface")
+        or (p.name.casefold() == "interface"
+            and p.parent.name.casefold() in (*CLIENT_DIRS, "_classic_ptr_"))
+        for p in (dest, *dest.parents)
+    ):
         raise DownloadError("Staging im WoW-Interface-Verzeichnis ist verboten.")
     from addon_manager import _linked
     if not dest.parent.is_dir() or any(_linked(p) for p in (dest.parent, *dest.parent.parents)):
