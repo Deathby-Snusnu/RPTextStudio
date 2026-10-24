@@ -44,6 +44,7 @@ class AddonChange:
     removed: tuple[str, ...]
     source_fingerprints: tuple[tuple[str, str], ...]
     target_fingerprints: tuple[tuple[str, str], ...]
+    target_path: Path
 
     @property
     def is_changed(self) -> bool:
@@ -119,6 +120,7 @@ def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> N
 def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tuple[AddonChange, ...]:
     source = Path(source).resolve()
     target = _validate_target(Path(target), source)
+    resolved_target = target.resolve()
     _validate_selection(source, target, names)
     changes = []
     for name in names:
@@ -132,7 +134,7 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
         removed = sorted(set(dst) - set(src))
         changed = sorted(k for k in set(src) & set(dst) if source_hashes[k] != target_hashes[k])
         changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed),
-                                   source_fingerprints, target_fingerprints))
+                                   source_fingerprints, target_fingerprints, resolved_target))
     return tuple(changes)
 
 
