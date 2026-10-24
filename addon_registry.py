@@ -1,0 +1,109 @@
+"""Discovery and opt-in metadata for RP Text Studio projects."""
+from __future__ import annotations
+from contextlib import contextmanager
+import json
+import os
+import re
+from pathlib import Path
+from project_paths import addons_root, project_root
+
+ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{1,63}$")
+REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+REGISTRY = "addons.json"
+
+
+@contextmanager
+def _registry_lock(root: Path):
+    path = root / f".{REGISTRY}.lock"
+    with path.open("a+b") as stream:
+        stream.seek(0, os.SEEK_END)
+        if stream.tell() == 0:
+            stream.write(b"\0")
+            stream.flush()
+        stream.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(stream.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                stream.seek(0)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def discover(root: Path) -> dict[str, Path]:
+    folder = addons_root(root)
+    result = {}
+    if not folder.is_dir():
+        return result
+    for candidate in folder.iterdir():
+        if not candidate.is_dir() or candidate.is_symlink() or not ID.fullmatch(candidate.name):
+            continue
+        if (candidate / (candidate.name + ".toc")).is_file():
+            result[candidate.name] = candidate
+    return dict(sorted(result.items()))
+
+
+def load_registry(root: Path) -> dict:
+    path = project_root(root) / REGISTRY
+    if not path.exists():
+        return {"schema": 1, "addons": []}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or data.get("schema") != 1 or not isinstance(data.get("addons"), list):
+        raise ValueError("Ungültiges AddOn-Register.")
+    ids = set()
+    for item in data["addons"]:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not ID.fullmatch(item["id"]):
+            raise ValueError("Ungültiger AddOn-Eintrag.")
+        if item["id"].casefold() in ids:
+            raise ValueError("Doppelter AddOn-Eintrag.")
+        ids.add(item["id"].casefold())
+        repository = item.get("repository")
+        if repository is not None and not REPOSITORY.fullmatch(str(repository)):
+            raise ValueError("Ungültiges Repository.")
+    return data
+
+
+def register(root: Path, entry: dict, *, persist=True) -> dict:
+    """Add a validated local addon; never replace existing registrations."""
+    name = entry.get("id", "")
+    if not isinstance(name, str) or not ID.fullmatch(name):
+        raise ValueError("Ungültige AddOn-ID.")
+    if name not in discover(root):
+        raise ValueError("AddOn besitzt keine gültige TOC im Quellordner.")
+    repo = entry.get("repository")
+    if repo is not None and (not isinstance(repo, str) or not REPOSITORY.fullmatch(repo)):
+        raise ValueError("Ungültiges GitHub-Repository.")
+    root = project_root(root)
+    with _registry_lock(root):
+        data = load_registry(root)
+        if any(x["id"].casefold() == name.casefold() for x in data["addons"]):
+            raise ValueError("AddOn ist bereits registriert.")
+        data["addons"].append(dict(entry))
+        data["addons"].sort(key=lambda a: a["id"].lower())
+        if persist:
+            path = root / REGISTRY
+            import tempfile
+            fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".addons-", suffix=".json.tmp")
+            tmp = Path(temporary)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                    json.dump(data, stream, ensure_ascii=False, indent=2)
+                    stream.write("\n")
+                tmp.replace(path)
+            finally:
+                tmp.unlink(missing_ok=True)
+    return data
+
+
+def available(root: Path) -> list[dict]:
+    """Registered entries with a valid local source, including future addons."""
+    projects = discover(root)
+    return [entry for entry in load_registry(root)["addons"] if entry["id"] in projects and entry.get("enabled", True)]
