@@ -23,10 +23,12 @@ def inspect_installed(addons: Path, names: tuple[str, ...] = ADDONS) -> tuple[In
     if inspect_client(root.parent.parent, "installed-addons") is None:
         raise ValueError("Keine plausible WoW-Installation erkannt.")
     results = []
+    from wow_detection import _linked
+
     for name in names:
         toc = root / name / (name + ".toc")
         try:
-            if toc.is_symlink() or toc.parent.is_symlink():
+            if _linked(toc) or _linked(toc.parent):
                 raise OSError("Verknüpfung statt regulärem AddOn")
             version, interface = parse_toc(toc.read_text(encoding="utf-8-sig"))
             state = "Installiert" if version else "Version fehlt"
