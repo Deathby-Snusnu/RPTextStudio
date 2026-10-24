@@ -45,5 +45,10 @@ def inspect_installed(addons: Path, names: tuple[str, ...] = ADDONS) -> tuple[In
 def check_installed(addons: Path, names: tuple[str, ...] = ADDONS,
                     channel: str = "stable") -> tuple[VersionCheck, ...]:
     """Version-only GitHub queries; no local developer project required."""
-    inspect_installed(addons, names)
-    return tuple(check_addon(name, addons, channel) for name in names)
+    installed = inspect_installed(addons, names)
+    return tuple(
+        VersionCheck(row.name, row.version, None, channel, "Fehler", row.state)
+        if row.state.startswith("Nicht lesbar:")
+        else check_addon(row.name, addons, channel)
+        for row in installed
+    )
