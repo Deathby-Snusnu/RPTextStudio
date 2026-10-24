@@ -112,6 +112,8 @@ class UserAddonManagerDialog(QDialog):
     def _done(self, operation, results):
         if operation == "discover":
             self.candidates = [x for x in results if x.verified]
+            self.installed.clear()
+            self.table.setRowCount(0)
             self.installations.blockSignals(True)
             self.installations.clear()
             for found in self.candidates:
