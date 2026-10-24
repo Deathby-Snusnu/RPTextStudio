@@ -32,7 +32,7 @@ def load_registry(root: Path) -> dict:
         raise ValueError("Ungültiges AddOn-Register.")
     ids = set()
     for item in data["addons"]:
-        if not isinstance(item, dict) or not ID.fullmatch(str(item.get("id", ""))):
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not ID.fullmatch(item["id"]):
             raise ValueError("Ungültiger AddOn-Eintrag.")
         if item["id"].casefold() in ids:
             raise ValueError("Doppelter AddOn-Eintrag.")
