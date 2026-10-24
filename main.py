@@ -181,9 +181,9 @@ class Studio(QMainWindow):
         add(project_menu,'Rassen-/Klassen-Manager…',self.open_race_class_manager)
         add(project_menu,'Projekt prüfen',self.validate_all,'F7')
         project_menu.addSeparator()
-        add(project_menu,'AddOn-Installer / Updates…',self.open_addon_manager)
-        add(project_menu,'WoW-Installation suchen…',self.open_wow_detection)
         add(project_menu,'Neues Klassen-AddOn erstellen…',self.open_project_generator)
+        add(project_menu,'WoW-Installation suchen…',self.open_wow_detection)
+        add(project_menu,'AddOn-Installer / Updates…',self.open_addon_manager)
 
         translations=self.menuBar().addMenu('Übersetzungen')
         add(translations,'Texte verknüpfen',self.link_selected)
@@ -214,16 +214,16 @@ class Studio(QMainWindow):
             QMessageBox.information(self, 'Projekt öffnen', 'Bitte zuerst die RPAddOns-Projektwurzel öffnen.')
             return
         if self.changes or self.links_dirty:
-            QMessageBox.information(self, 'Ungespeicherte Änderungen', 'Bitte zuerst speichern.')
+            QMessageBox.information(self, 'Ungespeicherte Änderungen', 'Bitte Änderungen zuerst speichern.')
             return
         if AddonProjectWizard(self.root, self).exec():
             self.load(self.root)
 
     def open_wow_detection(self):
         from wow_detection_dialog import WoWDetectionDialog
-        chooser = WoWDetectionDialog(self)
-        if chooser.exec() and chooser.selected_path:
-            self.statusBar().showMessage(f'WoW-Installation gespeichert: {chooser.selected_path}', 12000)
+        dialog = WoWDetectionDialog(self)
+        if dialog.exec() and dialog.selected_path:
+            self.statusBar().showMessage(f'WoW-AddOns-Verzeichnis gespeichert: {dialog.selected_path}', 12000)
 
     def open_addon_manager(self):
         from addon_manager_gui import AddonManagerDialog

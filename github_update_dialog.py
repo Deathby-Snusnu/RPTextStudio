@@ -56,6 +56,7 @@ class GitHubUpdateDialog(QDialog):
         self.table.setHorizontalHeaderLabels(("AddOn", "Installiert", "GitHub", "Ergebnis", "Hinweis"))
         self.table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.table)
+        self.channel.currentIndexChanged.connect(lambda _: self.table.setRowCount(0))
         self.status = QLabel("Bereit. Für private GitHub-Repositories: 'gh auth login' ausführen.")
         layout.addWidget(self.status)
 

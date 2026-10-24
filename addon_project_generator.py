@@ -27,6 +27,7 @@ class AddonProjectSpec:
 @dataclass(frozen=True)
 class GenerationPlan:
     addon_path: Path
+    spec: AddonProjectSpec
     files_to_create: tuple[str, ...]
     registry_changes: tuple[str, ...]
     warnings: tuple[str, ...]
@@ -66,7 +67,11 @@ def _entry(spec: AddonProjectSpec) -> dict:
 def preview_project(root: Path, spec: AddonProjectSpec) -> GenerationPlan:
     _, path = _validate(root, spec)
     files = source_files(spec.addon_id, spec.title, spec.locales, spec.version, spec.interface)
-    return GenerationPlan(path, tuple(sorted(files)), ("addons.json: MagierRP hinzufügen",),
+    validated_spec = AddonProjectSpec(spec.addon_id, spec.title, spec.addon_type,
+                                      spec.class_token, tuple(spec.locales), spec.version,
+                                      spec.interface)
+    return GenerationPlan(path, validated_spec, tuple(sorted(files)),
+                          ("addons.json: MagierRP hinzufügen",),
                           ("GitHub-Repository wird nicht automatisch angelegt.",))
 
 

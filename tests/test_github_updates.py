@@ -1,4 +1,5 @@
 """Offline GitHub version checker tests; no network needed."""
+import base64
 import tempfile
 import unittest
 from pathlib import Path
@@ -48,6 +49,27 @@ class VersionCheckerTests(unittest.TestCase):
             with patch.object(updates, "_release", side_effect=updates.GitHubCheckError("404")):
                 row = updates.check_addon("DruidenRP", Path(d), "stable")
                 self.assertEqual(row.status, "Kein Release / nicht verfügbar")
+
+    def test_stable_release_uses_tag_toc_for_interface(self):
+        with tempfile.TemporaryDirectory() as d:
+            addon = Path(d) / "HexerRP"
+            addon.mkdir()
+            (addon / "HexerRP.toc").write_text("## Version: 0.2.0\n## Interface: 16001\n")
+            release = {
+                "tag_name": "v0.3.0",
+                "html_url": "https://github.com/Deathby-Snusnu/HexerRP/releases/tag/v0.3.0",
+            }
+            toc = {
+                "encoding": "base64",
+                "content": base64.b64encode(b"## Version: 0.3.0\n## Interface: 11000\n").decode(),
+            }
+            with patch.object(updates, "_api", side_effect=(release, toc)) as api:
+                row = updates.check_addon("HexerRP", Path(d), "stable")
+            self.assertEqual(row.status, "Kompatibilität prüfen")
+            self.assertEqual(
+                api.call_args_list[1].args[0],
+                "/repos/Deathby-Snusnu/HexerRP/contents/HexerRP.toc?ref=v0.3.0",
+            )
 
     def test_reject_unknown_repository(self):
         with tempfile.TemporaryDirectory() as d:

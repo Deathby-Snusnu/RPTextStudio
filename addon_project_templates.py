@@ -45,7 +45,9 @@ function addon.BuildText(key)
     local target = UnitExists("target") and UnitName("target") or nil
     local pool = target and entry.ziel or entry.gruppe
     if type(pool) ~= "table" or #pool == 0 then return nil end
-    return pool[math.random(#pool)]:gsub("%%s", target or "")
+    return pool[math.random(#pool)]:gsub("%%([%%s])", function(token)
+        return token == "%" and "%" or (target or "")
+    end)
 end
 """
     files["core/Chat.lua"] = """local _, addon = ...

@@ -85,7 +85,7 @@ def _api(path: str) -> object:
         try:
             result = subprocess.run(["gh", "api", path, "-H",
                 "Accept: application/vnd.github+json"], capture_output=True,
-                text=True, timeout=15, check=False)
+                text=True, encoding="utf-8", timeout=15, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise GitHubCheckError("GitHub CLI fehlt oder antwortet nicht. "
                                    "Bitte 'gh auth login' ausführen oder GH_TOKEN setzen.") from exc
@@ -100,7 +100,7 @@ def _api(path: str) -> object:
         raise GitHubCheckError("Ungültige GitHub-Antwort.") from exc
 
 
-def _release(name: str) -> tuple[str | None, str | None]:
+def _release(name: str) -> tuple[str, str | None, str]:
     data = _api(f"/repos/{OWNER}/{name}/releases/latest")
     if not isinstance(data, dict) or data.get("draft") or data.get("prerelease"):
         raise GitHubCheckError("Kein gültiger stabiler Release.")
@@ -111,7 +111,21 @@ def _release(name: str) -> tuple[str | None, str | None]:
     url = data.get("html_url")
     if not isinstance(url, str) or not url.startswith(f"https://github.com/{OWNER}/{name}/releases/"):
         url = None
-    return version, url
+    return version, url, str(tag)
+
+
+def _release_interface(name: str, tag: str) -> str | None:
+    path = urllib.parse.quote(f"{name}.toc", safe="")
+    ref = urllib.parse.quote(tag, safe="")
+    toc = _api(f"/repos/{OWNER}/{name}/contents/{path}?ref={ref}")
+    if not isinstance(toc, dict) or toc.get("encoding") != "base64":
+        raise GitHubCheckError("TOC-Inhalt konnte nicht gelesen werden.")
+    try:
+        raw = base64.b64decode(toc["content"], validate=False).decode("utf-8-sig")
+    except (KeyError, ValueError, UnicodeError) as exc:
+        raise GitHubCheckError("Ungültige TOC-Daten.") from exc
+    _, interface = parse_toc(raw)
+    return interface
 
 
 def _development(name: str) -> tuple[str | None, str | None, str | None]:
@@ -172,12 +186,16 @@ def check_addon(name: str, target: Path, channel: str = "stable", *, project: Pa
     try:
         if channel == "stable":
             try:
-                available, url = _release(repo_name)
+                available, url, tag = _release(repo_name)
             except GitHubCheckError as exc:
                 # 404 on releases/latest is expected for repos with no releases.
                 return VersionCheck(name, local_version, None, channel,
                                     "Kein Release / nicht verfügbar", str(exc))
-            remote_interface, sha = None, None
+            try:
+                remote_interface = _release_interface(repo_name, tag)
+            except GitHubCheckError as exc:
+                return VersionCheck(name, local_version, None, channel, "Nicht prüfbar", str(exc))
+            sha = None
         else:
             available, remote_interface, sha = _development(repo_name)
             url = None
@@ -185,6 +203,8 @@ def check_addon(name: str, target: Path, channel: str = "stable", *, project: Pa
         return VersionCheck(name, local_version, None, channel, "Nicht prüfbar", str(exc))
     if not available:
         status, detail = "Nicht prüfbar", "GitHub-Version fehlt."
+    elif local_version is None and path.is_file():
+        status, detail = "Nicht prüfbar", "Lokale TOC-Datei enthält keine Versionsnummer."
     elif local_version is None:
         status, detail = "Nicht installiert", "Lokale TOC-Datei fehlt."
     elif remote_interface and local_interface and remote_interface != local_interface:

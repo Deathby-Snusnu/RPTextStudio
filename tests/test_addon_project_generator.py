@@ -1,11 +1,17 @@
 """Project generation and dynamic registry regression tests (offline)."""
+import multiprocessing
 import tempfile
 import unittest
 from pathlib import Path
 from addon_project_generator import AddonProjectSpec, preview_project, generate_project
-from addon_registry import discover, available, load_registry
+from addon_registry import discover, available, load_registry, register
 from addon_project_templates import source_files
 from lua_text import parse_pools
+
+
+def _register_addon(root, addon_id, barrier):
+    barrier.wait()
+    register(Path(root), {"id": addon_id})
 
 
 class GeneratorTests(unittest.TestCase):
@@ -40,6 +46,35 @@ class GeneratorTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             preview_project(self.root, spec)
 
+    def test_parallel_registrations_are_preserved(self):
+        for addon_id in ("AddonOne", "AddonTwo"):
+            addon = self.root / "addons" / addon_id
+            addon.mkdir()
+            (addon / f"{addon_id}.toc").write_text("", encoding="utf-8")
+
+        context = multiprocessing.get_context("spawn")
+        barrier = context.Barrier(2)
+        processes = [
+            context.Process(target=_register_addon, args=(str(self.root), addon_id, barrier))
+            for addon_id in ("AddonOne", "AddonTwo")
+        ]
+        try:
+            for process in processes:
+                process.start()
+            for process in processes:
+                process.join(timeout=10)
+            self.assertFalse(any(process.is_alive() for process in processes))
+            self.assertEqual([process.exitcode for process in processes], [0, 0])
+            self.assertEqual(
+                {entry["id"] for entry in load_registry(self.root)["addons"]},
+                {"AddonOne", "AddonTwo"},
+            )
+        finally:
+            for process in processes:
+                if process.is_alive():
+                    process.terminate()
+                    process.join()
+
     def test_invalid_spec_has_no_side_effects(self):
         with self.assertRaises(ValueError):
             preview_project(self.root, AddonProjectSpec(interface=1))
@@ -48,8 +83,13 @@ class GeneratorTests(unittest.TestCase):
     def test_stale_preview_rejected(self):
         spec = AddonProjectSpec()
         plan = preview_project(self.root, spec)
-        with self.assertRaises(ValueError):
-            generate_project(self.root, AddonProjectSpec(version="0.1.1"), plan)
+        for changed_spec in (
+            AddonProjectSpec(version="0.1.1"),
+            AddonProjectSpec(title="Changed title"),
+            AddonProjectSpec(interface=16002),
+        ):
+            with self.subTest(spec=changed_spec), self.assertRaises(ValueError):
+                generate_project(self.root, changed_spec, plan)
 
     def test_templates_complete(self):
         files = source_files("MagierRP", "Magier RP", ("deDE", "enUS", "frFR"), "0.1.0", 16001)

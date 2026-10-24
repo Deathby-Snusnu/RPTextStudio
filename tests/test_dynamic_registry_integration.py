@@ -42,7 +42,8 @@ class DynamicRegistryIntegration(unittest.TestCase):
         folder = self.root / "addons" / "JaegerRP"
         folder.mkdir()
         (folder / "JaegerRP.toc").write_text("## Version: 0.3.0\n", encoding="utf-8")
-        with patch("github_updates._release", return_value=("0.4.0", None)):
+        with patch("github_updates._release", return_value=("0.4.0", None, "v0.4.0")), \
+                patch("github_updates._release_interface", return_value=None):
             result = check_addon("JaegerRP", self.target, "stable", project=self.root)
         self.assertEqual(result.status, "Nicht installiert")
 
