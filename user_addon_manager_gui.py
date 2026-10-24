@@ -47,6 +47,7 @@ class UserAddonManagerDialog(QDialog):
         self.worker = None
         self.candidates = []
         self.installed = {}
+        self._scan_after_cleanup = False
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Anwender-Modus: Nur lesen. Keine Dateien werden installiert oder verändert."))
         top = QHBoxLayout()
@@ -136,7 +137,7 @@ class UserAddonManagerDialog(QDialog):
             self.status.setText("GitHub-Versionsvergleich abgeschlossen. Keine Installation möglich.")
         self._set_busy(False)
         if operation == "discover" and self.candidates:
-            self.select_installation()
+            self._scan_after_cleanup = True
 
     def _failed(self, message):
         self.status.setText("Prüfung fehlgeschlagen: " + message)
@@ -149,6 +150,9 @@ class UserAddonManagerDialog(QDialog):
             self.thread.deleteLater()
         self.thread = None
         self.worker = None
+        if self._scan_after_cleanup:
+            self._scan_after_cleanup = False
+            self.select_installation()
 
     def select_installation(self, *_):
         if self.thread is not None:
