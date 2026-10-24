@@ -114,6 +114,15 @@ class WoWDetectionTests(unittest.TestCase):
             self.assertEqual(scan_selected_drives((self.root,)), [])
         usable_dir.assert_not_called()
 
+    def test_remote_discovery_roots_are_rejected_before_directory_access(self):
+        remote = Path(r"Z:\World of Warcraft")
+        with mock.patch.object(wow_detection.os, "name", "nt"), \
+                mock.patch.object(wow_detection, "_windows_drive_type", return_value=4), \
+                mock.patch.object(wow_detection, "_usable_dir") as usable_dir:
+            self.assertEqual(wow_detection._candidate_roots(remote), [])
+            self.assertIsNone(inspect_client(remote))
+        usable_dir.assert_not_called()
+
     def test_local_drive_listing_excludes_mapped_drives(self):
         def drive_type(path):
             return 3 if str(path) == "C:\\" else 4

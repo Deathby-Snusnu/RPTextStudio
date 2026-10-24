@@ -13,25 +13,27 @@ class UpdateWorker(QObject):
     completed = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, target: Path, names: tuple[str, ...], channel: str):
+    def __init__(self, target: Path, names: tuple[str, ...], channel: str, project=None):
         super().__init__()
         self.target = target
         self.names = names
         self.channel = channel
+        self.project = project
 
     @Slot()
     def run(self):
         try:
-            self.completed.emit(check_all(self.target, self.names, self.channel))
+            self.completed.emit(check_all(self.target, self.names, self.channel, project=self.project))
         except (OSError, ValueError, RuntimeError) as exc:
             self.failed.emit(str(exc))
 
 
 class GitHubUpdateDialog(QDialog):
-    def __init__(self, target: Path, names: tuple[str, ...] = ADDONS, parent=None):
+    def __init__(self, target: Path, names: tuple[str, ...] = ADDONS, parent=None, project=None):
         super().__init__(parent)
         self.target = Path(target)
         self.names = names
+        self.project = project
         self.thread = None
         self.worker = None
         self.setWindowTitle("GitHub-Update-Prüfung (nur lesen)")
@@ -65,7 +67,7 @@ class GitHubUpdateDialog(QDialog):
         self.channel.setEnabled(False)
         self.status.setText("GitHub-Versionen werden geprüft …")
         self.thread = QThread(self)
-        self.worker = UpdateWorker(self.target, self.names, self.channel.currentData())
+        self.worker = UpdateWorker(self.target, self.names, self.channel.currentData(), self.project)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.completed.connect(self.populate)

@@ -78,6 +78,8 @@ def _normalize_hint(path: Path) -> Path:
 
 def _candidate_roots(path: Path) -> list[Path]:
     path = _normalize_hint(path)
+    if not _local_root(path):
+        return []
     results = [path]
     if _usable_dir(path):
         results.extend(p for p in _children(path)
@@ -87,6 +89,8 @@ def _candidate_roots(path: Path) -> list[Path]:
 
 def inspect_client(path: Path, source: str = "scan") -> WoWInstallation | None:
     root = _normalize_hint(path)
+    if not _local_root(root):
+        return None
     if not _usable_dir(root):
         return None
     if any(_linked(p) for p in (root, *root.parents)):
@@ -159,6 +163,13 @@ def _windows_drive_type(path: Path) -> int:
         return 0
 
 
+def _local_root(path: Path) -> bool:
+    path = Path(path)
+    if str(path).startswith(("\\\\", "//")):
+        return False
+    return _windows_drive_type(path) in (2, 3, 6)
+
+
 def _local_drive_roots() -> tuple[Path, ...]:
     if os.name != "nt":
         return tuple(
@@ -207,7 +218,7 @@ def scan_selected_drives(drives: tuple[Path, ...], *,
         if len(queue) >= max_visits:
             break
         folder = Path(root).absolute()
-        if _windows_drive_type(folder) in (2, 3, 6):
+        if _local_root(folder):
             queue.append((folder, 0))
     seen = set()
     entries_examined = 0

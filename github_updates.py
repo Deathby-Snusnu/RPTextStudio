@@ -18,6 +18,7 @@ import urllib.parse
 import urllib.request
 
 from addon_manager import ADDONS
+from addon_registry import discover, load_registry
 
 OWNER = "Deathby-Snusnu"
 VERSION_RE = re.compile(r"^\s*##\s*Version\s*:\s*(.*?)\s*$", re.I | re.M)
@@ -148,9 +149,30 @@ def _development(name: str) -> tuple[str | None, str | None, str | None]:
     return version, interface, sha if isinstance(sha, str) else None
 
 
-def check_addon(name: str, target: Path, channel: str = "stable") -> VersionCheck:
-    if name not in ADDONS or channel not in ("stable", "development"):
-        raise ValueError("Ungültiges AddOn oder Update-Kanal.")
+def _resolve_repository(name: str, project: Path | None) -> str | None:
+    if project is None:
+        if name not in ADDONS:
+            raise ValueError("Unbekanntes AddOn ohne Projektregister.")
+        return name
+    projects = discover(project)
+    if name not in projects:
+        raise ValueError("Nicht bekanntes lokales AddOn.")
+    for item in load_registry(project)["addons"]:
+        if item["id"] == name:
+            repository = item.get("repository")
+            if repository is None:
+                return None
+            if repository != f"{OWNER}/{name}":
+                raise ValueError("GitHub-Zuordnung ist nicht für diese Quelle freigegeben.")
+            return name
+    # Legacy six projects retain their historical allowlisted mapping.
+    return name if name in ADDONS else None
+
+
+def check_addon(name: str, target: Path, channel: str = "stable", *, project: Path | None = None) -> VersionCheck:
+    if channel not in ("stable", "development"):
+        raise ValueError("Ungültiger Update-Kanal.")
+    repo_name = _resolve_repository(name, project)
     path = Path(target) / name / f"{name}.toc"
     try:
         local_version, local_interface = parse_toc(path.read_text(encoding="utf-8-sig"))
@@ -158,21 +180,24 @@ def check_addon(name: str, target: Path, channel: str = "stable") -> VersionChec
         local_version = local_interface = None
     except (OSError, UnicodeError) as exc:
         return VersionCheck(name, None, None, channel, "Fehler", str(exc))
+    if repo_name is None:
+        return VersionCheck(name, local_version, None, channel, "Nicht zugeordnet",
+                            "Kein bestätigtes GitHub-Repository registriert.")
     try:
         if channel == "stable":
             try:
-                available, url, tag = _release(name)
+                available, url, tag = _release(repo_name)
             except GitHubCheckError as exc:
                 # 404 on releases/latest is expected for repos with no releases.
                 return VersionCheck(name, local_version, None, channel,
                                     "Kein Release / nicht verfügbar", str(exc))
             try:
-                remote_interface = _release_interface(name, tag)
+                remote_interface = _release_interface(repo_name, tag)
             except GitHubCheckError as exc:
                 return VersionCheck(name, local_version, None, channel, "Nicht prüfbar", str(exc))
             sha = None
         else:
-            available, remote_interface, sha = _development(name)
+            available, remote_interface, sha = _development(repo_name)
             url = None
     except GitHubCheckError as exc:
         return VersionCheck(name, local_version, None, channel, "Nicht prüfbar", str(exc))
@@ -192,5 +217,5 @@ def check_addon(name: str, target: Path, channel: str = "stable") -> VersionChec
     return VersionCheck(name, local_version, available, channel, status, detail, url, sha)
 
 
-def check_all(target: Path, names=ADDONS, channel="stable") -> tuple[VersionCheck, ...]:
-    return tuple(check_addon(name, target, channel) for name in names)
+def check_all(target: Path, names=ADDONS, channel="stable", *, project: Path | None = None) -> tuple[VersionCheck, ...]:
+    return tuple(check_addon(name, target, channel, project=project) for name in names)

@@ -55,6 +55,13 @@ class AddonInstallerTests(unittest.TestCase):
         with self.assertRaises(InstallError):
             install(self.source, self.target, ("HexerRP",), approved=plan)
 
+    def test_different_destination_invalidates_preview(self):
+        plan = preview(self.source, self.target, ("HexerRP",))
+        other_target = self.target.parent.parent.parent / "other-game" / "Interface" / "AddOns"
+        other_target.mkdir(parents=True)
+        with self.assertRaises(InstallError):
+            install(self.source, other_target, ("HexerRP",), approved=plan)
+
     def test_staged_files_match_approved_source_snapshot(self):
         plan = preview(self.source, self.target, ("HexerRP",))
         copy2 = shutil.copy2

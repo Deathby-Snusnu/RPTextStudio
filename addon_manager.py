@@ -10,6 +10,7 @@ import os
 import shutil
 import tempfile
 import uuid
+from addon_registry import discover
 
 ADDONS = ("DruidenRP", "HexerRP", "JaegerRP", "PaladinRP", "RPChatMod", "RPControlCenter")
 RUNTIME_SUFFIXES = {".toc", ".lua", ".xml", ".blp", ".tga", ".dds", ".png", ".jpg",
@@ -21,17 +22,14 @@ MAX_BYTES = 256 * 1024 * 1024
 
 
 def _linked(path: Path) -> bool:
-    if path.is_symlink():
-        return True
-    if hasattr(path, "is_junction"):
-        return path.is_junction()
-    if os.name == "nt":
-        import stat
-        try:
-            return path.lstat().st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
-        except (FileNotFoundError, NotADirectoryError):
-            return False
-    return False
+    import stat
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return False
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
 
 
 class InstallError(RuntimeError):
@@ -46,6 +44,7 @@ class AddonChange:
     removed: tuple[str, ...]
     source_fingerprints: tuple[tuple[str, str], ...]
     target_fingerprints: tuple[tuple[str, str], ...]
+    target_path: Path
 
     @property
     def is_changed(self) -> bool:
@@ -65,10 +64,10 @@ def _files(folder: Path, *, runtime: bool) -> dict[str, Path]:
         raise InstallError(f"Ungültiger AddOn-Ordner: {folder}")
     result = {}
     count = total = 0
-    def walk_error(error: OSError) -> None:
-        raise InstallError(f"AddOn kann nicht vollständig gelesen werden: {error}") from error
+    def fail_walk(exc: OSError) -> None:
+        raise InstallError(f"AddOn-Verzeichnis kann nicht gelesen werden: {exc}") from exc
 
-    for root, dirs, files in os.walk(folder, followlinks=False, onerror=walk_error):
+    for root, dirs, files in os.walk(folder, followlinks=False, onerror=fail_walk):
         here = Path(root)
         for directory in dirs:
             if _linked(here / directory):
@@ -104,7 +103,8 @@ def _validate_target(target: Path, source: Path) -> Path:
 
 
 def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> None:
-    if not names or len(names) != len(set(names)) or any(n not in ADDONS for n in names):
+    known = discover(source)
+    if not names or len(names) != len(set(names)) or any(n not in known for n in names):
         raise InstallError("Ungültige AddOn-Auswahl.")
     for name in names:
         folder = source / name
@@ -120,6 +120,7 @@ def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> N
 def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tuple[AddonChange, ...]:
     source = Path(source).resolve()
     target = _validate_target(Path(target), source)
+    resolved_target = target.resolve()
     _validate_selection(source, target, names)
     changes = []
     for name in names:
@@ -133,7 +134,7 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
         removed = sorted(set(dst) - set(src))
         changed = sorted(k for k in set(src) & set(dst) if source_hashes[k] != target_hashes[k])
         changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed),
-                                   source_fingerprints, target_fingerprints))
+                                   source_fingerprints, target_fingerprints, resolved_target))
     return tuple(changes)
 
 
@@ -206,11 +207,23 @@ def rollback(target: Path, backup: Path) -> None:
     base = target / ".addon-backups"
     if backup.parent != base or _linked(backup) or _linked(base):
         raise InstallError("Sicherung liegt außerhalb des Backup-Verzeichnisses.")
+    from addon_registry import ID
     data = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
-    names = data["names"]
-    previous = set(data["previously_installed"])
-    if any(n not in ADDONS for n in names):
+    if not isinstance(data, dict):
         raise InstallError("Ungültiger Backup-Inhalt.")
+    names = data.get("names")
+    previous_names = data.get("previously_installed")
+    if (
+        not isinstance(names, list)
+        or not names
+        or not isinstance(previous_names, list)
+        or any(not isinstance(n, str) or not ID.fullmatch(n) for n in names + previous_names)
+        or len({n.casefold() for n in names}) != len(names)
+        or len(set(previous_names)) != len(previous_names)
+        or not set(previous_names).issubset(names)
+    ):
+        raise InstallError("Ungültiger Backup-Inhalt.")
+    previous = set(previous_names)
     for name in names:
         if _linked(target / name) or _linked(backup / name):
             raise InstallError("Verknüpfte Verzeichnisse sind nicht zulässig.")

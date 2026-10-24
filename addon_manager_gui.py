@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QFileDialog, QCheckBox, QPlainTextEdit, QMessageBox)
 from addon_manager import ADDONS, InstallError, install, preview, rollback
 from project_paths import addons_root
+from addon_registry import discover
 
 
 class AddonManagerDialog(QDialog):
@@ -29,12 +30,14 @@ class AddonManagerDialog(QDialog):
         layout.addLayout(row)
         layout.addWidget(QLabel("Ziel: ausschließlich Interface\\AddOns, niemals das Entwicklungsprojekt."))
         self.checkboxes = []
-        for name in ADDONS:
+        for name in discover(self.project):
             checkbox = QCheckBox(name)
             checkbox.setChecked(True)
             checkbox.stateChanged.connect(self.invalidate)
             self.checkboxes.append(checkbox)
             layout.addWidget(checkbox)
+        if not self.checkboxes:
+            layout.addWidget(QLabel("Keine AddOns mit gültiger TOC im Quellprojekt gefunden."))
         self.target.textChanged.connect(self.invalidate)
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
@@ -68,7 +71,7 @@ class AddonManagerDialog(QDialog):
         if not self.target.text().strip():
             QMessageBox.information(self, 'Installationsziel fehlt', 'Bitte zuerst eine WoW-Installation auswählen.')
             return
-        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self).exec()
+        GitHubUpdateDialog(Path(self.target.text()), self.selected(), self, project=self.project).exec()
 
     def detect_wow(self):
         from wow_detection_dialog import WoWDetectionDialog
