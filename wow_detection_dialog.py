@@ -47,6 +47,7 @@ class WoWDetectionDialog(QDialog):
         self.thread = None
         self.worker = None
         self.matches = []
+        self._pending_completion = None
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Erkannte WoW-Clients. Kein Installationsziel wird automatisch ausgewählt."))
         self.list = QListWidget()
@@ -84,6 +85,9 @@ class WoWDetectionDialog(QDialog):
             self.manual.setText(directory)
 
     def _selection_changed(self, *_):
+        if self._pending_completion is not None:
+            self.select.setEnabled(False)
+            return
         self.select.setEnabled(bool(self.manual.text().strip()) or self.list.currentRow() >= 0)
 
     def start_scan(self):
@@ -95,9 +99,10 @@ class WoWDetectionDialog(QDialog):
         self.list.clear()
         self.list.addItem("Suche läuft …")
         self.list.item(0).setFlags(self.list.item(0).flags() & ~Qt.ItemFlag.ItemIsSelectable)
+        self.select.setEnabled(bool(self.manual.text().strip()))
         import string
-        drives = tuple(Path(f"{letter}:\\") for letter in string.ascii_uppercase
-                       if Path(f"{letter}:\\").is_dir()) if self.extended.isChecked() else ()
+        drives = tuple(Path(f"{letter}:\\") for letter in string.ascii_uppercase) \
+            if self.extended.isChecked() else ()
         self.thread = QThread(self)
         self.worker = ScanWorker(load_paths(), self.extended.isChecked(), drives)
         self.worker.moveToThread(self.thread)
@@ -119,14 +124,16 @@ class WoWDetectionDialog(QDialog):
         if not matches:
             self.list.addItem("Keine Installation erkannt. Pfad manuell auswählen.")
             self.list.item(0).setFlags(self.list.item(0).flags() & ~Qt.ItemFlag.ItemIsSelectable)
-        self.select.setEnabled(bool(self.manual.text().strip()))
-        self.scan.setEnabled(True)
+        self.select.setEnabled(
+            self._pending_completion is None and bool(self.manual.text().strip())
+        )
+        self.scan.setEnabled(self._pending_completion is None)
         self.stop.setEnabled(False)
 
     def _error(self, message):
         self.list.clear()
         self.list.addItem("Suche fehlgeschlagen: " + message)
-        self.scan.setEnabled(True)
+        self.scan.setEnabled(self._pending_completion is None)
         self.stop.setEnabled(False)
 
     def _cleanup_thread(self):
@@ -136,6 +143,10 @@ class WoWDetectionDialog(QDialog):
             self.thread.deleteLater()
         self.thread = None
         self.worker = None
+        pending = self._pending_completion
+        self._pending_completion = None
+        if pending is not None:
+            (QDialog.accept if pending else QDialog.reject)(self)
 
     def stop_scan(self):
         if self.worker:
@@ -150,9 +161,9 @@ class WoWDetectionDialog(QDialog):
                 QMessageBox.warning(self, "Nicht erkannt",
                     "Der manuelle Pfad enthält keine ausreichend plausiblen WoW-Clientmerkmale.")
                 return
-            if len(matching) != 1:
+            if len(matching) > 1:
                 QMessageBox.warning(
-                    self, "Client auswählen",
+                    self, "Mehrere Clients erkannt",
                     "Mehrere WoW-Clients erkannt. Bitte den gewünschten "
                     "Clientordner oder dessen Interface/AddOns-Verzeichnis auswählen.")
                 return
@@ -176,9 +187,29 @@ class WoWDetectionDialog(QDialog):
         self.selected_path = chosen.addons_path
         self.accept()
 
+    def _complete(self, accepted):
+        if self._pending_completion is not None:
+            return
+        if self.thread is not None and self.thread.isRunning():
+            self._pending_completion = accepted
+            self.stop_scan()
+            self.scan.setEnabled(False)
+            self.select.setEnabled(False)
+            self.list.setEnabled(False)
+            self.manual.setEnabled(False)
+            self.extended.setEnabled(False)
+            return
+        (QDialog.accept if accepted else QDialog.reject)(self)
+
+    def accept(self):
+        self._complete(True)
+
+    def reject(self):
+        self._complete(False)
+
     def closeEvent(self, event):
         if self.thread is not None and self.thread.isRunning():
-            self.stop_scan()
+            self.reject()
             event.ignore()
             return
         super().closeEvent(event)

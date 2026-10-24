@@ -25,13 +25,13 @@ def _linked(path: Path) -> bool:
         return True
     if hasattr(path, "is_junction"):
         return path.is_junction()
-    if os.name != "nt":
-        return False
-    import stat
-    try:
-        return path.lstat().st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
-    except FileNotFoundError:
-        return False
+    if os.name == "nt":
+        import stat
+        try:
+            return path.lstat().st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
+        except (FileNotFoundError, NotADirectoryError):
+            return False
+    return False
 
 
 class InstallError(RuntimeError):
@@ -44,6 +44,8 @@ class AddonChange:
     added: tuple[str, ...]
     changed: tuple[str, ...]
     removed: tuple[str, ...]
+    source_fingerprint: str = ""
+    destination_fingerprint: str = ""
 
     @property
     def is_changed(self) -> bool:
@@ -55,6 +57,16 @@ def _hash(path: Path) -> str:
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             h.update(block)
+    return h.hexdigest()
+
+
+def _fingerprint(files: dict[str, Path]) -> str:
+    h = sha256()
+    for rel in sorted(files):
+        name = os.fsencode(rel)
+        h.update(len(name).to_bytes(8, "big"))
+        h.update(name)
+        h.update(bytes.fromhex(_hash(files[rel])))
     return h.hexdigest()
 
 
@@ -126,7 +138,8 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
         added = sorted(set(src) - set(dst))
         removed = sorted(set(dst) - set(src))
         changed = sorted(k for k in set(src) & set(dst) if _hash(src[k]) != _hash(dst[k]))
-        changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed)))
+        changes.append(AddonChange(name, tuple(added), tuple(changed), tuple(removed),
+                                   _fingerprint(src), _fingerprint(dst)))
     return tuple(changes)
 
 
@@ -159,6 +172,8 @@ def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
                 shutil.copy2(path, dest)
                 if _hash(path) != _hash(dest):
                     raise InstallError(f"Kopierprüfung fehlgeschlagen: {item.name}/{rel}")
+            if _fingerprint(_files(staged, runtime=False)) != item.source_fingerprint:
+                raise InstallError(f"Prüfung der vorbereiteten Dateien fehlgeschlagen: {item.name}")
         if preview(source, target, names) != approved:
             raise InstallError("Dateien haben sich während der Vorbereitung geändert.")
         backup.mkdir(parents=True, exist_ok=False)
