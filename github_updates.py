@@ -84,7 +84,7 @@ def _api(path: str) -> object:
         try:
             result = subprocess.run(["gh", "api", path, "-H",
                 "Accept: application/vnd.github+json"], capture_output=True,
-                text=True, timeout=15, check=False)
+                text=True, encoding="utf-8", timeout=15, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise GitHubCheckError("GitHub CLI fehlt oder antwortet nicht. "
                                    "Bitte 'gh auth login' ausführen oder GH_TOKEN setzen.") from exc
