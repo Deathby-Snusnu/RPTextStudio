@@ -211,6 +211,9 @@ def rollback(target: Path, backup: Path) -> None:
     data = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise InstallError("Ungültiger Backup-Inhalt.")
+    installing = data.get("status") == "installing"
+    if "status" in data and data["status"] not in ("installing", "complete"):
+        raise InstallError("Ungültiger Backup-Inhalt.")
     names = data.get("names")
     previous_names = data.get("previously_installed")
     if (
@@ -227,13 +230,19 @@ def rollback(target: Path, backup: Path) -> None:
     for name in names:
         if _linked(target / name) or _linked(backup / name):
             raise InstallError("Verknüpfte Verzeichnisse sind nicht zulässig.")
-        if name in previous and not (backup / name).is_dir():
+        if (
+            name in previous
+            and not (backup / name).is_dir()
+            and not (installing and (target / name).is_dir())
+        ):
             raise InstallError(f"Sicherung fehlt: {name}")
     reverted = base / ("pre-rollback-" + uuid.uuid4().hex)
     reverted.mkdir(parents=True)
     moved_current, restored = [], []
     try:
         for name in names:
+            if installing and name in previous and not (backup / name).is_dir():
+                continue
             if (target / name).exists():
                 (target / name).rename(reverted / name)
                 moved_current.append(name)

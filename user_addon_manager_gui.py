@@ -12,6 +12,8 @@ from wow_installations import load_paths
 from wow_detection import discover_wow_installations, inspect_client
 from user_addon_manager import inspect_installed, check_installed
 from github_staging import stage
+from safe_github_install import preview_safe_install, install_safe
+from addon_manager import rollback
 from wow_client_profiles import get_profile, save_profile, compatibility, interface_line, preview_toc
 
 
@@ -39,6 +41,9 @@ class UserScanWorker(QObject):
                 result = check_installed(self.target, channel=self.channel)
             elif self.operation == "stage":
                 result = stage(self.name, self.channel, self.staging_target)
+            elif self.operation == "install":
+                plan, profile = self.staging_target
+                result = install_safe(plan, profile)
             else:
                 raise ValueError("Unbekannte Operation.")
             self.done.emit(result)
@@ -55,6 +60,7 @@ class UserAddonManagerDialog(QDialog):
         self.worker = None
         self.candidates = []
         self.installed = {}
+        self.staged_packages = {}
         self._scan_after_cleanup = False
         self._operation = None
         layout = QVBoxLayout(self)
@@ -94,6 +100,10 @@ class UserAddonManagerDialog(QDialog):
         actions.addWidget(self.channel)
         actions.addWidget(self.check_button)
         actions.addWidget(self.stage_button)
+        self.install_button = QPushButton("Geprüftes Paket installieren…")
+        self.install_button.clicked.connect(self.install_selected)
+        self.install_button.setEnabled(False)
+        actions.addWidget(self.install_button)
         actions.addStretch(1)
         layout.addLayout(actions)
         self.status = QLabel("Suche nach vorhandenen WoW-Installationen …")
@@ -110,6 +120,8 @@ class UserAddonManagerDialog(QDialog):
         self.check_button.setEnabled(not busy and self.current_target() is not None)
         self.stage_button.setEnabled(not busy and self.current_target() is not None and
                                      0 <= self.table.currentRow() < self.table.rowCount())
+        self.install_button.setEnabled(not busy and self.current_target() is not None and
+                                        self.selected_staged() is not None)
 
     def current_target(self):
         index = self.installations.currentIndex()
@@ -163,6 +175,44 @@ class UserAddonManagerDialog(QDialog):
             'Dies ist nur eine Zeichenfolgen-Vorschau. Keine Datei wurde verändert. '
             'Ohne bestätigte Kompatibilität darf kein automatisches Update erfolgen.')
 
+    def selected_staged(self):
+        row = self.table.currentRow()
+        if not 0 <= row < self.table.rowCount():
+            return None
+        item = self.table.item(row, 0)
+        return self.staged_packages.get(item.text()) if item else None
+
+    def install_selected(self):
+        package = self.selected_staged()
+        target = self.current_target()
+        if self.thread is not None or package is None or target is None:
+            return
+        profile = get_profile(self.candidates[self.installations.currentIndex()].client_root)
+        if profile is None:
+            QMessageBox.warning(self, "Interface-Profil fehlt",
+                "Bitte zuerst das Interface-Profil der WoW-Installation speichern.")
+            return
+        warning = compatibility(package.name, profile)
+        try:
+            plan = preview_safe_install(package.name, package.directory, target, profile)
+        except Exception as exc:
+            QMessageBox.warning(self, "Installation nicht möglich", str(exc))
+            return
+        summary = (f"{package.name} → {target / package.name}\\n"
+            f"Interface: {profile.interface}\\n"
+            f"Neue Dateien: {len(plan.new_files)}\\n"
+            f"Bestehende geänderte Dateien geschützt: {len(plan.protected)}\\n"
+            f"TOC-Interface wird geändert: {'Ja' if plan.toc_changed else 'Nein'}\\n"
+            f"Kompatibilität: {warning}\\n\\n"
+            "Vorhandene Dateien werden niemals überschrieben, außer der Interface-Zeile der TOC. "
+            "Eine vollständige Sicherung der bisherigen AddOn-Dateien wird erstellt.\\n\\n"
+            "Achtung: Eine passende Interface-Nummer bestätigt keine WoW-API-Kompatibilität. "
+            "Fortfahren nur, wenn du das AddOn mit diesem Client bewusst testen möchtest.")
+        if QMessageBox.warning(self, "Installationsvorschau und ausdrückliche Freigabe", summary,
+                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        self._start("install", staging_target=(plan, profile))
+
     def stage_selected(self):
         if self.thread is not None:
             return
@@ -209,6 +259,7 @@ class UserAddonManagerDialog(QDialog):
 
     def _done(self, operation, results):
         if operation == "discover":
+            self.staged_packages.clear()
             self.candidates = [x for x in results if x.verified]
             self.installed.clear()
             self.table.setRowCount(0)
@@ -230,11 +281,16 @@ class UserAddonManagerDialog(QDialog):
                     self.table.setItem(i, j, QTableWidgetItem(value))
             self.status.setText("Lokale RP-AddOns eingelesen. Keine Änderungen vorgenommen.")
         elif operation == "stage":
+            self.staged_packages[results.name] = results
             self.status.setText(f"Paket vorbereitet: {results.directory}")
             QMessageBox.information(self, "Paket geprüft und bereitgestellt",
                 f"{results.name} {results.version} wurde ohne Installation vorbereitet.\n"
                 f"Commit: {results.commit}\nSHA-256 (Archiv): {results.archive_sha256}\n"
                 f"Dateien: {results.files}\nZiel: {results.directory}")
+        elif operation == "install":
+            self.status.setText(f"Installation abgeschlossen. Backup: {results}")
+            QMessageBox.information(self, "Installiert",
+                f"AddOn installiert. Backup und Rollback über den Sicherungsordner verfügbar:\\n{results}")
         else:
             for i, row in enumerate(results):
                 if i < self.table.rowCount():
