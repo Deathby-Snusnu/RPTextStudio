@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from hashlib import sha256
+import json
 from datetime import datetime, timezone
 import os
 import shutil
@@ -45,6 +46,15 @@ def _validate(name: str, staged: Path, target: Path, profile: ClientProfile):
     if (target / name).exists() and not (target / name).is_dir():
         raise InstallError("Ziel ist kein AddOn-Verzeichnis.")
 
+def _casefold_index(files: dict[str, Path]) -> dict[str, str]:
+    result = {}
+    for rel in files:
+        key = rel.casefold()
+        if key in result:
+            raise InstallError("Mehrere Dateien unterscheiden sich nur durch Groß-/Kleinschreibung.")
+        result[key] = rel
+    return result
+
 def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientProfile) -> SafePlan:
     staged, target = Path(staged).absolute(), Path(target).absolute()
     _validate(name, staged, target, profile)
@@ -54,17 +64,25 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     toc = name + ".toc"
     if toc not in src:
         raise InstallError("Gleichnamige TOC fehlt im Staging.")
+    _casefold_index(src)
+    old_names = _casefold_index(old)
+    old_toc = old_names.get(toc.casefold())
     upstream = src[toc].read_text(encoding="utf-8-sig")
     preview_toc(upstream, profile.interface, compatible=True)
-    if toc in old:
+    if old_toc is not None:
         # Validate that the existing TOC is parseable before preparing any changes.
-        preview_toc(old[toc].read_text(encoding="utf-8-sig"), profile.interface, compatible=True)
-    new = tuple(sorted(set(src) - set(old)))
-    protected = tuple(sorted(k for k in set(src) & set(old) if k != toc and _hash(src[k]) != _hash(old[k])))
-    current_toc = old[toc].read_text(encoding="utf-8-sig") if toc in old else upstream
+        preview_toc(old[old_toc].read_text(encoding="utf-8-sig"), profile.interface, compatible=True)
+    new = tuple(sorted(k for k in src if k.casefold() not in old_names))
+    protected = tuple(sorted(
+        k for k in src
+        if k.casefold() in old_names
+        and k.casefold() != toc.casefold()
+        and _hash(src[k]) != _hash(old[old_names[k.casefold()]])
+    ))
+    current_toc = old[old_toc].read_text(encoding="utf-8-sig") if old_toc is not None else upstream
     adapted = preview_toc(current_toc, profile.interface, compatible=True)
     return SafePlan(name, target, staged, profile.interface, new, protected,
-                    toc in old and adapted != current_toc,
+                    adapted != current_toc,
                     tuple(sorted((k, _hash(v)) for k, v in src.items())),
                     tuple(sorted((k, _hash(v)) for k, v in old.items())))
 
@@ -81,11 +99,23 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
         raise InstallError("Unsicheres Backup-Verzeichnis.")
     token = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:10]
     backup = backups / token
+    target.mkdir(parents=True, exist_ok=True)
     # Prepare beside target. Existing files are all preserved, including unknown formats.
     work = Path(tempfile.mkdtemp(prefix=".rpstudio-safe-", dir=target))
     ready = work / plan.name
     moved = False
     deployed = False
+    manifest = {
+        "timestamp": token, "names": [plan.name],
+        "previously_installed": [plan.name] if dest.exists() else [],
+        "status": "installing",
+    }
+
+    def write_manifest() -> None:
+        temporary_manifest = backup / ".manifest.json.tmp"
+        temporary_manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        temporary_manifest.replace(backup / "manifest.json")
+
     try:
         if dest.exists():
             shutil.copytree(dest, ready, symlinks=False)
@@ -98,30 +128,35 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
             shutil.copy2(incoming[rel], output)
             if _hash(output) != dict(plan.source_hashes)[rel]:
                 raise InstallError("Kopierprüfung fehlgeschlagen: " + rel)
-        toc = ready / (plan.name + ".toc")
-        original = toc.read_text(encoding="utf-8-sig")
+        toc_rel = next(
+            (rel for rel, _ in plan.target_hashes if rel.casefold() == (plan.name + ".toc").casefold()),
+            plan.name + ".toc",
+        )
+        toc = ready / toc_rel
+        original_bytes = toc.read_bytes()
+        has_bom = original_bytes.startswith(b"\xef\xbb\xbf")
+        original = original_bytes.decode("utf-8-sig")
         changed = preview_toc(original, plan.interface, compatible=True)
         if changed != original:
-            toc.write_text(changed, encoding="utf-8")
+            toc.write_bytes((b"\xef\xbb\xbf" if has_bom else b"") + changed.encode("utf-8"))
         if preview_safe_install(plan.name, plan.source, target, profile) != plan:
             raise InstallError("Dateien während der Vorbereitung geändert.")
         backup.mkdir(parents=True, exist_ok=False)
+        write_manifest()
         if dest.exists():
             dest.rename(backup / plan.name)
             moved = True
         ready.rename(dest)
         deployed = True
-        import json
-        (backup / "manifest.json").write_text(json.dumps({
-            "timestamp": token, "names": [plan.name],
-            "previously_installed": [plan.name] if moved else []
-        }, indent=2), encoding="utf-8")
+        manifest["status"] = "complete"
+        write_manifest()
         return backup
     except Exception:
         if deployed and dest.exists():
             shutil.rmtree(dest)
         if moved and (backup / plan.name).exists():
             (backup / plan.name).rename(dest)
+        shutil.rmtree(backup, ignore_errors=True)
         raise
     finally:
         shutil.rmtree(work, ignore_errors=True)
