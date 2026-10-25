@@ -5,13 +5,14 @@ from uuid import uuid4
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton,
-    QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog,
+    QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QInputDialog,
 )
 from addon_manager import ADDONS
 from wow_installations import load_paths
 from wow_detection import discover_wow_installations, inspect_client
 from user_addon_manager import inspect_installed, check_installed
 from github_staging import stage
+from wow_client_profiles import get_profile, save_profile, compatibility, preview_toc
 
 
 class UserScanWorker(QObject):
@@ -66,6 +67,9 @@ class UserAddonManagerDialog(QDialog):
         top.addWidget(QLabel("WoW:"))
         top.addWidget(self.installations, 1)
         top.addWidget(self.find_button)
+        self.profile_button = QPushButton("Interface-Profil…")
+        self.profile_button.clicked.connect(self.edit_client_profile)
+        top.addWidget(self.profile_button)
         layout.addLayout(top)
 
         self.table = QTableWidget(0, 5)
@@ -95,6 +99,7 @@ class UserAddonManagerDialog(QDialog):
 
     def _set_busy(self, busy):
         self.find_button.setEnabled(not busy)
+        self.profile_button.setEnabled(not busy and self.current_target() is not None)
         self.installations.setEnabled(not busy)
         self.channel.setEnabled(not busy)
         self.check_button.setEnabled(not busy and self.current_target() is not None)
@@ -104,6 +109,25 @@ class UserAddonManagerDialog(QDialog):
     def current_target(self):
         index = self.installations.currentIndex()
         return self.candidates[index].addons_path if 0 <= index < len(self.candidates) else None
+
+    def edit_client_profile(self):
+        target = self.current_target()
+        if target is None or self.thread is not None:
+            return
+        installation = self.candidates[self.installations.currentIndex()]
+        current = get_profile(installation.client_root)
+        value, accepted = QInputDialog.getText(self, 'WoW-Interface-Profil',
+            'Interface-Nummer aus dem Spiel (/dump select(4, GetBuildInfo())):',
+            text=current.interface if current else '')
+        if not accepted:
+            return
+        try:
+            profile = save_profile(installation.client_root, value)
+        except (ValueError, OSError) as exc:
+            QMessageBox.warning(self, 'Profil nicht gespeichert', str(exc))
+            return
+        info = compatibility('JaegerRP', profile)
+        self.status.setText(f'Interface-Profil gespeichert: {profile.interface} ({profile.client_type}). {info}. Keine TOC verändert.')
 
     def stage_selected(self):
         if self.thread is not None:
