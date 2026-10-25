@@ -14,6 +14,7 @@ from user_addon_manager import inspect_installed, check_installed
 from github_staging import stage
 from safe_github_install import preview_safe_install, install_safe
 from addon_manager import rollback
+from batch_addon_install import prepare_missing, install_missing, discard_missing, missing_names
 from wow_client_profiles import get_profile, save_profile, compatibility, interface_line, preview_toc
 
 
@@ -44,6 +45,10 @@ class UserScanWorker(QObject):
             elif self.operation == "install":
                 plan, profile = self.staging_target
                 result = install_safe(plan, profile)
+            elif self.operation == "prepare_missing":
+                result = prepare_missing(self.target, self.staging_target, self.channel)
+            elif self.operation == "install_missing":
+                result = install_missing(self.staging_target)
             else:
                 raise ValueError("Unbekannte Operation.")
             self.done.emit(result)
@@ -61,6 +66,7 @@ class UserAddonManagerDialog(QDialog):
         self.candidates = []
         self.installed = {}
         self.staged_packages = {}
+        self.missing_batch = None
         self._scan_after_cleanup = False
         self._operation = None
         layout = QVBoxLayout(self)
@@ -104,6 +110,9 @@ class UserAddonManagerDialog(QDialog):
         self.install_button.clicked.connect(self.install_selected)
         self.install_button.setEnabled(False)
         actions.addWidget(self.install_button)
+        self.missing_button = QPushButton('Alle fehlenden RP-AddOns vorbereiten…')
+        self.missing_button.clicked.connect(self.handle_missing)
+        actions.addWidget(self.missing_button)
         actions.addStretch(1)
         layout.addLayout(actions)
         self.status = QLabel("Suche nach vorhandenen WoW-Installationen …")
@@ -122,6 +131,7 @@ class UserAddonManagerDialog(QDialog):
                                      0 <= self.table.currentRow() < self.table.rowCount())
         self.install_button.setEnabled(not busy and self.current_target() is not None and
                                         self.selected_staged() is not None)
+        self.missing_button.setEnabled(not busy and self.current_target() is not None)
 
     def current_target(self):
         index = self.installations.currentIndex()
@@ -174,6 +184,69 @@ class UserAddonManagerDialog(QDialog):
             f'Kompatibilität: {compatibility(name, profile)}\n\n'
             'Dies ist nur eine Zeichenfolgen-Vorschau. Keine Datei wurde verändert. '
             'Ohne bestätigte Kompatibilität darf kein automatisches Update erfolgen.')
+
+    def handle_missing(self):
+        if self.thread is not None or self.current_target() is None:
+            return
+        if self.missing_batch is not None:
+            batch = self.missing_batch
+            if batch.target != self.current_target():
+                discard_missing(batch)
+                self.missing_batch = None
+                self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+                QMessageBox.warning(self, "WoW-Installation gewechselt",
+                    "Die vorbereiteten Pakete gehörten zu einer anderen Installation. Bitte neu vorbereiten.")
+                return
+            names = ", ".join(plan.name for plan in batch.plans)
+            summary = (
+                f"WoW-Installation: {batch.target.parent.parent}\n"
+                f"Interface-Nummer: {batch.profile.interface}\n"
+                f"Kanal: {batch.channel}\n"
+                f"Neue AddOns: {len(batch.plans)}\n\n"
+                f"{names}\n\n"
+                "Nur fehlende RP-AddOns werden installiert. Bereits vorhandene "
+                "AddOn-Ordner und Benutzertexte bleiben unverändert. "
+                "Die Installation erstellt Wiederherstellungsinformationen.\n\n"
+                "Achtung: Eine angepasste Interface-Nummer garantiert keine "
+                "funktionale WoW-API-Kompatibilität. Fortfahren nur für "
+                "einen ausdrücklich gewünschten Test."
+            )
+            dialog = QMessageBox(self)
+            dialog.setWindowTitle("Gemeinsame Erstinstallation bestätigen")
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText("Alle vorbereiteten RP-AddOns installieren?")
+            dialog.setInformativeText(summary)
+            dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            dialog.setDefaultButton(QMessageBox.No)
+            dialog.button(QMessageBox.Yes).setText("Installieren")
+            dialog.button(QMessageBox.No).setText("Abbrechen")
+            if dialog.exec() == QMessageBox.Yes:
+                self._start("install_missing", staging_target=batch)
+            return
+
+        installation = self.candidates[self.installations.currentIndex()]
+        profile = get_profile(installation.client_root)
+        if profile is None:
+            QMessageBox.information(self, "Interface-Profil fehlt",
+                "Bitte zuerst unter 'Interface-Profil…' die Nummer des WoW-Clients speichern.")
+            return
+        try:
+            names = missing_names(self.current_target())
+        except Exception as exc:
+            QMessageBox.warning(self, "Erstinstallation nicht möglich", str(exc))
+            return
+        if not names:
+            QMessageBox.information(self, "Keine fehlenden AddOns",
+                "Alle sechs bekannten RP-AddOns sind bereits vorhanden.")
+            return
+        if QMessageBox.question(self, "Fehlende RP-AddOns herunterladen",
+            f"{len(names)} AddOns fehlen:\n" + "\n".join(names) +
+            f"\n\nKanal: {self.channel.currentText()}\n"
+            "Pakete werden zuerst außerhalb von WoW geladen und geprüft. "
+            "Es wird jetzt noch nichts installiert.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        self._start("prepare_missing", staging_target=profile)
 
     def selected_staged(self):
         row = self.table.currentRow()
@@ -287,6 +360,10 @@ class UserAddonManagerDialog(QDialog):
 
     def _done(self, operation, results):
         if operation == "discover":
+            if self.missing_batch is not None:
+                discard_missing(self.missing_batch)
+                self.missing_batch = None
+                self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
             self.staged_packages.clear()
             self.candidates = [x for x in results if x.verified]
             self.installed.clear()
@@ -308,6 +385,25 @@ class UserAddonManagerDialog(QDialog):
                                           "Noch nicht geprüft", entry.state)):
                     self.table.setItem(i, j, QTableWidgetItem(value))
             self.status.setText("Lokale RP-AddOns eingelesen. Keine Änderungen vorgenommen.")
+        elif operation == "prepare_missing":
+            self.missing_batch = results
+            self.missing_button.setText("Alle vorbereiteten RP-AddOns installieren…")
+            self.status.setText(f"{len(results.plans)} RP-AddOns geprüft und bereitgestellt. Installation noch nicht gestartet.")
+            QMessageBox.information(self, "Pakete bereit",
+                f"{len(results.plans)} fehlende RP-AddOns wurden außerhalb von WoW heruntergeladen "
+                "und geprüft. Mit 'Alle vorbereiteten RP-AddOns installieren…' kann die "
+                "gemeinsame Installationsvorschau geöffnet werden.")
+        elif operation == "install_missing":
+            count = len(results)
+            if self.missing_batch is not None:
+                discard_missing(self.missing_batch)
+                self.missing_batch = None
+            self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+            self.status.setText(f"{count} RP-AddOns installiert.")
+            QMessageBox.information(self, "Erstinstallation abgeschlossen",
+                f"{count} RP-AddOns wurden installiert. Vorhandene AddOns blieben unverändert. "
+                "Wiederherstellungsdaten liegen im AddOns-Backup-Verzeichnis.")
+            self._scan_after_cleanup = True
         elif operation == "stage":
             self.staged_packages[results.name] = results
             self.status.setText(f"Paket vorbereitet: {results.directory}")
@@ -346,6 +442,10 @@ class UserAddonManagerDialog(QDialog):
     def select_installation(self, *_):
         if self.thread is not None:
             return
+        if self.missing_batch is not None and self.missing_batch.target != self.current_target():
+            discard_missing(self.missing_batch)
+            self.missing_batch = None
+            self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
         self.table.setRowCount(0)
         if self.current_target() is not None:
             self._start("local")
@@ -354,4 +454,7 @@ class UserAddonManagerDialog(QDialog):
         if self.thread is not None and self.thread.isRunning():
             self.status.setText("Laufende Suche wird abgeschlossen. Danach kann das Fenster geschlossen werden.")
             return
+        if self.missing_batch is not None:
+            discard_missing(self.missing_batch)
+            self.missing_batch = None
         super().reject()
