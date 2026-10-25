@@ -24,6 +24,25 @@ class SpellManagerTests(unittest.TestCase):
             save_mappings(p,[])
             self.assertTrue((p/'data'/'.rptextstudio-spells.json.bak').exists())
 
+    def test_paladin_categories_are_discovered(self):
+        samples = {
+            "Abilities.lua": 'addon.localeData.deDE.Abilities = { ["LAYONHANDS"] = { ziel = { "Segen, %s", }, }, ["DIVINE_SHIELD"] = { gruppe = { "Schild", }, }, }',
+            "Blessings.lua": 'addon.localeData.deDE.Blessings = { ["MIGHT"] = { ziel = { "Kraft, %s", }, }, }',
+            "GreaterBlessings.lua": 'addon.localeData.deDE.GreaterBlessings = { ["GREATER_MIGHT"] = { gruppe = { "Kraft", }, }, }',
+            "Auras.lua": 'addon.localeData.deDE.Auras = { ["DEVOTION"] = { gruppe = { "Schutz", }, }, }',
+            "Seals.lua": 'addon.localeData.deDE.Seals = { ["FURY"] = { gruppe = { "Zorn", }, }, }',
+            "Ambient.lua": 'addon.localeData.deDE.ambient = { PRAYER = { "Gebet", }, }',
+        }
+        files = {
+            Path("addons/PaladinRP/locales/deDE") / filename: parse_pools(source)
+            for filename, source in samples.items()
+        }
+        found = candidate_keys(files, "PaladinRP")
+        for key in ("LAYONHANDS", "DIVINE_SHIELD", "MIGHT",
+                    "GREATER_MIGHT", "DEVOTION", "FURY"):
+            self.assertIn(key, found)
+        self.assertNotIn("PRAYER", found)
+
     def test_real_hexer_keys(self):
         addons=Path(__file__).resolve().parents[3]/'addons'
         source=addons/'HexerRP/locales/deDE/Texts.lua'
