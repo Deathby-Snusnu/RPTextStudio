@@ -70,6 +70,9 @@ class UserAddonManagerDialog(QDialog):
         self.profile_button = QPushButton("Interface-Profil…")
         self.profile_button.clicked.connect(self.edit_client_profile)
         top.addWidget(self.profile_button)
+        self.toc_button = QPushButton("TOC-Vorschau…")
+        self.toc_button.clicked.connect(self.preview_selected_toc)
+        top.addWidget(self.toc_button)
         layout.addLayout(top)
 
         self.table = QTableWidget(0, 5)
@@ -100,6 +103,8 @@ class UserAddonManagerDialog(QDialog):
     def _set_busy(self, busy):
         self.find_button.setEnabled(not busy)
         self.profile_button.setEnabled(not busy and self.current_target() is not None)
+        self.toc_button.setEnabled(not busy and self.current_target() is not None and
+                                   0 <= self.table.currentRow() < self.table.rowCount())
         self.installations.setEnabled(not busy)
         self.channel.setEnabled(not busy)
         self.check_button.setEnabled(not busy and self.current_target() is not None)
@@ -128,6 +133,35 @@ class UserAddonManagerDialog(QDialog):
             return
         info = compatibility('JaegerRP', profile)
         self.status.setText(f'Interface-Profil gespeichert: {profile.interface} ({profile.client_type}). {info}. Keine TOC verändert.')
+
+    def preview_selected_toc(self):
+        root = self.current_target()
+        row = self.table.currentRow()
+        if root is None or self.thread is not None or row < 0:
+            return
+        name = self.table.item(row, 0).text()
+        profile = get_profile(self.candidates[self.installations.currentIndex()].client_root)
+        if profile is None:
+            QMessageBox.information(self, 'TOC-Vorschau', 'Bitte zuerst das Interface-Profil speichern.')
+            return
+        toc_path = root / name / (name + '.toc')
+        try:
+            from wow_detection import _linked
+            if _linked(toc_path) or _linked(toc_path.parent):
+                raise ValueError('Verknüpfte AddOn-Dateien werden nicht gelesen.')
+            original = toc_path.read_text(encoding='utf-8-sig')
+            # Explicit approval here produces a string for display only, never a file write.
+            updated = preview_toc(original, profile.interface, compatible=True)
+        except (OSError, UnicodeError, ValueError) as exc:
+            QMessageBox.warning(self, 'TOC-Vorschau', str(exc))
+            return
+        old_line = next((line for line in original.splitlines() if line.strip().lower().startswith('## interface:')), '?')
+        new_line = next((line for line in updated.splitlines() if line.strip().lower().startswith('## interface:')), '?')
+        QMessageBox.information(self, 'TOC-Vorschau, keine Installation',
+            f'{name}\nAktuell: {old_line}\nVorgeschlagen: {new_line}\n\n'
+            f'Kompatibilität: {compatibility(name, profile)}\n\n'
+            'Dies ist nur eine Zeichenfolgen-Vorschau. Keine Datei wurde verändert. '
+            'Ohne bestätigte Kompatibilität darf kein automatisches Update erfolgen.')
 
     def stage_selected(self):
         if self.thread is not None:
