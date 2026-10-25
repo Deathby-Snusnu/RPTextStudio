@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from wow_client_profiles import save_profile, get_profile, preview_toc, compatibility
+from wow_client_profiles import (
+    save_profile, get_profile, preview_toc, compatibility, interface_line,
+)
 
 
 class ClientProfileTests(unittest.TestCase):
@@ -38,6 +40,21 @@ class ClientProfileTests(unittest.TestCase):
             preview_toc(toc, "11509")
         self.assertEqual(preview_toc(toc, "11509", compatible=True),
                          "## Interface: 11509\r\n## Version: 0.5.0\r\n")
+
+    def test_toc_preview_replaces_empty_interface_without_changing_version(self):
+        toc = "## Interface:\n## Version: 0.5.0\n"
+        self.assertEqual(preview_toc(toc, "11509", compatible=True),
+                         "## Interface: 11509\n## Version: 0.5.0\n")
+
+    def test_toc_preview_rejects_duplicate_interface_fields(self):
+        toc = "## Interface:\n## Interface: 16001\n"
+        with self.assertRaises(ValueError):
+            preview_toc(toc, "11509", compatible=True)
+
+    def test_interface_line_uses_preview_header_matching(self):
+        for line in ("##Interface: 16001", "## Interface : 16001"):
+            with self.subTest(line=line):
+                self.assertEqual(interface_line(line), line)
 
     def test_no_automatic_compatibility_for_classic_era(self):
         profile = save_profile(self.root, "11509", self.settings)

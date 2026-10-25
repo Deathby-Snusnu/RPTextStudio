@@ -8,7 +8,7 @@ import re
 from wow_detection import inspect_client
 from wow_installations import settings_path
 
-INTERFACE_RE = re.compile(r"^(\s*##\s*Interface\s*:\s*)([^\r\n]*)(\r?\n|$)", re.I | re.M)
+INTERFACE_RE = re.compile(r"^([ \t]*##[ \t]*Interface[ \t]*:[ \t]*)([^\r\n]*)(\r?\n|$)", re.I | re.M)
 VALID_INTERFACE = re.compile(r"^[1-9][0-9]{3,6}$")
 # Verified compatibility remains opt-in. These are not compatibility claims for other clients.
 TESTED_COMPATIBILITY = {name: {"forever"} for name in (
@@ -77,6 +77,11 @@ def compatibility(addon: str, profile: ClientProfile) -> str:
     return "Kompatibilität deklariert"
 
 
+def interface_line(toc: str) -> str | None:
+    match = INTERFACE_RE.search(toc)
+    return match.group(0).rstrip("\r\n") if match else None
+
+
 def preview_toc(toc: str, interface: str, *, compatible: bool = False) -> str:
     """Return adapted content without writing; compatibility must be explicitly approved."""
     if not compatible:
@@ -87,4 +92,7 @@ def preview_toc(toc: str, interface: str, *, compatible: bool = False) -> str:
     if len(matches) != 1:
         raise ValueError("TOC muss genau eine Interface-Zeile enthalten.")
     match = matches[0]
-    return toc[:match.start(2)] + str(interface) + toc[match.end(2):]
+    replacement = str(interface)
+    if match.group(1).endswith(":"):
+        replacement = " " + replacement
+    return toc[:match.start(2)] + replacement + toc[match.end(2):]

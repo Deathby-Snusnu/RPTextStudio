@@ -12,7 +12,7 @@ from wow_installations import load_paths
 from wow_detection import discover_wow_installations, inspect_client
 from user_addon_manager import inspect_installed, check_installed
 from github_staging import stage
-from wow_client_profiles import get_profile, save_profile, compatibility, preview_toc
+from wow_client_profiles import get_profile, save_profile, compatibility, interface_line, preview_toc
 
 
 class UserScanWorker(QObject):
@@ -155,8 +155,8 @@ class UserAddonManagerDialog(QDialog):
         except (OSError, UnicodeError, ValueError) as exc:
             QMessageBox.warning(self, 'TOC-Vorschau', str(exc))
             return
-        old_line = next((line for line in original.splitlines() if line.strip().lower().startswith('## interface:')), '?')
-        new_line = next((line for line in updated.splitlines() if line.strip().lower().startswith('## interface:')), '?')
+        old_line = interface_line(original) or '?'
+        new_line = interface_line(updated) or '?'
         QMessageBox.information(self, 'TOC-Vorschau, keine Installation',
             f'{name}\nAktuell: {old_line}\nVorgeschlagen: {new_line}\n\n'
             f'Kompatibilität: {compatibility(name, profile)}\n\n'
