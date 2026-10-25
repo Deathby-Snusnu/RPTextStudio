@@ -314,11 +314,22 @@ class UserAddonManagerDialog(QDialog):
                 return
             if replacements:
                 try:
-                    plan = preview_safe_install(package.name, package.directory, target, profile,
-                                                approved_overwrites=replacements)
+                    approved_plan = preview_safe_install(
+                        package.name, package.directory, target, profile,
+                        approved_overwrites=replacements,
+                    )
                 except Exception as exc:
                     QMessageBox.warning(self, "Aktualisierung nicht möglich", str(exc))
                     return
+                if (approved_plan.source_hashes != plan.source_hashes
+                        or approved_plan.target_hashes != plan.target_hashes):
+                    QMessageBox.warning(
+                        self, "Vorschau veraltet",
+                        "Dateien wurden während der Auswahl geändert. "
+                        "Bitte die Vorschau neu starten.",
+                    )
+                    return
+                plan = approved_plan
         if not plan.new_files and not plan.toc_changed and not plan.approved_overwrites:
             details = (
                 f"Für {package.name} gibt es derzeit keine gefahrlos anwendbaren Änderungen.\n\n"

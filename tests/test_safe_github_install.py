@@ -81,7 +81,16 @@ class SafeGitHubInstallTests(unittest.TestCase):
             "## Interface: 11509\n## Version: local\n", encoding="utf8"
         )
         (existing / "Core.lua").write_text("LOCAL", encoding="utf8")
-        for forbidden in (("JaegerRP.toc",), ("missing.lua",), ("Core.lua", "Core.lua")):
+        (existing / "JaegerRP_Classic.TOC").write_text("local metadata", encoding="utf8")
+        (self.source / "JaegerRP_Classic.TOC").write_text("upstream metadata", encoding="utf8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(plan.protected, ("Core.lua",))
+        for forbidden in (
+            ("JaegerRP.toc",),
+            ("JaegerRP_Classic.TOC",),
+            ("missing.lua",),
+            ("Core.lua", "Core.lua"),
+        ):
             with self.subTest(forbidden=forbidden):
                 with self.assertRaises(Exception):
                     preview_safe_install("JaegerRP", self.source, self.target, self.profile,
@@ -113,7 +122,6 @@ class SafeGitHubInstallTests(unittest.TestCase):
                                     approved_overwrites=("Core.lua",))
         install_safe(plan, self.profile)
         self.assertEqual((existing / "core.lua").read_text(), "NEW ENGINE")
-        self.assertFalse((existing / "Core.lua").exists())
         self.assertEqual({p.name for p in existing.iterdir()}, {"core.lua", "jaegerRP.TOC"})
 
     def test_case_only_collisions_preserve_existing_files_and_toc_bytes(self):

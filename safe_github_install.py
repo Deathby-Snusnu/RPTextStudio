@@ -79,7 +79,7 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     protected = tuple(sorted(
         k for k in src
         if k.casefold() in old_names
-        and k.casefold() != toc.casefold()
+        and not k.casefold().endswith(".toc")
         and _hash(src[k]) != _hash(old[old_names[k.casefold()]])
     ))
     # A file may only be replaced if it was actually reported as protected
