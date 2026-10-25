@@ -43,6 +43,36 @@ class SpellManagerTests(unittest.TestCase):
             self.assertIn(key, found)
         self.assertNotIn("PRAYER", found)
 
+    def test_all_other_class_spell_keys(self):
+        examples = {
+            "HexerRP": ("SHADOW_BOLT", "IMMOLATE"),
+            "JaegerRP": ("HUNTERS_MARK", "ARCANE_SHOT"),
+            "DruidenRP": ("MARK", "GIFT"),
+        }
+        for addon, (first, second) in examples.items():
+            with self.subTest(addon=addon):
+                source = (
+                    "addon.localeData.deDE.texts = { "
+                    + first + ' = { ziel = { "Ziel, %s", }, }, '
+                    + second + ' = { gruppe = { "Gruppe", }, } }'
+                )
+                path = Path("addons") / addon / "locales" / "deDE" / "Texts.lua"
+                actual = candidate_keys({path: parse_pools(source)}, addon)
+                self.assertIn(first, actual)
+                self.assertIn(second, actual)
+                other = candidate_keys({path: parse_pools(source)}, "PaladinRP")
+                self.assertEqual(other, [])
+
+    def test_flat_racial_keys_and_ambient_exclusion(self):
+        racial = Path("addons/PaladinRP/locales/deDE/Racial.lua")
+        ambient = Path("addons/PaladinRP/locales/deDE/Ambient.lua")
+        pools = {
+            racial: parse_pools('addon.localeData.deDE.Racial = { ["Dwarf"] = { ["MIGHT"] = { "Text", }, }, }'),
+            ambient: parse_pools('addon.localeData.deDE.ambient = { PRAYER = { "Gebet", }, }'),
+        }
+        self.assertIn("MIGHT", candidate_keys(pools, "PaladinRP"))
+        self.assertNotIn("PRAYER", candidate_keys(pools, "PaladinRP"))
+
     def test_real_hexer_keys(self):
         addons=Path(__file__).resolve().parents[3]/'addons'
         source=addons/'HexerRP/locales/deDE/Texts.lua'
