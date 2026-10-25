@@ -40,6 +40,16 @@ class TextMergeTests(unittest.TestCase):
         self.assertEqual(result.conflicts, 1)
         self.assertEqual(result.safe_updates, {})
 
+    def test_new_nonliteral_text_list_requires_review(self):
+        local = lua("Alt")
+        upstream = ('addon.texts = { HUNTERS_MARK = { ziel = {"Alt"}, '
+                    'gruppe = {"Neu", build_text()} } }\n')
+        result = preview_text_merge(local, local, upstream)
+        conflict = next(pool for pool in result.pools if pool.path[-1] == "gruppe")
+        self.assertEqual(result.conflicts, 1)
+        self.assertEqual(conflict.status, "Konflikt")
+        self.assertEqual(result.safe_updates, {})
+
     def test_no_disk_modification(self):
         old, local, new = lua("Alt"), lua("Eigene Texte"), lua("Alt", "Repo")
         preview_text_merge(old, local, new)

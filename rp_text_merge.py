@@ -38,15 +38,21 @@ def preview_text_merge(baseline_lua: str, local_lua: str, upstream_lua: str) -> 
     because upstream still has them. Newly added upstream strings are appended
     in upstream order. New or structurally changed keys must be reviewed manually.
     """
-    old = parse_pools(baseline_lua)
-    local = parse_pools(local_lua)
-    new = parse_pools(upstream_lua)
+    rejected = set()
+    old = parse_pools(baseline_lua, rejected_paths=rejected)
+    local = parse_pools(local_lua, rejected_paths=rejected)
+    new = parse_pools(upstream_lua, rejected_paths=rejected)
     previews = []
     updates = {}
-    for key in sorted(set(old) | set(local) | set(new)):
+    for key in sorted(set(old) | set(local) | set(new) | rejected):
         before = old.get(key)
         current = local.get(key)
         incoming = new.get(key)
+        if key in rejected:
+            existing = tuple(current.entries) if current else ()
+            previews.append(PoolMerge(key, "Konflikt", existing, (), existing,
+                "Textliste enthält nichtliterale Lua-Ausdrücke und muss manuell geprüft werden."))
+            continue
         if not current:
             previews.append(PoolMerge(key, "Konflikt", (),
                 (), (), "Textliste fehlt lokal oder ist nicht als reine Textliste lesbar."))
