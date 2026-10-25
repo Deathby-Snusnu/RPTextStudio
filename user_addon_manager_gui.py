@@ -198,18 +198,33 @@ class UserAddonManagerDialog(QDialog):
         except Exception as exc:
             QMessageBox.warning(self, "Installation nicht möglich", str(exc))
             return
-        summary = (f"{package.name} → {target / package.name}\\n"
-            f"Interface: {profile.interface}\\n"
-            f"Neue Dateien: {len(plan.new_files)}\\n"
-            f"Bestehende geänderte Dateien geschützt: {len(plan.protected)}\\n"
-            f"TOC-Interface wird geändert: {'Ja' if plan.toc_changed else 'Nein'}\\n"
-            f"Kompatibilität: {warning}\\n\\n"
-            "Vorhandene Dateien werden niemals überschrieben, außer der Interface-Zeile der TOC. "
-            "Eine vollständige Sicherung der bisherigen AddOn-Dateien wird erstellt.\\n\\n"
-            "Achtung: Eine passende Interface-Nummer bestätigt keine WoW-API-Kompatibilität. "
-            "Fortfahren nur, wenn du das AddOn mit diesem Client bewusst testen möchtest.")
-        if QMessageBox.warning(self, "Installationsvorschau und ausdrückliche Freigabe", summary,
-                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+        summary = (
+            f"AddOn: {package.name}\n"
+            f"Ziel: {target / package.name}\n"
+            f"Interface-Profil: {profile.interface}\n\n"
+            "Geplante Änderungen\n"
+            f"  • Neue Dateien: {len(plan.new_files)}\n"
+            f"  • Geschützte abweichende Dateien: {len(plan.protected)}\n"
+            f"  • Interface-Zeile der TOC anpassen: {'Ja' if plan.toc_changed else 'Nein'}\n\n"
+            "Bestandsschutz\n"
+            "  • Bestehende RP-Texte und sonstige Dateien bleiben erhalten.\n"
+            "  • Nur die Interface-Zeile der TOC darf angepasst werden.\n"
+            "  • Der bisherige AddOn-Ordner wird vorab gesichert.\n\n"
+            f"Kompatibilität: {warning}\n"
+            "Eine passende Interface-Nummer garantiert keine WoW-API-Kompatibilität.\n"
+            "Bitte nur fortfahren, wenn du die Installation mit diesem Client testen möchtest."
+        )
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("AddOn-Installation prüfen")
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(f"Installation von {package.name} bestätigen?")
+        dialog.setInformativeText(summary)
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setDefaultButton(QMessageBox.No)
+        dialog.button(QMessageBox.Yes).setText("Installieren")
+        dialog.button(QMessageBox.No).setText("Abbrechen")
+        dialog.setMinimumWidth(630)
+        if dialog.exec() != QMessageBox.Yes:
             return
         self._start("install", staging_target=(plan, profile))
 
