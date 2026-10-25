@@ -101,6 +101,7 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
     backup = backups / token
     target.mkdir(parents=True, exist_ok=True)
     # Prepare beside target. Existing files are all preserved, including unknown formats.
+    target.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=".rpstudio-safe-", dir=target))
     ready = work / plan.name
     moved = False
