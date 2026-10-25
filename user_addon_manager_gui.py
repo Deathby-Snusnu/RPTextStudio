@@ -316,9 +316,25 @@ class UserAddonManagerDialog(QDialog):
                 f"Commit: {results.commit}\nSHA-256 (Archiv): {results.archive_sha256}\n"
                 f"Dateien: {results.files}\nZiel: {results.directory}")
         elif operation == "install":
-            self.status.setText(f"Installation abgeschlossen. Backup: {results}")
-            QMessageBox.information(self, "Installiert",
-                f"AddOn installiert. Backup und Rollback über den Sicherungsordner verfügbar:\\n{results}")
+            backup_path = Path(results)
+            self.status.setText("AddOn installiert. Sicherung erstellt.")
+            dialog = QMessageBox(self)
+            dialog.setWindowTitle("Installation erfolgreich")
+            dialog.setIcon(QMessageBox.Information)
+            dialog.setText("Das AddOn wurde erfolgreich installiert.")
+            dialog.setInformativeText(
+                "Der vorherige AddOn-Stand wurde gesichert.\n"
+                "Du kannst ihn bei Bedarf über die Backup-Wiederherstellung zurückholen.\n\n"
+                f"Sicherung: {backup_path.name}"
+            )
+            dialog.setDetailedText(str(backup_path))
+            open_button = dialog.addButton("Backup-Ordner öffnen", QMessageBox.ActionRole)
+            dialog.addButton("Schließen", QMessageBox.AcceptRole)
+            dialog.exec()
+            if dialog.clickedButton() is open_button:
+                from PySide6.QtCore import QUrl
+                from PySide6.QtGui import QDesktopServices
+                QDesktopServices.openUrl(QUrl.fromLocalFile(str(backup_path)))
         else:
             for i, row in enumerate(results):
                 if i < self.table.rowCount():
