@@ -27,24 +27,32 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
     paladin_sources = {"Abilities", "Blessings", "GreaterBlessings", "Auras", "Seals"}
     for path, pools in files.items():
         path = Path(path)
-        if addon not in path.parts or path.suffix.lower() != ".lua":
+        if (path.parent.parent.name != "locales"
+                or path.parent.parent.parent.name != addon
+                or path.suffix.lower() != ".lua"):
             continue
         for tokens in pools:
             parts = tuple(tokens)
             if len(parts) < 4:
                 continue
+            if (path.name in ("Classes.lua", "RaceClass.lua")
+                    and parts[-1] in ("ziel", "gruppe")):
+                result.add(parts[-2])
             if addon == "PaladinRP":
                 if (len(parts) >= 5 and "localeData" in parts
                         and any(section in parts for section in paladin_sources)
                         and path.stem in paladin_sources
                         and parts[-1] in ("ziel", "gruppe")):
                     result.add(parts[-2])
-                elif path.name == "Racial.lua" and "Racial" in parts and len(parts) >= 5:
+                elif (path.name == "Racial.lua"
+                      and any(part.casefold() == "racial" for part in parts)
+                      and len(parts) >= 5):
                     result.add(parts[-2] if parts[-1] in ("ziel", "gruppe") else parts[-1])
             elif path.name == "Texts.lua" and (
                     "texts" in parts or "Texts" in parts) and parts[-1] in ("ziel", "gruppe"):
                 result.add(parts[-2])
-            elif path.name == "Racial.lua" and "Racial" in parts:
+            elif (path.name == "Racial.lua"
+                  and any(part.casefold() == "racial" for part in parts)):
                 # Race-specific spell pool: Racial.Dwarf.MIGHT = {"..."}
                 if len(parts) >= 5:
                     result.add(parts[-2] if parts[-1] in ("ziel", "gruppe") else parts[-1])

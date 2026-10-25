@@ -63,6 +63,32 @@ class SpellManagerTests(unittest.TestCase):
                 other = candidate_keys({path: parse_pools(source)}, "PaladinRP")
                 self.assertEqual(other, [])
 
+    def test_classes_and_race_class_keys_are_discovered(self):
+        for addon in ("HexerRP", "PaladinRP", "JaegerRP", "DruidenRP"):
+            with self.subTest(addon=addon):
+                classes = Path("addons") / addon / "locales/deDE/Classes.lua"
+                race_class = Path("addons") / addon / "locales/deDE/RaceClass.lua"
+                files = {
+                    classes: parse_pools(
+                        'addon.localeData.deDE.classes = { WARLOCK = { HELLO = { ziel = { "Text", }, }, }, }'
+                    ),
+                    race_class: parse_pools(
+                        'addon.localeData.deDE.raceClassTexts = { Dwarf = { PALADIN = { GREETING = { gruppe = { "Text", }, }, }, }, }'
+                    ),
+                }
+                found = candidate_keys(files, addon)
+                self.assertIn("HELLO", found)
+                self.assertIn("GREETING", found)
+
+    def test_only_selected_addon_directory_is_scanned(self):
+        path = Path("/work/HexerRP/addons/DruidenRP/locales/deDE/Texts.lua")
+        pools = parse_pools(
+            'addon.localeData.deDE.texts = { MARK = { ziel = { "Text", }, }, }'
+        )
+        files = {path: pools}
+        self.assertEqual(candidate_keys(files, "HexerRP"), [])
+        self.assertEqual(candidate_keys(files, "DruidenRP"), ["MARK"])
+
     def test_flat_racial_keys_and_ambient_exclusion(self):
         racial = Path("addons/PaladinRP/locales/deDE/Racial.lua")
         ambient = Path("addons/PaladinRP/locales/deDE/Ambient.lua")
@@ -72,6 +98,17 @@ class SpellManagerTests(unittest.TestCase):
         }
         self.assertIn("MIGHT", candidate_keys(pools, "PaladinRP"))
         self.assertNotIn("PRAYER", candidate_keys(pools, "PaladinRP"))
+
+    def test_lowercase_racial_pool_is_discovered(self):
+        for addon in ("PaladinRP", "DruidenRP"):
+            with self.subTest(addon=addon):
+                racial = Path("addons") / addon / "locales/deDE/Racial.lua"
+                pools = {
+                    racial: parse_pools(
+                        'addon.localeData.deDE.racial = { Gnome = { SHADOW_BOLT = { ziel = { "Text", }, }, }, }'
+                    ),
+                }
+                self.assertIn("SHADOW_BOLT", candidate_keys(pools, addon))
 
     def test_real_hexer_keys(self):
         addons=Path(__file__).resolve().parents[3]/'addons'
