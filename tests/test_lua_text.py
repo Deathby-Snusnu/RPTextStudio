@@ -24,6 +24,11 @@ class Tests(unittest.TestCase):
  def test_parse(self):
   p=parse_pools(SAMPLE)
   self.assertEqual(p[('localeData','deDE','texts','SHADOW_BOLT','ziel')].entries,['Hallo, %s.','*zeigt auf %s.*'])
+ def test_parse_reports_nonliteral_text_list_paths(self):
+  rejected=set()
+  parse_pools('addon.texts = { HUNTERS_MARK = { gruppe = {"Neu", build_text()} } }',
+              rejected_paths=rejected)
+  self.assertEqual(rejected,{('texts','HUNTERS_MARK','gruppe')})
  def test_roundtrip(self):
   with tempfile.TemporaryDirectory() as d:
    file=Path(d)/'Texts.lua';file.write_text(SAMPLE,encoding='utf8')
