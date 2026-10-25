@@ -14,34 +14,40 @@ KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
 
 
 def candidate_keys(files: dict, addon: str) -> list[str]:
-    """Discover actual spell keys from localized literal RP pools.
+    """Find spell-capable RP keys in all supported class addons.
 
-    PaladinRP stores its spells across Abilities, Blessings, GreaterBlessings,
-    Auras and Seals, not in Texts.lua. Ambient pools are not spell commands.
+    The parser paths are relative to the Lua assignment (without `addon`):
+    localeData.deDE.texts.SHADOW_BOLT.ziel, or
+    localeData.deDE.Abilities.LAYONHANDS.ziel.
+    Ambient collections are deliberately excluded from spell macros.
     """
-    keys = set()
-    spell_files = {"Abilities.lua", "Blessings.lua", "GreaterBlessings.lua",
-                   "Auras.lua", "Seals.lua"}
+    if addon not in COMMANDS:
+        return []
+    result = set()
+    paladin_sources = {"Abilities", "Blessings", "GreaterBlessings", "Auras", "Seals"}
     for path, pools in files.items():
-        if addon not in path.parts:
+        path = Path(path)
+        if addon not in path.parts or path.suffix.lower() != ".lua":
             continue
-        for parts in pools:
+        for tokens in pools:
+            parts = tuple(tokens)
+            if len(parts) < 4 or parts[-1] not in ("ziel", "gruppe"):
+                continue
             if addon == "PaladinRP":
-                if path.name in spell_files and "localeData" in parts:
-                    # addon.localeData.deDE.Abilities.LAYONHANDS.ziel
-                    if len(parts) >= 5 and parts[-1] in ("ziel", "gruppe"):
-                        keys.add(parts[-2])
-                elif path.name == "Racial.lua" and len(parts) >= 5:
-                    # localeData.deDE.Racial.Dwarf.MIGHT is a fallback,
-                    # not a new spell; it still contributes its spell token.
-                    keys.add(parts[-1])
-            elif path.name == "Texts.lua" and len(parts) >= 4:
-                keys.add(parts[3])
-            elif path.name == "Racial.lua" and len(parts) >= 5:
-                keys.add(parts[4])
-            elif path.name in ("Classes.lua", "RaceClass.lua") and len(parts) >= 5:
-                keys.add(parts[-2] if parts[-1] in ("ziel", "gruppe") else parts[-1])
-    return sorted(key for key in keys if KEY_PATTERN.fullmatch(key))
+                if (len(parts) >= 5 and "localeData" in parts
+                        and any(section in parts for section in paladin_sources)
+                        and path.stem in paladin_sources):
+                    result.add(parts[-2])
+                elif path.name == "Racial.lua" and "Racial" in parts:
+                    result.add(parts[-2] if len(parts) > 5 else parts[-1])
+            elif path.name == "Texts.lua" and (
+                    "texts" in parts or "Texts" in parts):
+                result.add(parts[-2])
+            elif path.name == "Racial.lua" and "Racial" in parts:
+                # Race-specific spell pool: Racial.Dwarf.MIGHT = {"..."}
+                if len(parts) >= 5:
+                    result.add(parts[-2])
+    return sorted(key for key in result if KEY_PATTERN.fullmatch(key))
 
 
 def validate_entry(addon: str, spell: str, key: str, known_keys: list[str]):
