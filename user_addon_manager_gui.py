@@ -329,7 +329,7 @@ class UserAddonManagerDialog(QDialog):
             )
             dialog.setDetailedText(str(backup_path))
             open_button = dialog.addButton("Backup-Ordner öffnen", QMessageBox.ActionRole)
-            dialog.addButton("Schließen", QMessageBox.AcceptRole)
+            dialog.addButton("Schließen", QMessageBox.RejectRole)
             dialog.exec()
             if dialog.clickedButton() is open_button:
                 from PySide6.QtCore import QUrl
