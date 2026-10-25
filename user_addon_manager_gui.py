@@ -2,10 +2,11 @@
 from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
-from PySide6.QtCore import QObject, QThread, Signal, Slot
+from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton,
     QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QInputDialog,
+    QDialogButtonBox, QListWidget, QListWidgetItem,
 )
 from addon_manager import ADDONS
 from wow_installations import load_paths
@@ -255,6 +256,42 @@ class UserAddonManagerDialog(QDialog):
         item = self.table.item(row, 0)
         return self.staged_packages.get(item.text()) if item else None
 
+    def _choose_overwrites(self, plan):
+        """Require affirmative per-file selection; unchecked means preserve."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Geschützte Dateien gezielt aktualisieren")
+        dialog.resize(690, 430)
+        layout = QVBoxLayout(dialog)
+        explanation = QLabel(
+            f"GitHub unterscheidet sich bei {len(plan.protected)} vorhandenen Dateien.\n\n"
+            "Alle Dateien bleiben standardmäßig geschützt. Markiere nur Dateien, "
+            "deren lokale Fassung du bewusst durch die geprüfte GitHub-Fassung "
+            "ersetzen möchtest. Eventuelle eigene Änderungen in diesen Dateien "
+            "sind anschließend nur noch im automatischen Backup vorhanden.\n\n"
+            "Ein vollständiges Backup wird vor der Änderung angelegt. "
+            "Unmarkierte Dateien bleiben unverändert."
+        )
+        explanation.setWordWrap(True)
+        layout.addWidget(explanation)
+        choices = QListWidget(dialog)
+        for name in plan.protected:
+            item = QListWidgetItem(name, choices)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+        layout.addWidget(choices)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=dialog)
+        buttons.button(QDialogButtonBox.Ok).setText("Auswahl übernehmen")
+        buttons.button(QDialogButtonBox.Cancel).setText("Abbrechen")
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        if dialog.exec() != QDialog.Accepted:
+            return None
+        return tuple(
+            sorted(choices.item(i).text() for i in range(choices.count())
+                   if choices.item(i).checkState() == Qt.Checked)
+        )
+
     def install_selected(self):
         package = self.selected_staged()
         target = self.current_target()
@@ -271,7 +308,18 @@ class UserAddonManagerDialog(QDialog):
         except Exception as exc:
             QMessageBox.warning(self, "Installation nicht möglich", str(exc))
             return
-        if not plan.new_files and not plan.toc_changed:
+        if plan.protected:
+            replacements = self._choose_overwrites(plan)
+            if replacements is None:
+                return
+            if replacements:
+                try:
+                    plan = preview_safe_install(package.name, package.directory, target, profile,
+                                                approved_overwrites=replacements)
+                except Exception as exc:
+                    QMessageBox.warning(self, "Aktualisierung nicht möglich", str(exc))
+                    return
+        if not plan.new_files and not plan.toc_changed and not plan.approved_overwrites:
             details = (
                 f"Für {package.name} gibt es derzeit keine gefahrlos anwendbaren Änderungen.\n\n"
                 f"Neue Dateien: 0\n"
@@ -281,7 +329,7 @@ class UserAddonManagerDialog(QDialog):
                 "nicht automatisch überschrieben. Eine neue GitHub-Version kann deshalb "
                 "vorliegen, obwohl hier kein sicheres Update möglich ist."
             )
-            QMessageBox.information(self, "Keine Änderungen notwendig", details)
+            QMessageBox.information(self, "Keine Aktualisierung freigegeben", details)
             self.status.setText(f"{package.name}: keine sicheren Änderungen; vorhandene Dateien geschützt.")
             return
         summary = (
@@ -290,10 +338,13 @@ class UserAddonManagerDialog(QDialog):
             f"Interface-Profil: {profile.interface}\n\n"
             "Geplante Änderungen\n"
             f"  • Neue Dateien: {len(plan.new_files)}\n"
-            f"  • Geschützte abweichende Dateien: {len(plan.protected)}\n"
+            f"  • Geschützte abweichende Dateien: {len(plan.protected) - len(plan.approved_overwrites)}\n"
+            f"  • Ausdrücklich freigegebene Ersetzungen: {len(plan.approved_overwrites)}\n"
             f"  • Interface-Zeile der TOC anpassen: {'Ja' if plan.toc_changed else 'Nein'}\n\n"
             "Bestandsschutz\n"
-            "  • Bestehende RP-Texte und sonstige Dateien bleiben erhalten.\n"
+            "  • Nicht ausgewählte RP-Texte und sonstige Dateien bleiben erhalten.\n"
+            "  • Ausgewählte vorhandene Dateien werden durch GitHub-Versionen ersetzt;\n"
+            "    lokale Anpassungen dieser Dateien bleiben nur im Backup.\n"
             "  • Nur die Interface-Zeile der TOC darf angepasst werden.\n"
             "  • Der bisherige AddOn-Ordner wird vorab gesichert.\n\n"
             f"Kompatibilität: {warning}\n"
