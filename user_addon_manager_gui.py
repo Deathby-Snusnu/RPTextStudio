@@ -190,6 +190,13 @@ class UserAddonManagerDialog(QDialog):
             return
         if self.missing_batch is not None:
             batch = self.missing_batch
+            if batch.target != self.current_target():
+                discard_missing(batch)
+                self.missing_batch = None
+                self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+                QMessageBox.warning(self, "WoW-Installation gewechselt",
+                    "Die vorbereiteten Pakete gehörten zu einer anderen Installation. Bitte neu vorbereiten.")
+                return
             names = ", ".join(plan.name for plan in batch.plans)
             summary = (
                 f"WoW-Installation: {batch.target.parent.parent}\n"
@@ -435,6 +442,10 @@ class UserAddonManagerDialog(QDialog):
     def select_installation(self, *_):
         if self.thread is not None:
             return
+        if self.missing_batch is not None and self.missing_batch.target != self.current_target():
+            discard_missing(self.missing_batch)
+            self.missing_batch = None
+            self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
         self.table.setRowCount(0)
         if self.current_target() is not None:
             self._start("local")
@@ -443,4 +454,7 @@ class UserAddonManagerDialog(QDialog):
         if self.thread is not None and self.thread.isRunning():
             self.status.setText("Laufende Suche wird abgeschlossen. Danach kann das Fenster geschlossen werden.")
             return
+        if self.missing_batch is not None:
+            discard_missing(self.missing_batch)
+            self.missing_batch = None
         super().reject()
