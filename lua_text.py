@@ -82,7 +82,7 @@ def decode_string(raw: str) -> str:
 def encode_string(s: str) -> str:
     return '"' + (s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n').replace('\r','\\r').replace('\t','\\t')) + '"'
 
-def parse_pools(src: str) -> dict[tuple[str,...],Pool]:
+def parse_pools(src: str, *, rejected_paths: set[tuple[str,...]] | None = None) -> dict[tuple[str,...],Pool]:
     ts=lex(src); pools={}; n=len(ts)
     def table(idx: int, path: tuple[str,...]):
         opener=ts[idx]; idx+=1; entries=[]; children=False; is_literal=True
@@ -117,6 +117,8 @@ def parse_pools(src: str) -> dict[tuple[str,...],Pool]:
             line=src.rfind('\n',0,opener.start)+1
             indent=re.match(r'[ \t]*',src[line:opener.start]).group()
             pools[path]=Pool(path,opener,closer,entries,indent)
+        elif entries and not children and rejected_paths is not None:
+            rejected_paths.add(path)
         return idx+1
     # Look for top-level literal assignment addon.localeData.<locale>.<name> = {
     # or other addon.* assignment, but never expansion scripts.
