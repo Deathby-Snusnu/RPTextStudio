@@ -64,7 +64,7 @@ class UserAddonManagerDialog(QDialog):
         self._scan_after_cleanup = False
         self._operation = None
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Anwender-Modus: Nur lesen. Keine Dateien werden installiert oder verändert."))
+        layout.addWidget(QLabel("Anwender-Modus: GitHub-Pakete prüfen und nach Bestätigung mit Bestandsschutz installieren."))
         top = QHBoxLayout()
         self.installations = QComboBox()
         self.installations.currentIndexChanged.connect(self.select_installation)
@@ -197,6 +197,19 @@ class UserAddonManagerDialog(QDialog):
             plan = preview_safe_install(package.name, package.directory, target, profile)
         except Exception as exc:
             QMessageBox.warning(self, "Installation nicht möglich", str(exc))
+            return
+        if not plan.new_files and not plan.toc_changed:
+            details = (
+                f"Für {package.name} gibt es derzeit keine gefahrlos anwendbaren Änderungen.\n\n"
+                f"Neue Dateien: 0\n"
+                f"TOC-Interface bereits passend: {profile.interface}\n"
+                f"Abweichende vorhandene Dateien (geschützt): {len(plan.protected)}\n\n"
+                "Bereits vorhandene Programm- und Textdateien werden aus Sicherheitsgründen "
+                "nicht automatisch überschrieben. Eine neue GitHub-Version kann deshalb "
+                "vorliegen, obwohl hier kein sicheres Update möglich ist."
+            )
+            QMessageBox.information(self, "Keine Änderungen notwendig", details)
+            self.status.setText(f"{package.name}: keine sicheren Änderungen; vorhandene Dateien geschützt.")
             return
         summary = (f"{package.name} → {target / package.name}\\n"
             f"Interface: {profile.interface}\\n"
