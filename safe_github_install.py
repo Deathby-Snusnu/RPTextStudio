@@ -30,6 +30,8 @@ class SafePlan:
     toc_changed: bool
     source_hashes: tuple[tuple[str, str], ...]
     target_hashes: tuple[tuple[str, str], ...]
+    # Explicit, individually reviewed exceptions to the default file protection.
+    approved_overwrites: tuple[str, ...] = ()
 
 def _validate(name: str, staged: Path, target: Path, profile: ClientProfile):
     if name not in ADDONS:
@@ -55,7 +57,8 @@ def _casefold_index(files: dict[str, Path]) -> dict[str, str]:
         result[key] = rel
     return result
 
-def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientProfile) -> SafePlan:
+def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientProfile,
+                         *, approved_overwrites: tuple[str, ...] = ()) -> SafePlan:
     staged, target = Path(staged).absolute(), Path(target).absolute()
     _validate(name, staged, target, profile)
     src = _files(staged, runtime=True)
@@ -76,21 +79,28 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     protected = tuple(sorted(
         k for k in src
         if k.casefold() in old_names
-        and k.casefold() != toc.casefold()
+        and not k.casefold().endswith(".toc")
         and _hash(src[k]) != _hash(old[old_names[k.casefold()]])
     ))
+    # A file may only be replaced if it was actually reported as protected
+    # in THIS snapshot. TOC and new/unchanged files are never user-selectable.
+    selected = tuple(sorted(set(approved_overwrites)))
+    if len(selected) != len(approved_overwrites) or any(rel not in protected for rel in selected):
+        raise InstallError("Ungültige Auswahl geschützter Dateien.")
     current_toc = old[old_toc].read_text(encoding="utf-8-sig") if old_toc is not None else upstream
     adapted = preview_toc(current_toc, profile.interface, compatible=True)
     return SafePlan(name, target, staged, profile.interface, new, protected,
                     adapted != current_toc,
                     tuple(sorted((k, _hash(v)) for k, v in src.items())),
-                    tuple(sorted((k, _hash(v)) for k, v in old.items())))
+                    tuple(sorted((k, _hash(v)) for k, v in old.items())),
+                    selected)
 
 def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
     """Apply previously approved exact plan, then return persistent backup path."""
-    if preview_safe_install(plan.name, plan.source, plan.target, profile) != plan:
+    if preview_safe_install(plan.name, plan.source, plan.target, profile,
+                            approved_overwrites=plan.approved_overwrites) != plan:
         raise InstallError("Dateien oder Installationsprofil wurden seit der Vorschau geändert.")
-    if not plan.new_files and not plan.toc_changed:
+    if not plan.new_files and not plan.toc_changed and not plan.approved_overwrites:
         raise InstallError("Keine sicheren Änderungen vorhanden.")
     target = plan.target
     dest = target / plan.name
@@ -129,6 +139,17 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
             shutil.copy2(incoming[rel], output)
             if _hash(output) != dict(plan.source_hashes)[rel]:
                 raise InstallError("Kopierprüfung fehlgeschlagen: " + rel)
+        # The existing filename's spelling is preserved for case-insensitive
+        # Windows volumes. Every explicit replacement is verified byte-for-byte.
+        ready_names = _casefold_index(_files(ready, runtime=False))
+        for rel in plan.approved_overwrites:
+            old_rel = ready_names.get(rel.casefold())
+            if old_rel is None:
+                raise InstallError("Freigegebene Datei fehlt bei der Vorbereitung: " + rel)
+            output = ready / old_rel
+            shutil.copy2(incoming[rel], output)
+            if _hash(output) != dict(plan.source_hashes)[rel]:
+                raise InstallError("Kopierprüfung fehlgeschlagen: " + rel)
         toc_rel = next(
             (rel for rel, _ in plan.target_hashes if rel.casefold() == (plan.name + ".toc").casefold()),
             plan.name + ".toc",
@@ -140,7 +161,8 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
         changed = preview_toc(original, plan.interface, compatible=True)
         if changed != original:
             toc.write_bytes((b"\xef\xbb\xbf" if has_bom else b"") + changed.encode("utf-8"))
-        if preview_safe_install(plan.name, plan.source, target, profile) != plan:
+        if preview_safe_install(plan.name, plan.source, target, profile,
+                                approved_overwrites=plan.approved_overwrites) != plan:
             raise InstallError("Dateien während der Vorbereitung geändert.")
         backup.mkdir(parents=True, exist_ok=False)
         write_manifest()

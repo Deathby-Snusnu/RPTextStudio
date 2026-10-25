@@ -46,6 +46,84 @@ class SafeGitHubInstallTests(unittest.TestCase):
         self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CODE")
         self.assertEqual((existing / "JaegerRP.toc").read_text().splitlines()[0], "## Interface: 16001")
 
+    def test_explicitly_approved_replacement_creates_backup_and_rolls_back(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        old_toc = "## Interface: 11509\n## Version: local\nCore.lua\n"
+        (existing / "JaegerRP.toc").write_text(old_toc, encoding="utf8")
+        (existing / "Core.lua").write_text("LOCAL CHANGES", encoding="utf8")
+        (existing / "Personal.lua").write_text("KEEP PERSONAL TEXT", encoding="utf8")
+
+        guarded = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(guarded.protected, ("Core.lua",))
+        self.assertFalse(guarded.new_files)
+        self.assertFalse(guarded.toc_changed)
+        with self.assertRaises(Exception):
+            install_safe(guarded, self.profile)
+        self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CHANGES")
+
+        approved = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
+                                        approved_overwrites=("Core.lua",))
+        self.assertEqual(approved.approved_overwrites, ("Core.lua",))
+        backup = install_safe(approved, self.profile)
+        self.assertEqual((existing / "Core.lua").read_text(), "NEW ENGINE")
+        self.assertEqual((existing / "Personal.lua").read_text(), "KEEP PERSONAL TEXT")
+        self.assertEqual((existing / "JaegerRP.toc").read_text(), old_toc)
+        self.assertEqual((backup / "JaegerRP" / "Core.lua").read_text(), "LOCAL CHANGES")
+        rollback(self.target, backup)
+        self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CHANGES")
+        self.assertEqual((existing / "Personal.lua").read_text(), "KEEP PERSONAL TEXT")
+
+    def test_approval_restricted_to_changed_existing_non_toc_files(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: local\n", encoding="utf8"
+        )
+        (existing / "Core.lua").write_text("LOCAL", encoding="utf8")
+        (existing / "JaegerRP_Classic.TOC").write_text("local metadata", encoding="utf8")
+        (self.source / "JaegerRP_Classic.TOC").write_text("upstream metadata", encoding="utf8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(plan.protected, ("Core.lua",))
+        for forbidden in (
+            ("JaegerRP.toc",),
+            ("JaegerRP_Classic.TOC",),
+            ("missing.lua",),
+            ("Core.lua", "Core.lua"),
+        ):
+            with self.subTest(forbidden=forbidden):
+                with self.assertRaises(Exception):
+                    preview_safe_install("JaegerRP", self.source, self.target, self.profile,
+                                         approved_overwrites=forbidden)
+
+    def test_approved_replacement_refuses_modified_local_file(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: local\n", encoding="utf8"
+        )
+        core = existing / "Core.lua"
+        core.write_text("MY FIRST EDIT", encoding="utf8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
+                                    approved_overwrites=("Core.lua",))
+        core.write_text("MY SECOND EDIT", encoding="utf8")
+        with self.assertRaises(Exception):
+            install_safe(plan, self.profile)
+        self.assertEqual(core.read_text(), "MY SECOND EDIT")
+
+    def test_approved_replacement_keeps_existing_filename_spelling(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "jaegerRP.TOC").write_text(
+            "## Interface: 11509\n## Version: local\n", encoding="utf8"
+        )
+        (existing / "core.lua").write_text("LOCAL", encoding="utf8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
+                                    approved_overwrites=("Core.lua",))
+        install_safe(plan, self.profile)
+        self.assertEqual((existing / "core.lua").read_text(), "NEW ENGINE")
+        self.assertEqual({p.name for p in existing.iterdir()}, {"core.lua", "jaegerRP.TOC"})
+
     def test_case_only_collisions_preserve_existing_files_and_toc_bytes(self):
         existing = self.target / "JaegerRP"
         existing.mkdir()
