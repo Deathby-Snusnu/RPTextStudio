@@ -31,22 +31,23 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
             continue
         for tokens in pools:
             parts = tuple(tokens)
-            if len(parts) < 4 or parts[-1] not in ("ziel", "gruppe"):
+            if len(parts) < 4:
                 continue
             if addon == "PaladinRP":
                 if (len(parts) >= 5 and "localeData" in parts
                         and any(section in parts for section in paladin_sources)
-                        and path.stem in paladin_sources):
+                        and path.stem in paladin_sources
+                        and parts[-1] in ("ziel", "gruppe")):
                     result.add(parts[-2])
-                elif path.name == "Racial.lua" and "Racial" in parts:
-                    result.add(parts[-2] if len(parts) > 5 else parts[-1])
+                elif path.name == "Racial.lua" and "Racial" in parts and len(parts) >= 5:
+                    result.add(parts[-2] if parts[-1] in ("ziel", "gruppe") else parts[-1])
             elif path.name == "Texts.lua" and (
-                    "texts" in parts or "Texts" in parts):
+                    "texts" in parts or "Texts" in parts) and parts[-1] in ("ziel", "gruppe"):
                 result.add(parts[-2])
             elif path.name == "Racial.lua" and "Racial" in parts:
                 # Race-specific spell pool: Racial.Dwarf.MIGHT = {"..."}
                 if len(parts) >= 5:
-                    result.add(parts[-2])
+                    result.add(parts[-2] if parts[-1] in ("ziel", "gruppe") else parts[-1])
     return sorted(key for key in result if KEY_PATTERN.fullmatch(key))
 
 
