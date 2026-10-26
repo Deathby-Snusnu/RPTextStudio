@@ -44,7 +44,7 @@ def inspect_installed(addons: Path, names: tuple[str, ...] | None = None) -> tup
     return tuple(results)
 
 
-def check_installed(addons: Path, names: tuple[str, ...] = ADDONS,
+def check_installed(addons: Path, names: tuple[str, ...] | None = None,
                     channel: str = "stable") -> tuple[VersionCheck, ...]:
     """Version-only GitHub queries; no local developer project required."""
     installed = inspect_installed(addons, names)
