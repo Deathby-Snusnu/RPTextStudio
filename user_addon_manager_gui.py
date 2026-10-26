@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QInputDialog,
     QDialogButtonBox, QListWidget, QListWidgetItem,
 )
-from addon_manager import ADDONS
+from addon_catalog import load_catalog
 from wow_installations import load_paths
 from wow_detection import discover_wow_installations, inspect_client
 from user_addon_manager import inspect_installed, check_installed
@@ -66,6 +66,7 @@ class UserAddonManagerDialog(QDialog):
         self.worker = None
         self.candidates = []
         self.installed = {}
+        self.catalog = {entry.id: entry for entry in load_catalog()}
         self.staged_packages = {}
         self.missing_batch = None
         self._scan_after_cleanup = False
@@ -134,6 +135,10 @@ class UserAddonManagerDialog(QDialog):
                                         self.selected_staged() is not None)
         self.missing_button.setEnabled(not busy and self.current_target() is not None)
 
+    def _selected_addon_id(self):
+        item = self.table.item(self.table.currentRow(), 0)
+        return (item.data(Qt.UserRole) or item.text()) if item else None
+
     def current_target(self):
         index = self.installations.currentIndex()
         return self.candidates[index].addons_path if 0 <= index < len(self.candidates) else None
@@ -154,7 +159,7 @@ class UserAddonManagerDialog(QDialog):
         except (ValueError, OSError) as exc:
             QMessageBox.warning(self, 'Profil nicht gespeichert', str(exc))
             return
-        info = compatibility('JaegerRP', profile)
+        info = 'Kompatibilität für jedes AddOn separat prüfen'
         self.status.setText(f'Interface-Profil gespeichert: {profile.interface} ({profile.client_type}). {info}. Keine TOC verändert.')
 
     def preview_selected_toc(self):
@@ -162,7 +167,7 @@ class UserAddonManagerDialog(QDialog):
         row = self.table.currentRow()
         if root is None or self.thread is not None or row < 0:
             return
-        name = self.table.item(row, 0).text()
+        name = self._selected_addon_id()
         profile = get_profile(self.candidates[self.installations.currentIndex()].client_root)
         if profile is None:
             QMessageBox.information(self, 'TOC-Vorschau', 'Bitte zuerst das Interface-Profil speichern.')
@@ -254,7 +259,7 @@ class UserAddonManagerDialog(QDialog):
         if not 0 <= row < self.table.rowCount():
             return None
         item = self.table.item(row, 0)
-        return self.staged_packages.get(item.text()) if item else None
+        return self.staged_packages.get(item.data(Qt.UserRole) or item.text()) if item else None
 
     def _choose_overwrites(self, plan):
         """Require affirmative per-file selection; unchecked means preserve."""
@@ -382,7 +387,7 @@ class UserAddonManagerDialog(QDialog):
         row = self.table.currentRow()
         if not 0 <= row < self.table.rowCount():
             return
-        name = self.table.item(row, 0).text()
+        name = self._selected_addon_id()
         channel = self.channel.currentData()
         directory = QFileDialog.getExistingDirectory(self, "Lokalen Staging-Elternordner auswählen")
         if not directory:
@@ -443,9 +448,16 @@ class UserAddonManagerDialog(QDialog):
             self.installed = {x.name: x for x in results}
             self.table.setRowCount(len(results))
             for i, entry in enumerate(results):
-                for j, value in enumerate((entry.name, entry.version or "—", entry.interface or "—",
+                catalog_entry = self.catalog.get(entry.name)
+                display_name = catalog_entry.title if catalog_entry else entry.name
+                for j, value in enumerate((display_name, entry.version or "—", entry.interface or "—",
                                           "Noch nicht geprüft", entry.state)):
-                    self.table.setItem(i, j, QTableWidgetItem(value))
+                    item = QTableWidgetItem(value)
+                    if j == 0:
+                        item.setData(Qt.UserRole, entry.name)
+                        if catalog_entry:
+                            item.setToolTip(catalog_entry.description or catalog_entry.repository)
+                    self.table.setItem(i, j, item)
             self.status.setText("Lokale RP-AddOns eingelesen. Keine Änderungen vorgenommen.")
         elif operation == "prepare_missing":
             self.missing_batch = results
