@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app_build_info import window_title
 import sys
 import zipfile
 import copy
@@ -30,7 +31,7 @@ except ImportError as exc:
 class Studio(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('RP Text Studio 0.1.15')
+        self.setWindowTitle(window_title())
         logo_path = Path(__file__).resolve().parent / 'assets' / 'rp_text_studio_icon.svg'
         logo_renderer = QSvgRenderer(str(logo_path))
         if not logo_renderer.isValid():
