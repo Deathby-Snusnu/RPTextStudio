@@ -43,6 +43,26 @@ class MissingAddonTests(unittest.TestCase):
         finally:
             discard_missing(batch)
 
+    def test_selected_subset_installs_only_selected_addon(self):
+        selected = "JaegerRP"
+        with patch("batch_addon_install.stage", side_effect=self.fake_stage) as staging:
+            batch = prepare_missing(self.target, self.profile, names=(selected,))
+        try:
+            self.assertEqual([plan.name for plan in batch.plans], [selected])
+            staging.assert_called_once()
+            self.assertEqual(staging.call_args.args[0], selected)
+            install_missing(batch)
+            self.assertEqual(
+                {path.name for path in self.target.iterdir() if path.name in ADDONS},
+                {selected},
+            )
+            self.assertEqual(
+                missing_names(self.target),
+                tuple(name for name in ADDONS if name != selected),
+            )
+        finally:
+            discard_missing(batch)
+
     def test_existing_addon_is_never_replaced(self):
         folder = self.target / "JaegerRP"
         folder.mkdir()

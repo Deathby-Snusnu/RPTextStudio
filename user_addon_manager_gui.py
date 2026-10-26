@@ -25,13 +25,14 @@ class UserScanWorker(QObject):
     failed = Signal(str)
 
     def __init__(self, operation: str, target: Path | None = None, channel: str = "stable",
-                 name: str | None = None, staging_target: Path | None = None):
+                 name: str | None = None, staging_target: Path | None = None, selected_names=None):
         super().__init__()
         self.operation = operation
         self.target = target
         self.channel = channel
         self.name = name
         self.staging_target = staging_target
+        self.selected_names = selected_names
 
     @Slot()
     def run(self):
@@ -48,7 +49,7 @@ class UserScanWorker(QObject):
                 plan, profile = self.staging_target
                 result = install_safe(plan, profile)
             elif self.operation == "prepare_missing":
-                result = prepare_missing(self.target, self.staging_target, self.channel)
+                result = prepare_missing(self.target, self.staging_target, self.channel, names=self.selected_names)
             elif self.operation == "install_missing":
                 result = install_missing(self.staging_target)
             else:
@@ -113,7 +114,7 @@ class UserAddonManagerDialog(QDialog):
         self.install_button.clicked.connect(self.install_selected)
         self.install_button.setEnabled(False)
         actions.addWidget(self.install_button)
-        self.missing_button = QPushButton('Alle fehlenden RP-AddOns vorbereiten…')
+        self.missing_button = QPushButton('AddOns auswählen und installieren…')
         self.missing_button.clicked.connect(self.handle_missing)
         actions.addWidget(self.missing_button)
         actions.addStretch(1)
@@ -200,7 +201,7 @@ class UserAddonManagerDialog(QDialog):
             if batch.target != self.current_target():
                 discard_missing(batch)
                 self.missing_batch = None
-                self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+                self.missing_button.setText("AddOns auswählen und installieren…")
                 QMessageBox.warning(self, "WoW-Installation gewechselt",
                     "Die vorbereiteten Pakete gehörten zu einer anderen Installation. Bitte neu vorbereiten.")
                 return
@@ -244,16 +245,44 @@ class UserAddonManagerDialog(QDialog):
             return
         if not names:
             QMessageBox.information(self, "Keine fehlenden AddOns",
-                "Alle sechs bekannten RP-AddOns sind bereits vorhanden.")
+                "Alle im Katalog bekannten RP-AddOns sind bereits vorhanden.")
             return
-        if QMessageBox.question(self, "Fehlende RP-AddOns herunterladen",
-            f"{len(names)} AddOns fehlen:\n" + "\n".join(names) +
-            f"\n\nKanal: {self.channel.currentText()}\n"
-            "Pakete werden zuerst außerhalb von WoW geladen und geprüft. "
-            "Es wird jetzt noch nichts installiert.",
+        dialog = QDialog(self)
+        dialog.setWindowTitle("RP-AddOns auswählen")
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel(
+            "Wähle die AddOns für diese WoW-Installation aus. "
+            "Bestehende AddOns werden nicht verändert."))
+        choices = QListWidget()
+        for name in names:
+            entry = self.catalog.get(name)
+            item = QListWidgetItem(entry.title if entry else name)
+            item.setData(Qt.UserRole, name)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+            choices.addItem(item)
+        layout.addWidget(choices)
+        controls = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        controls.button(QDialogButtonBox.Ok).setText("Auswahl vorbereiten")
+        controls.accepted.connect(dialog.accept)
+        controls.rejected.connect(dialog.reject)
+        layout.addWidget(controls)
+        if dialog.exec() != QDialog.Accepted:
+            return
+        selected = tuple(choices.item(i).data(Qt.UserRole)
+                         for i in range(choices.count())
+                         if choices.item(i).checkState() == Qt.Checked)
+        if not selected:
+            QMessageBox.information(self, "Keine Auswahl",
+                "Bitte mindestens ein AddOn auswählen.")
+            return
+        if QMessageBox.question(self, "Downloads vorbereiten",
+            f"{len(selected)} ausgewählte AddOns aus {self.channel.currentText()} "
+            "herunterladen und sicher prüfen?\\n\\n"
+            "WoW wird erst nach einer zweiten Bestätigung verändert.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
             return
-        self._start("prepare_missing", staging_target=profile)
+        self._start("prepare_missing", staging_target=profile, selected_names=selected)
 
     def selected_staged(self):
         row = self.table.currentRow()
@@ -399,7 +428,7 @@ class UserAddonManagerDialog(QDialog):
             return
         self._start("stage", name=name, staging_target=destination)
 
-    def _start(self, operation, *, name=None, staging_target=None):
+    def _start(self, operation, *, name=None, staging_target=None, selected_names=None):
         if self.thread is not None:
             return
         target = self.current_target()
@@ -410,7 +439,7 @@ class UserAddonManagerDialog(QDialog):
         self._operation = operation
         self.thread = QThread(self)
         self.worker = UserScanWorker(operation, target, self.channel.currentData(), name,
-                                     staging_target)
+                                     staging_target, selected_names)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.done.connect(self._on_done)
@@ -430,7 +459,7 @@ class UserAddonManagerDialog(QDialog):
             if self.missing_batch is not None:
                 discard_missing(self.missing_batch)
                 self.missing_batch = None
-                self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+                self.missing_button.setText("AddOns auswählen und installieren…")
             self.staged_packages.clear()
             self.candidates = [x for x in results if x.verified]
             self.installed.clear()
@@ -461,18 +490,18 @@ class UserAddonManagerDialog(QDialog):
             self.status.setText("Lokale RP-AddOns eingelesen. Keine Änderungen vorgenommen.")
         elif operation == "prepare_missing":
             self.missing_batch = results
-            self.missing_button.setText("Alle vorbereiteten RP-AddOns installieren…")
+            self.missing_button.setText("Ausgewählte AddOns jetzt installieren…")
             self.status.setText(f"{len(results.plans)} RP-AddOns geprüft und bereitgestellt. Installation noch nicht gestartet.")
             QMessageBox.information(self, "Pakete bereit",
                 f"{len(results.plans)} fehlende RP-AddOns wurden außerhalb von WoW heruntergeladen "
-                "und geprüft. Mit 'Alle vorbereiteten RP-AddOns installieren…' kann die "
+                "und geprüft. Mit 'Ausgewählte AddOns jetzt installieren…' kann die "
                 "gemeinsame Installationsvorschau geöffnet werden.")
         elif operation == "install_missing":
             count = len(results)
             if self.missing_batch is not None:
                 discard_missing(self.missing_batch)
                 self.missing_batch = None
-            self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+            self.missing_button.setText("AddOns auswählen und installieren…")
             self.status.setText(f"{count} RP-AddOns installiert.")
             QMessageBox.information(self, "Erstinstallation abgeschlossen",
                 f"{count} RP-AddOns wurden installiert. Vorhandene AddOns blieben unverändert. "
@@ -535,7 +564,7 @@ class UserAddonManagerDialog(QDialog):
         if self.missing_batch is not None and self.missing_batch.target != self.current_target():
             discard_missing(self.missing_batch)
             self.missing_batch = None
-            self.missing_button.setText("Alle fehlenden RP-AddOns vorbereiten…")
+            self.missing_button.setText("AddOns auswählen und installieren…")
         self.table.setRowCount(0)
         if self.current_target() is not None:
             self._start("local")
