@@ -15,7 +15,7 @@ import shutil
 import tempfile
 import uuid
 
-from addon_manager import ADDONS, _files, _hash, _linked, InstallError
+from addon_manager import known_addons, _files, _hash, _linked, InstallError
 from wow_detection import inspect_client
 from wow_client_profiles import preview_toc, ClientProfile
 
@@ -34,7 +34,7 @@ class SafePlan:
     approved_overwrites: tuple[str, ...] = ()
 
 def _validate(name: str, staged: Path, target: Path, profile: ClientProfile):
-    if name not in ADDONS:
+    if name not in known_addons():
         raise InstallError("Unbekanntes RP-AddOn.")
     if target.name.casefold() != "addons" or target.parent.name.casefold() != "interface":
         raise InstallError("Ziel muss Interface/AddOns sein.")
