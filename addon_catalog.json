@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "addons": [
+    {
+      "id": "DruidenRP",
+      "title": "Druiden RP",
+      "repository": "Deathby-Snusnu/DruidenRP",
+      "supported_clients": [],
+      "classes": [
+        "DRUID"
+      ],
+      "description": "Rollenspieltexte für Druiden"
+    },
+    {
+      "id": "HexerRP",
+      "title": "Hexer RP",
+      "repository": "Deathby-Snusnu/HexerRP",
+      "supported_clients": [],
+      "classes": [
+        "WARLOCK"
+      ],
+      "description": "Rollenspieltexte für Hexenmeister"
+    },
+    {
+      "id": "JaegerRP",
+      "title": "Jäger RP",
+      "repository": "Deathby-Snusnu/JaegerRP",
+      "supported_clients": [],
+      "classes": [
+        "HUNTER"
+      ],
+      "description": "Rollenspieltexte für Jäger"
+    },
+    {
+      "id": "PaladinRP",
+      "title": "Paladin RP",
+      "repository": "Deathby-Snusnu/PaladinRP",
+      "supported_clients": [],
+      "classes": [
+        "PALADIN"
+      ],
+      "description": "Rollenspieltexte für Paladine"
+    },
+    {
+      "id": "RPChatMod",
+      "title": "RP Chat Mod",
+      "repository": "Deathby-Snusnu/RPChatMod",
+      "supported_clients": [],
+      "classes": [],
+      "description": "Allgemeine Rollenspiel-Chatfunktionen"
+    },
+    {
+      "id": "RPControlCenter",
+      "title": "RP Control Center",
+      "repository": "Deathby-Snusnu/RPControlCenter",
+      "supported_clients": [],
+      "classes": [],
+      "description": "Zentrale RP-AddOn-Verwaltung"
+    }
+  ]
+}
