@@ -63,7 +63,16 @@ if errorlevel 1 (
     goto :failed
 )
 
-echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
+echo [4/5] Build-Version und Commit-ID erfassen ...
+"%VENV_PYTHON%" "%~dp0prepare_build.py"
+if errorlevel 1 goto :failed
+
+echo [5/5] Alte EXE entfernen und aktuell bauen ...
+if exist "%~dp0dist\RPTextStudio.exe" del /f /q "%~dp0dist\RPTextStudio.exe"
+if exist "%~dp0dist\RPTextStudio.exe" (
+    echo FEHLER: Alte EXE konnte nicht entfernt werden.
+    goto :failed
+)
 "%VENV_PYTHON%" -m PyInstaller --noconfirm --clean --onefile --windowed ^
     --name RPTextStudio ^
     --icon "%~dp0build\RPTextStudio.ico" ^
@@ -72,6 +81,7 @@ echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
     --specpath "%~dp0build" ^
     --add-data "%MANUAL%;." ^
     --add-data "%~dp0addon_catalog.json;." ^
+    --add-data "%~dp0build_info.json;." ^
     --add-data "%~dp0assets\rp_text_studio_icon.svg;assets" ^
     "%~dp0main.py"
 if errorlevel 1 (
