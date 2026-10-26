@@ -11,8 +11,16 @@ import shutil
 import tempfile
 import uuid
 from addon_registry import discover
+from addon_catalog import catalog_ids
 
-ADDONS = ("DruidenRP", "HexerRP", "JaegerRP", "PaladinRP", "RPChatMod", "RPControlCenter")
+
+def known_addons() -> tuple[str, ...]:
+    """The trusted catalog is the single source of installable add-on IDs."""
+    return catalog_ids()
+
+
+# Compatibility with older callers; new workflows call known_addons at runtime.
+ADDONS = known_addons()
 RUNTIME_SUFFIXES = {".toc", ".lua", ".xml", ".blp", ".tga", ".dds", ".png", ".jpg",
                     ".jpeg", ".ogg", ".mp3", ".wav", ".ttf", ".otf"}
 SKIP_DIRS = {".git", ".vscode", ".pytest_cache", "__pycache__", "tests", "tools",
