@@ -67,35 +67,27 @@ def _api(path: str) -> object:
     if not path.startswith("/repos/" + OWNER + "/"):
         raise GitHubCheckError("Unzulässige GitHub-Adresse.")
     endpoint = "https://api.github.com" + path
+    # Public repositories work anonymously. Authentication is optional for
+    # private/development use, never a prerequisite for a normal user.
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    headers = {"Accept": "application/vnd.github+json",
+               "User-Agent": "RPTextStudio-UpdateChecker"}
     if token:
-        request = urllib.request.Request(endpoint, headers={
-            "Authorization": "Bearer " + token,
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "RPTextStudio-UpdateChecker",
-        })
-        try:
-            with urllib.request.urlopen(request, timeout=12) as response:
-                data = response.read(MAX_RESPONSE + 1)
-        except (urllib.error.URLError, TimeoutError) as exc:
-            raise GitHubCheckError(f"GitHub-Zugriff fehlgeschlagen: {exc}") from exc
-        if len(data) > MAX_RESPONSE:
-            raise GitHubCheckError("GitHub-Antwort zu groß.")
-    else:
-        # 'gh api' uses Windows GitHub CLI credential management for private repos.
-        try:
-            result = subprocess.run(["gh", "api", path, "-H",
-                "Accept: application/vnd.github+json"], capture_output=True,
-                text=True, encoding="utf-8", timeout=15, check=False,
-                **hidden_subprocess_kwargs())
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise GitHubCheckError("GitHub CLI fehlt oder antwortet nicht. "
-                                   "Bitte 'gh auth login' ausführen oder GH_TOKEN setzen.") from exc
-        if result.returncode:
-            raise GitHubCheckError("GitHub-Zugriff fehlgeschlagen (Anmeldung/Rechte/Netzwerk prüfen).")
-        data = result.stdout.encode("utf-8")
-        if len(data) > MAX_RESPONSE:
-            raise GitHubCheckError("GitHub-Antwort zu groß.")
+        headers["Authorization"] = "Bearer " + token
+    request = urllib.request.Request(endpoint, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=12) as response:
+            data = response.read(MAX_RESPONSE + 1)
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            raise GitHubCheckError("GitHub-Zugriff verweigert oder API-Limit erreicht.") from exc
+        if exc.code == 404:
+            raise GitHubCheckError("Repository oder Release nicht öffentlich verfügbar.") from exc
+        raise GitHubCheckError(f"GitHub-HTTP-Fehler: {exc.code}") from exc
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise GitHubCheckError(f"GitHub-Zugriff fehlgeschlagen: {exc}") from exc
+    if len(data) > MAX_RESPONSE:
+        raise GitHubCheckError("GitHub-Antwort zu groß.")
     try:
         return json.loads(data)
     except (ValueError, UnicodeDecodeError) as exc:

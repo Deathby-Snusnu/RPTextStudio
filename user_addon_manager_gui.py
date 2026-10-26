@@ -1,6 +1,7 @@
 """User mode: read-only WoW addon overview with background discovery and GitHub checks."""
 from __future__ import annotations
 from pathlib import Path
+import tempfile
 from uuid import uuid4
 from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
@@ -101,7 +102,7 @@ class UserAddonManagerDialog(QDialog):
         self.check_button = QPushButton("GitHub-Versionen prüfen")
         self.check_button.clicked.connect(lambda: self._start("github"))
         self.check_button.setEnabled(False)
-        self.stage_button = QPushButton("Paket prüfen und bereitstellen…")
+        self.stage_button = QPushButton("AddOn herunterladen und prüfen…")
         self.stage_button.clicked.connect(self.stage_selected)
         self.stage_button.setEnabled(False)
         self.table.currentCellChanged.connect(lambda *_: self._set_busy(self.thread is not None))
@@ -389,13 +390,12 @@ class UserAddonManagerDialog(QDialog):
             return
         name = self._selected_addon_id()
         channel = self.channel.currentData()
-        directory = QFileDialog.getExistingDirectory(self, "Lokalen Staging-Elternordner auswählen")
-        if not directory:
-            return
-        destination = Path(directory) / (name + "-" + channel + "-" + uuid4().hex[:10])
-        if QMessageBox.question(self, "GitHub-Paket vorbereiten",
-            f"{name} aus dem GitHub-Kanal {channel} ausschließlich in diesen Ordner herunterladen "
-            f"und prüfen?\n\n{destination}\n\nDeine WoW-AddOns bleiben unverändert.") != QMessageBox.Yes:
+        # Use a private temporary staging location, never a WoW directory.
+        destination = Path(tempfile.gettempdir()) / ("rptextstudio-" + name + "-" + uuid4().hex)
+        if QMessageBox.question(self, "AddOn sicher vorbereiten",
+            f"{name} aus dem GitHub-Kanal {channel} herunterladen und prüfen?\n\n"
+            "Das Paket wird in einem temporären Ordner vorbereitet. "
+            "Deine WoW-AddOns bleiben bis zur ausdrücklichen Installationsbestätigung unverändert.") != QMessageBox.Yes:
             return
         self._start("stage", name=name, staging_target=destination)
 

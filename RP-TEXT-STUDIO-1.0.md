@@ -71,3 +71,31 @@ Katalog wird nicht mit ungeprüften Quellen installiert.
 
 Dieser Schritt ist bewusst eine Erweiterung der bestehenden Anwenderoberfläche,
 noch kein vollständiger Endnutzer-Installer.
+
+## PR #30: Öffentliche GitHub-Releases ohne CLI und Konto
+
+`github_updates._api` und `github_staging._download` verwenden für
+öffentliche Repositories jetzt direkt HTTPS mit einem User-Agent.
+Ein GitHub-Token ist optional und wird nur genutzt, wenn er bewusst über
+`GH_TOKEN` oder `GITHUB_TOKEN` gesetzt wurde. Normale Nutzer müssen
+weder GitHub CLI noch `gh auth login` installieren oder ausführen.
+
+Die Anwenderoberfläche wählt für die Download-Vorschau eigenständig einen
+temporären Staging-Ordner. Eine ausdrückliche Freigabe vor dem Download und
+die bestehende geschützte Installationsvorschau bleiben erhalten.
+Entwicklungskanäle sind weiterhin ein Expertenpfad.
+
+**Noch offen:** Einen vollständigen Ein-Klick-Installationsassistenten mit
+automatischer Versionsauswahl, Kompatibilitätsfreigabe, Aufräumlogik und
+Downloadfortschritt benötigt einen weiteren PR. Der vorliegende Schritt
+entfernt die Account-/CLI-Hürde, ohne die bestehenden Sicherheitsprüfungen
+zu umgehen. GitHub kann für anonyme Abrufe eigene Rate-Limits anwenden.
+
+### Test unter Windows
+- `python -m pytest tests/test_public_github_access.py tests/test_github_updates.py tests/test_github_staging.py -q`
+- Mit **öffentlichem** GitHub-Repository, ohne `GH_TOKEN`, `GITHUB_TOKEN`
+  und ohne GitHub CLI, die Versionsprüfung im Programm starten.
+- Ein AddOn zur Vorbereitung auswählen; es darf keine Ordnerauswahl
+  und keine GitHub-Anmeldung verlangen. WoW muss bis zur separat
+  bestätigten Installation unverändert bleiben.
+- Zurücksetzen/Abbrechen in der geschützten Installationsvorschau prüfen.

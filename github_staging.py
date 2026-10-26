@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
 from urllib.request import Request, build_opener, HTTPRedirectHandler
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 import json
 import os
 import re
@@ -47,21 +47,6 @@ class StagedAddon:
     directory: Path
 
 
-def _token() -> str:
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if token:
-        return token.strip()
-    try:
-        result = subprocess.run(["gh", "auth", "token", "--hostname", "github.com"],
-                                capture_output=True, text=True, timeout=15, check=False,
-                                **hidden_subprocess_kwargs())
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise DownloadError("GitHub CLI / Anmeldung nicht verfügbar.") from exc
-    if result.returncode or not result.stdout.strip():
-        raise DownloadError("Bitte zuerst 'gh auth login' ausführen.")
-    return result.stdout.strip()
-
-
 class _GitHubRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -81,11 +66,12 @@ def _download(commit: str, name: str, output: Path) -> str:
     if not SHA.fullmatch(commit):
         raise DownloadError("Ungültiger Commit-SHA.")
     url = f"https://api.github.com/repos/{OWNER}/{name}/zipball/{commit}"
-    request = Request(url, headers={
-        "Authorization": "Bearer " + _token(),
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "RPTextStudio-Staging",
-    })
+    headers = {"Accept": "application/vnd.github+json",
+               "User-Agent": "RPTextStudio-Staging"}
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = "Bearer " + token.strip()
+    request = Request(url, headers=headers)
     h = sha256()
     size = 0
     try:
@@ -99,6 +85,8 @@ def _download(commit: str, name: str, output: Path) -> str:
                     raise DownloadError("GitHub-Paket überschreitet 64 MiB.")
                 h.update(chunk)
                 stream.write(chunk)
+    except HTTPError as exc:
+        raise DownloadError(f"GitHub-Download fehlgeschlagen (HTTP {exc.code}).") from exc
     except (URLError, TimeoutError, OSError) as exc:
         raise DownloadError(f"Archivabruf fehlgeschlagen: {exc}") from exc
     return h.hexdigest()
