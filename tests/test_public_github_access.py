@@ -13,13 +13,13 @@ import github_staging
 
 class Response:
     def __init__(self, payload):
-        self.payload = payload
+        self.payload = io.BytesIO(payload)
     def __enter__(self):
         return self
     def __exit__(self, *args):
         return False
     def read(self, size=-1):
-        return self.payload[:size]
+        return self.payload.read(size)
 
 
 class PublicGithubTests(unittest.TestCase):
