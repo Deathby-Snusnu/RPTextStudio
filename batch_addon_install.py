@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from addon_manager import ADDONS, _linked, rollback, InstallError
+from addon_manager import known_addons, _linked, rollback, InstallError
 from github_staging import stage
 from safe_github_install import preview_safe_install, install_safe, SafePlan
 from wow_client_profiles import ClientProfile
@@ -35,7 +35,7 @@ def missing_names(target: Path) -> tuple[str, ...]:
     if not target.is_dir() or any(_linked(p) for p in (target, *target.parents)):
         raise InstallError("Bitte eine bestätigte WoW-Installation mit Interface/AddOns wählen.")
     names_on_disk = {p.name.casefold() for p in target.iterdir()}
-    return tuple(name for name in ADDONS if name.casefold() not in names_on_disk)
+    return tuple(name for name in known_addons() if name.casefold() not in names_on_disk)
 
 
 def prepare_missing(target: Path, profile: ClientProfile, channel: str = "development") -> MissingBatch:

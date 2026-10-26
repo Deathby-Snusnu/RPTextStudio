@@ -38,3 +38,36 @@ Keine Ausführung von Metadaten als Code.
 Ein erstmaliger Windows-Anwender kann das Setup herunterladen, seine WoW-
 Installation auswählen und ein kompatibles RP-AddOn installieren, ohne Git,
 Python, Staging, TOC-Dateien oder Branches kennen zu müssen.
+
+## PR #29: Katalogintegration in den bisherigen Anwender-Modus
+
+Die AddOn-Übersicht zeigt jetzt lesbare Namen aus dem lokalen Katalog.
+Installations-, Versionsprüfungs- und GitHub-Staging-Aktionen verwenden intern
+weiterhin die eindeutige AddOn-ID. Die vorhandenen Nutzeraktionen bleiben
+unverändert. Der Bestand wird für jede ausgewählte WoW-Installation getrennt
+ermittelt. Auch die Funktion für die Erstinstallation fehlender AddOns bezieht
+ihre Liste aus dem Katalog, statt sechs Namen im Python-Code zu hinterlegen.
+
+**Wichtig:** Die Katalogdatei ist weiterhin lokal mitgeliefert. Neue Einträge
+setzen zurzeit ein aktualisiertes Katalogpaket voraus. Ein abgesicherter
+Online-Katalog, GUI-basierte Kompatibilitätsfreigaben, Release-Downloads ohne
+GitHub-CLI und eine Ein-Klick-Installation folgen später. Bei beschädigtem
+Katalog wird nicht mit ungeprüften Quellen installiert.
+
+### Windows-Live-Test
+
+1. In Testkopie vom Branch `feature/catalog-driven-addon-manager-pr29`
+   `python -m unittest discover -s tests -p "test_catalog_driven_manager.py" -v` ausführen.
+2. RP Text Studio starten, Anwenderverwaltung öffnen und zwei getrennte
+   erkannte WoW-Installationen nacheinander auswählen.
+3. Anzeigenamen und Installationsstatus der sechs bestehenden AddOns prüfen.
+4. Paladin RP markieren, Versionsprüfung und die bestehende Staging-Vorschau
+   durchführen. Der Ordnername muss weiterhin `PaladinRP` lauten.
+5. Ein syntaktisch gültiges `MagierRP`-Element in die Katalogdatei einer
+   isolierten Testkopie eintragen, Anwendung neu starten: Es soll ohne neue
+   Python-Sonderlogik in der Übersicht erscheinen. Vor einer echten
+   Installation benötigt es allerdings ein geprüftes Repository-Paket und
+   eine ausdrückliche Freigabe der Client-Kompatibilität.
+
+Dieser Schritt ist bewusst eine Erweiterung der bestehenden Anwenderoberfläche,
+noch kein vollständiger Endnutzer-Installer.

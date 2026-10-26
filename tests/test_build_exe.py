@@ -53,6 +53,17 @@ class BuildExeTests(unittest.TestCase):
         self.assertIn('set "MANUAL=%~dp0..\\..\\docs\\RPTextStudio\\HANDBUCH.md"', build)
         self.assertIn('--add-data "%MANUAL%;."', build)
 
+    def test_build_bundles_addon_catalog(self):
+        build = (ROOT / "build_exe.bat").read_text(encoding="utf-8")
+        bundled_assets = {
+            (source.replace("\\", "/"), destination)
+            for source, destination in re.findall(
+                r'--add-data "%~dp0([^";]+);([^"]+)"', build
+            )
+        }
+        self.assertIn(("addon_catalog.json", "."), bundled_assets)
+        self.assertTrue((ROOT / "addon_catalog.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

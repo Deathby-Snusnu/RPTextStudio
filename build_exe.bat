@@ -71,6 +71,7 @@ echo [4/4] Einzelne EXE mit Python, Qt und Handbuch erstellen ...
     --workpath "%~dp0build\pyinstaller" ^
     --specpath "%~dp0build" ^
     --add-data "%MANUAL%;." ^
+    --add-data "%~dp0addon_catalog.json;." ^
     --add-data "%~dp0assets\rp_text_studio_icon.svg;assets" ^
     "%~dp0main.py"
 if errorlevel 1 (

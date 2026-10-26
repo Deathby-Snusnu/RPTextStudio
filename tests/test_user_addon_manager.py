@@ -35,6 +35,15 @@ class UserAddonManagerTests(unittest.TestCase):
             check_installed(self.addons, ("HexerRP",))
         mocked.assert_called_once_with("HexerRP", self.addons, "stable")
 
+    def test_check_installed_defaults_to_runtime_catalog(self):
+        with (
+            patch("user_addon_manager.known_addons", return_value=("HexerRP",)) as catalog,
+            patch("user_addon_manager.check_addon") as mocked,
+        ):
+            check_installed(self.addons)
+        catalog.assert_called_once_with()
+        mocked.assert_called_once_with("HexerRP", self.addons, "stable")
+
     def test_invalid_target_rejected_without_network(self):
         with patch("user_addon_manager.check_addon") as mocked:
             with self.assertRaises(ValueError):

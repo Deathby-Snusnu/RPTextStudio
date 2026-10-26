@@ -20,7 +20,7 @@ import subprocess
 import tempfile
 import zipfile
 
-from addon_manager import ADDONS, RUNTIME_SUFFIXES, SKIP_DIRS
+from addon_manager import known_addons, RUNTIME_SUFFIXES, SKIP_DIRS
 from github_updates import OWNER, _api, parse_toc
 from subprocess_windows import hidden_subprocess_kwargs
 
@@ -105,7 +105,7 @@ def _download(commit: str, name: str, output: Path) -> str:
 
 
 def _resolve(name: str, channel: str) -> tuple[str, str]:
-    if name not in ADDONS:
+    if name not in known_addons():
         raise DownloadError("Repository steht nicht auf der geprüften RP-AddOn-Liste.")
     if channel == "stable":
         release = _api(f"/repos/{OWNER}/{name}/releases/latest")
