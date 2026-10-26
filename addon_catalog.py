@@ -86,9 +86,8 @@ def load_catalog(path: Path | None = None) -> tuple[CatalogAddon, ...]:
     catalog = BUILTIN_PATH if path is None else Path(path)
     if not catalog.is_file() or catalog.is_symlink():
         raise ValueError("Kein vertrauenswürdiger Katalog am angegebenen Pfad.")
-    if catalog.stat().st_size > MAX_CATALOG_BYTES:
-        raise ValueError("AddOn-Katalog ist zu groß.")
-    return parse_catalog(catalog.read_bytes())
+    with catalog.open("rb") as stream:
+        return parse_catalog(stream.read(MAX_CATALOG_BYTES + 1))
 
 
 def catalog_ids(path: Path | None = None) -> tuple[str, ...]:
