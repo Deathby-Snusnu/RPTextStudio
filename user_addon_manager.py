@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from addon_manager import ADDONS
+from addon_manager import known_addons
 from github_updates import parse_toc, check_addon, VersionCheck
 from wow_detection import inspect_client
 
@@ -15,13 +15,15 @@ class InstalledAddon:
     state: str
 
 
-def inspect_installed(addons: Path, names: tuple[str, ...] = ADDONS) -> tuple[InstalledAddon, ...]:
+def inspect_installed(addons: Path, names: tuple[str, ...] | None = None) -> tuple[InstalledAddon, ...]:
     """Read only known RP addons; never read/write arbitrary other AddOns."""
     root = Path(addons)
     if root.name.casefold() != "addons" or root.parent.name.casefold() != "interface":
         raise ValueError("Ungültiges Interface/AddOns-Verzeichnis.")
     if inspect_client(root.parent.parent, "installed-addons") is None:
         raise ValueError("Keine plausible WoW-Installation erkannt.")
+    if names is None:
+        names = known_addons()
     results = []
     from wow_detection import _linked
 
