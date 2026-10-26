@@ -393,7 +393,7 @@ class UserAddonManagerDialog(QDialog):
         # Use a private temporary staging location, never a WoW directory.
         destination = Path(tempfile.gettempdir()) / ("rptextstudio-" + name + "-" + uuid4().hex)
         if QMessageBox.question(self, "AddOn sicher vorbereiten",
-            f"{name} aus dem GitHub-Kanal {channel} herunterladen und prüfen?\\n\\n"
+            f"{name} aus dem GitHub-Kanal {channel} herunterladen und prüfen?\n\n"
             "Das Paket wird in einem temporären Ordner vorbereitet. "
             "Deine WoW-AddOns bleiben bis zur ausdrücklichen Installationsbestätigung unverändert.") != QMessageBox.Yes:
             return
