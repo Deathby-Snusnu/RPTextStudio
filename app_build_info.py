@@ -2,12 +2,15 @@
 from __future__ import annotations
 import json
 from pathlib import Path
+import sys
 
 APP_VERSION = "0.2.1"
 INFO_FILE = Path(__file__).with_name("build_info.json")
 
 
 def build_identity() -> str:
+    if not getattr(sys, "frozen", False):
+        return "Quellcode"
     try:
         info = json.loads(INFO_FILE.read_text(encoding="utf-8"))
         if info.get("version") != APP_VERSION:

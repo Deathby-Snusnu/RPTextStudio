@@ -1,6 +1,11 @@
 """Static checks for the Inno Setup Windows installer configuration."""
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import prepare_build
+from app_build_info import APP_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,9 +41,19 @@ class InnoSetupTests(unittest.TestCase):
         self.assertIn("dist\\rptextstudio.exe", self.builder)
 
     def test_setup_version_and_identity(self):
-        self.assertIn("#define AppVersion", self.setup)
+        self.assertIn('#include "build_version.issinc"', self.setup)
         self.assertIn("AppId=", self.setup)
         self.assertIn("OutputBaseFilename=RPTextStudio-Setup-{#AppVersion}", self.setup)
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch("prepare_build.subprocess.run", side_effect=[
+                Mock(stdout=""), Mock(stdout="a" * 40),
+            ]):
+                metadata = prepare_build.prepare(Path(tmp))
+            self.assertEqual(metadata["version"], APP_VERSION)
+            self.assertEqual(
+                (Path(tmp) / "build_version.issinc").read_text(encoding="utf-8"),
+                f'#define AppVersion "{APP_VERSION}"\n',
+            )
 
 
 if __name__ == "__main__":

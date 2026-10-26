@@ -18,8 +18,17 @@ class BuildInfoTests(unittest.TestCase):
             path = Path(tmp) / "build_info.json"
             path.write_text(json.dumps({"version": app_build_info.APP_VERSION,
                                         "commit": "a" * 40}), encoding="utf-8")
-            with patch.object(app_build_info, "INFO_FILE", path):
+            with patch.object(app_build_info, "INFO_FILE", path), \
+                    patch.object(app_build_info.sys, "frozen", True, create=True):
                 self.assertIn("aaaaaaaaaaaa", app_build_info.window_title())
+
+    def test_source_launch_ignores_leftover_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "build_info.json"
+            path.write_text(json.dumps({"version": app_build_info.APP_VERSION,
+                                        "commit": "a" * 40}), encoding="utf-8")
+            with patch.object(app_build_info, "INFO_FILE", path):
+                self.assertIn("Quellcode", app_build_info.window_title())
 
     def test_mismatched_version_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
