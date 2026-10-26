@@ -1,7 +1,5 @@
 ; RP Text Studio user-scope installer. Build with Inno Setup 6 ISCC.exe.
-#ifndef AppVersion
-  #define AppVersion "0.2.0"
-#endif
+#include "build_version.issinc"
 #define AppName "RP Text Studio"
 #define AppExe "RPTextStudio.exe"
 
