@@ -38,12 +38,17 @@ def missing_names(target: Path) -> tuple[str, ...]:
     return tuple(name for name in known_addons() if name.casefold() not in names_on_disk)
 
 
-def prepare_missing(target: Path, profile: ClientProfile, channel: str = "development") -> MissingBatch:
+def prepare_missing(target: Path, profile: ClientProfile, channel: str = "stable",
+                    names: tuple[str, ...] | None = None) -> MissingBatch:
     target = Path(target).absolute()
     installation = inspect_client(target.parent.parent)
     if installation is None or not installation.verified or installation.client_root.resolve() != profile.client_root.resolve():
         raise InstallError("WoW-Installation oder Interface-Profil ungültig.")
-    names = missing_names(target)
+    available = missing_names(target)
+    if names is None:
+        names = available
+    if not names or len(names) != len(set(names)) or any(name not in available for name in names):
+        raise InstallError("Bitte mindestens ein noch nicht installiertes, bekanntes RP-AddOn auswählen.")
     if not names:
         raise InstallError("Alle bekannten RP-AddOns sind bereits vorhanden.")
     scratch = Path(tempfile.mkdtemp(prefix="rptextstudio-first-install-"))
@@ -66,7 +71,7 @@ def install_missing(batch: MissingBatch) -> tuple[Path, ...]:
     """Commit approved batch; best-effort rollback if a later installation fails."""
     if not batch.plans:
         raise InstallError("Keine AddOns zur Installation.")
-    if missing_names(batch.target) != tuple(plan.name for plan in batch.plans):
+    if any(name not in missing_names(batch.target) for name in (plan.name for plan in batch.plans)):
         raise InstallError("AddOn-Bestand wurde seit der Vorschau verändert.")
     for plan in batch.plans:
         if preview_safe_install(plan.name, plan.source, batch.target, batch.profile) != plan:
