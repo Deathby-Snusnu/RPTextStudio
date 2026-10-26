@@ -18,7 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from addon_manager import ADDONS
+from addon_manager import known_addons
 from addon_registry import discover, load_registry
 
 OWNER = "Deathby-Snusnu"
@@ -153,7 +153,7 @@ def _development(name: str) -> tuple[str | None, str | None, str | None]:
 
 def _resolve_repository(name: str, project: Path | None) -> str | None:
     if project is None:
-        if name not in ADDONS:
+        if name not in known_addons():
             raise ValueError("Unbekanntes AddOn ohne Projektregister.")
         return name
     projects = discover(project)
@@ -168,7 +168,7 @@ def _resolve_repository(name: str, project: Path | None) -> str | None:
                 raise ValueError("GitHub-Zuordnung ist nicht für diese Quelle freigegeben.")
             return name
     # Legacy six projects retain their historical allowlisted mapping.
-    return name if name in ADDONS else None
+    return name if name in known_addons() else None
 
 
 def check_addon(name: str, target: Path, channel: str = "stable", *, project: Path | None = None) -> VersionCheck:
@@ -219,5 +219,7 @@ def check_addon(name: str, target: Path, channel: str = "stable", *, project: Pa
     return VersionCheck(name, local_version, available, channel, status, detail, url, sha)
 
 
-def check_all(target: Path, names=ADDONS, channel="stable", *, project: Path | None = None) -> tuple[VersionCheck, ...]:
+def check_all(target: Path, names=None, channel="stable", *, project: Path | None = None) -> tuple[VersionCheck, ...]:
+    if names is None:
+        names = known_addons()
     return tuple(check_addon(name, target, channel, project=project) for name in names)
