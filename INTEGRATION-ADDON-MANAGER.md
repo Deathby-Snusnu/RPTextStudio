@@ -1,18 +1,27 @@
 # Integration: dynamische AddOn-Verwaltung
 
-Dieser Branch kombiniert die Installer- und WoW-Erkennung (PR #10), GitHub-Prüfung (PR #11) und MagierRP-Generator (PR #12).
+Diese Übersicht beschreibt die integrierten AddOn-Verwaltungsfunktionen.
 
 ## Ablauf
 
 1. RPAddOns-Projektwurzel in RP Text Studio öffnen.
-2. Projekt → Neues Klassen-AddOn erstellen: erzeugt addons/MagierRP und registriert es in addons.json.
-3. Projekt → AddOn-Installer / Updates: erkennt alle lokalen AddOn-Ordner mit gleichnamiger TOC dynamisch.
-4. Vorschau prüfen, Ziel auswählen, Backup und lokale Installation explizit bestätigen.
-5. GitHub-Updates prüfen: ausschließlich Versionsprüfung, keine Downloads.
+2. Projekt → Neues Klassen-AddOn erstellen: erzeugt `addons/MagierRP` nach
+   Vorschau und registriert es in `addons.json`.
+3. AddOns → Anwender: Installierte AddOns prüfen… öffnet die Verwaltung für
+   bestätigte WoW-Installationen und die sechs bekannten RP-AddOns.
+4. **GitHub-Versionen prüfen** liest Release-/Branch-Metadaten. **AddOn
+   herunterladen und prüfen…** stellt ein validiertes Paket außerhalb von WoW
+   bereit; die getrennte Installationsaktion benötigt eine Vorschau und
+   ausdrückliche Bestätigung.
+5. Fehlende bekannte AddOns können gesammelt vorbereitet und anschließend mit
+   gemeinsamer Vorschau installiert werden.
 
 ## Herkunftssicherung
 
-Neue AddOns ohne bestätigte GitHub-Zuordnung werden als Nicht zugeordnet angezeigt. Die sechs bisherigen Repositories haben eine Legacy-Zuordnung bei vorhandener lokaler Quelle. Für neue Projekte wird nur eine explizite Zuordnung Deathby-Snusnu/<AddOn-ID> akzeptiert. Andere Repositories werden nicht stillschweigend kontaktiert.
+Neue AddOns ohne bestätigte GitHub-Zuordnung werden als nicht zugeordnet
+angezeigt. Für neue Projekte wird nur eine explizite Zuordnung
+`Deathby-Snusnu/<AddOn-ID>` akzeptiert. Andere Repositories werden nicht
+still und automatisch kontaktiert.
 
 ## Tests
 

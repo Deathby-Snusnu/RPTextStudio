@@ -1,69 +1,106 @@
 # Changelog
 
+Die dokumentierte Historie wird nach Versionen geordnet. Undatierte
+Versionen erhalten kein nachträglich angenommenes Release-Datum.
+
+## [0.2.0] - 2026-10-26
+
+### AddOn-Verwaltung
+
+- Anwenderdialog für erkannte WoW-Installationen, lokale AddOn-Versionen,
+  Interface-Profile und GitHub-Versionsprüfungen erweitert.
+- Unterstützte AddOns werden anhand eines gepflegten Katalogs gefunden und
+  mit ihren Anzeigenamen dargestellt; interne AddOn-IDs bleiben für Aktionen
+  maßgeblich.
+- Öffentliche GitHub-Repositories können ohne Token geprüft und bereitgestellt
+  werden; optionale `GH_TOKEN`- und `GITHUB_TOKEN`-Variablen ermöglichen
+  authentifizierte Zugriffe.
+- Release-Metadaten und Archive öffentlicher Repositories werden direkt über
+  HTTPS abgerufen. Dafür sind weder GitHub-CLI noch Konto erforderlich;
+  Downloads werden vor der Installationsvorschau temporär bereitgestellt.
+- Geprüfte Pakete lassen sich nach Vorschau und ausdrücklicher Bestätigung
+  installieren. Vorhandene Dateien bleiben standardmäßig geschützt; Sicherungen
+  und Rücknahme bei Installationsfehlern sind Bestandteil des Ablaufs.
+- Fehlende bekannte RP-AddOns können gesammelt vorbereitet und nach gemeinsamer
+  Vorschau installiert werden.
+
+### Windows-Paket
+
+- `build_exe.bat` erstellt mit PyInstaller eine einzelne Windows-EXE samt
+  Python, Qt und eingebettetem Handbuch.
+- Build-Abhängigkeiten separat in `requirements-build.txt`; Projektdateien
+  und Backups bleiben extern bearbeitbar.
+- Im vollständigen Entwicklungsprojekt starten die Batch-Starter den
+  aktuellen Python-Quellstand. Außerhalb davon bevorzugen sie eine vorhandene
+  EXE.
+
+### Dokumentation
+
+- README und Handbuch auf den dokumentierten Anwendungsstand 0.2.0 abgestimmt.
+- Projektlokale Installation, pytest-Aufruf, Variantenwahl, Manager-Grenzen,
+  Modulaufgaben und getrennte Projektregister dokumentiert.
+- Historische Funktionsbeschreibungen von der aktuellen Bedienung getrennt.
+
 ## [0.1.16] – Strukturen im Arbeitsassistenten
 
-- Integrierter fünfter Schritt zum Erstellen von Rassen, Klassen und RP-Zauberschlüsseln.
-- Vorschau, Validierung, Vorabtest auf Dateikopien und ausdrückliche Schreibfreigabe.
+- Integrierter fünfter Schritt zum Erstellen von Rassen, Klassen und
+  RP-Zauberschlüsseln.
+- Vorschau, Validierung, Vorabtest auf Dateikopien und ausdrückliche
+  Schreibfreigabe.
 - Bestehende Schlüsselanlage und Rassen-/Klassenregistrierung wiederverwendet.
 - Tests und Dokumentation ergänzt; AddOn-Spielerkennung bleibt unverändert.
 
-
-
 ## [0.1.15] – Integrierter Arbeitsassistent
 
-- F2 öffnet einen breiten Arbeitsdialog mit Schrittliste links und Editor rechts.
-- Deutsches Original bearbeiten, Übersetzungen manuell oder mit OpenAI vorbereiten und einzeln freigeben.
+- F2 öffnet einen breiten Arbeitsdialog mit Schrittliste links und Editor
+  rechts.
+- Deutsches Original bearbeiten, Übersetzungen manuell oder mit OpenAI
+  vorbereiten und einzeln freigeben.
+- Optionale RP-Übersetzung über die OpenAI Responses API mit Schutz für
+  Platzhalter und `/me`-Markierungen; API-Schlüssel bleiben im Speicher.
 - Gesamtvorschau und Validierung vor dem expliziten Speichern mit Backups.
 - Alter Navigations-Wizard bleibt separat erreichbar.
-- Tests und Handbuch ergänzt; neue Schlüssel weiterhin über die bestehenden Manager.
-
-
+- Tests und Handbuch ergänzt; neue Schlüssel weiterhin über die bestehenden
+  Manager.
 
 ## [0.1.14] – Geführter Workflow-Assistent
 
 - Optionaler Wizard unter Hilfe → Workflow-Assistent (F2).
-- Vier geführte Einstiege: Text bearbeiten, Zauber ergänzen, KI-Übersetzung, Projektprüfung.
-- Kontextprüfung auf geöffnetes Projekt, gewählten Textpool und deDE-Ausgangszeile.
-- Keine automatischen Schreibvorgänge oder API-Aufrufe; vorhandene Werkzeuge bleiben zuständig.
+- Vier geführte Einstiege: Text bearbeiten, Zauber ergänzen,
+  KI-Übersetzung, Projektprüfung.
+- Kontextprüfung auf geöffnetes Projekt, gewählten Textpool und
+  deDE-Ausgangszeile.
+- Keine automatischen Schreibvorgänge oder API-Aufrufe; vorhandene Werkzeuge
+  bleiben zuständig.
 - Dokumentation und Tests der Voraussetzungen ergänzt.
-
-
 
 ## [0.1.13] – Klassische Desktopnavigation
 
 - Menüleiste Datei / Bearbeiten / Projekt / Übersetzungen / Ansicht / Hilfe.
-- Kompakte Symbolleiste für oft verwendete Aktionen und einheitliche Tastenkürzel.
-- Dauerhafte Statusfelder für Projekt, Navigationssprache, Textauswahl und offene Änderungen.
+- Kompakte Symbolleiste für oft verwendete Aktionen und einheitliche
+  Tastenkürzel.
+- Dauerhafte Statusfelder für Projekt, Navigationssprache, Textauswahl und
+  offene Änderungen.
 - Bestehende Bearbeitungsfunktionen erhalten; Workflow-Assistent folgt später.
 - Dokumentation entsprechend ergänzt.
 
+## [0.1.12]
 
+- Kontextbezogenes **Schlüssel löschen** mit Vorschau für alle vorhandenen
+  Sprachen, Sicherheitsdialog und Backups.
+- Entfernt den vollständigen ausgewählten RP-Schlüssel, bewahrt Geschwister-
+  und Elternzweige.
+- Mehrdateien-Vorabprüfung und Regressionstests für alle fünf
+  RP-AddOn-Strukturen.
+- Handbuch, README und Tooltips ergänzt.
 
-### Unreleased: OpenAI-RP-Übersetzungen
+## [0.1.11]
 
-- Optionaler OpenAI-Responses-API-Übersetzer für deutsche RP-Texte nach `enUS` und `frFR`.
-- Manuelle Prüfung und Freigabe pro Zielsprache; sichere Verknüpfung mit den vorhandenen Übersetzungsgruppen.
-- Schutz für RP-Platzhalter und `/me`-Markierungen, API-Schlüssel nur im Speicher.
-- Offline-Mock-Tests sowie ergänzte Anleitung.
-
-
-Die dokumentierte Historie wird nach Versionen geordnet. Undatierte
-Versionen erhalten kein nachträglich angenommenes Release-Datum.
-
-## [Unreleased]
-
-### Windows-Paket
-
-- `build_exe.bat` erstellt mit PyInstaller eine einzelne Windows-EXE samt Python, Qt und eingebettetem Handbuch.
-- Build-Abhängigkeiten separat in `requirements-build.txt`; Projektdateien und Backups bleiben extern bearbeitbar.
-- Windows-Starter bevorzugen eine vorhandene EXE und benötigen dann keine Python-Installation.
-
-### Dokumentation
-
-- README und Handbuch auf den Anwendungsstand 0.1.10 abgestimmt.
-- Projektlokale Installation, pytest-Aufruf, Variantenwahl, Manager-Grenzen,
-  Modulaufgaben und getrennte Projektregister dokumentiert.
-- Historische Funktionsbeschreibungen von der aktuellen Bedienung getrennt.
+- `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP
+  ergänzt.
+- Die Textverwaltung erkennt diese Tabellen als Textpools; rassenspezifische
+  Pools lassen sich nach Textart und Rasse auswählen.
+- `*Handlungen*` werden als `/me` ausgegeben.
 
 ## [0.1.10]
 
@@ -153,13 +190,3 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 ### Geändert
 
 - Kompatibilitätsanpassung und Speichern nur bei echten Änderungen.
-
-## Ambient-Texte (Version 0.1.11)
-
-Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP. Die Textverwaltung erkennt die Tabellen als Textpools. Waehle die Textart und bei rassenspezifischen Kategorien die Rasse. Alle Textaenderungen muessen wie bisher gespeichert werden. `*Handlungen*` werden zu `/me`.
-
-## 0.1.12
-- Kontextbezogenes **Schlüssel löschen** mit Vorschau für alle vorhandenen Sprachen, Sicherheitsdialog und Backups.
-- Entfernt den vollständigen ausgewählten RP-Schlüssel, bewahrt Geschwister- und Elternzweige.
-- Mehrdateien-Vorabprüfung und Regressionstests für alle fünf RP-AddOn-Strukturen.
-- Handbuch, README und Tooltips ergänzt.

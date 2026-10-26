@@ -10,7 +10,7 @@ Ein eigenständiges Windows-Setup kann auf einem Windows-Rechner mit Python 3.11
 
 ## Erstellung
 
-Im RPTextStudio-Verzeichnis `build_installer.bat` ausführen. Das Skript ruft erst `build_exe.bat` auf und beendet sich bei einem Fehler. Danach baut Inno Setup das Installationspaket unter `installer-dist/RPTextStudio-Setup-0.2.0.exe`. Die Version 0.2.0 ist ein geplanter Zielwert; vor dem Release muss sie mit der tatsächlich freigegebenen Anwendungsversion abgeglichen werden.
+Im RPTextStudio-Verzeichnis `build_installer.bat` ausführen. Das Skript ruft erst `build_exe.bat` auf und beendet sich bei einem Fehler. Danach baut Inno Setup das Installationspaket unter `installer-dist/RPTextStudio-Setup-0.2.0.exe`. Die Installer-Version stimmt mit der freigegebenen Anwendungsversion 0.2.0 überein. Der Build und die manuelle Windows-Abnahme sind vor einer Installer-Freigabe noch durchzuführen.
 
 ## Verhalten
 

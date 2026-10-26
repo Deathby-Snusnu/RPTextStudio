@@ -1,4 +1,4 @@
-# RP Text Studio 0.1.16
+# RP Text Studio 0.2.0
 
 ![RP Text Studio – Texte gestalten. Welten erzählen.](assets/rp_text_studio_logo.svg)
 
@@ -19,9 +19,9 @@ kanonische Datei in `data`, ohne das Original zu entfernen.
 Vorhandene EXEs wurden beim Umzug erhalten, aber nicht neu gebaut.
 Für den aktuellen Quellstand Python direkt verwenden oder die EXE neu bauen.
 
-## Windows-Setup (neu, derzeit Draft)
+## Windows-Setup (derzeit nicht als Release freigegeben)
 
-Ein reguläres Windows-Setup mit Startmenü, optionaler Desktopverknüpfung und Deinstallation lässt sich mit `build_installer.bat` erzeugen. Dazu werden Python und Inno Setup 6 benötigt. Das Paket wird unter `installer-dist/` abgelegt. Die vorgesehene Setup-Version `0.2.0` ist bis zur Release-Freigabe vorläufig. Details und manuelle Abnahmeschritte stehen in [WINDOWS-INSTALLER.md](WINDOWS-INSTALLER.md). Das Setup installiert ausschließlich den Editor, keine WoW-AddOns. Der Build wurde bisher nicht auf Windows ausgeführt.
+Ein reguläres Windows-Setup mit Startmenü, optionaler Desktopverknüpfung und Deinstallation lässt sich mit `build_installer.bat` erzeugen. Dazu werden Python und Inno Setup 6 benötigt. Das Paket wird unter `installer-dist/` abgelegt. Details und manuelle Abnahmeschritte stehen in [WINDOWS-INSTALLER.md](WINDOWS-INSTALLER.md). Das Setup installiert ausschließlich den Editor, keine WoW-AddOns. Der Build wurde bisher nicht auf Windows ausgeführt und ist vor einer Installer-Freigabe noch zu validieren.
 
 ## Installation (Windows)
 
@@ -64,7 +64,11 @@ Die Umgebung nur erstellen, wenn noch keine passende `.venv` existiert.
 Bei bereits installierten Abhängigkeiten kann der letzte Befehl den Editor
 ohne den pip-Schritt des Starters öffnen. Es wird keine Aktivierung der
 Umgebung und keine Änderung der PowerShell-Ausführungsrichtlinie benötigt.
-Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in diesem UI-Branch nicht verändert.
+Der dokumentierte Anwendungsstand ist `0.2.0`; siehe
+[CHANGELOG.md](CHANGELOG.md). In der aktuellen Quelle sind die fest codierten
+Fenstertitel noch nicht synchronisiert: `main.py` enthält `0.1.15`,
+`0.1.13` und `0.1.11`. Für den dokumentierten Quellstand ist der Changelog
+maßgeblich.
 
 ## Einstieg
 
@@ -98,7 +102,9 @@ Der Anwendungsfenstertitel zeigt Version `0.1.13`. Das Startskript wurde in dies
 - Nur wörtliche Stringlisten in `*/locales/{deDE,enUS,frFR}/*.lua` werden bearbeitet. `Expansion.lua`, Core/Config/TOC sowie dynamische Lua-Ausdrücke bleiben ausgenommen.
 - Bei Änderungen einer Stringliste gehen Kommentare **innerhalb** der Liste möglicherweise verloren. Nicht bearbeitete Listen und übrige Dateibereiche werden beibehalten.
 - **Alles prüfen** ersetzt keinen vollständigen Lua-Syntaxtest und keinen Spieltest.
-- Windows-EXE über `build_exe.bat` selbst erstellbar; keine automatische Übersetzung.
+- Windows-EXE über `build_exe.bat` selbst erstellbar. Optionale
+  KI-Übersetzungsvorschläge erfordern eine ausdrückliche Prüfung und Freigabe;
+  es gibt keine unbeaufsichtigte Stapelverarbeitung.
 
 Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen im [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
 
@@ -204,13 +210,18 @@ Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 
 | Modul | Zuständigkeit |
 | --- | --- |
-| [main.py](main.py) | GUI, Projekt-/ZIP-Öffnen, Filter, Sprachvergleich und Speichervorgänge |
+| [main.py](main.py) | Editoroberfläche, Projekt-/ZIP-Öffnen, Filter, Sprachvergleich, Menüs und Arbeitsassistent |
 | [project_paths.py](project_paths.py) | Projekt-/AddOn-Wurzeln, Metadaten- und Handbuchpfade |
 | [lua_text.py](lua_text.py) | Statischer Lua-Listenparser, Validierung, gezieltes Schreiben und Sicherungen |
-| [key_creation.py](key_creation.py) | Neue Schlüssel in bestehenden statischen Texttabellen |
+| `key_creation.py`, `key_deletion.py` | Neue Schlüssel anlegen bzw. ausgewählte Textschlüssel sicher entfernen |
 | [translation_links.py](translation_links.py) | Sprachübergreifende Poolkennungen, Textreferenzen und JSON-Speicherung |
 | [spell_manager.py](spell_manager.py) | Schlüsselvorschläge, Makroerzeugung und Zuordnungsregister |
 | [race_class_manager.py](race_class_manager.py) | Profilregister und optionale Lua-Textzweige |
+| `addon_manager.py`, `user_addon_manager.py` | AddOn-Erkennung, Vorschau und sichere Installations-/Updateoperationen |
+| `github_updates.py`, `github_staging.py`, `safe_github_install.py` | Versionsprüfung, validiertes Paket-Staging und bestätigte Installation |
+| `wow_detection.py`, `wow_client_profiles.py` | WoW-Installationen erkennen und Interface-Profile verwalten |
+| `addon_project_generator.py`, `addon_registry.py` | Unterstütztes AddOn-Projekt erzeugen und lokal registrieren |
+| `ai_translation.py`, `workspace_wizard.py`, `workflow_wizard.py` | Geprüfte Übersetzungsvorschläge und geführte Arbeitsabläufe |
 
 ## Lizenz
 
@@ -224,9 +235,9 @@ Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP.
 
 ### Falsch angelegte Schlüssel entfernen (0.1.12)
 
-Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe `HANDBUCH.md`.
+Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
 
-## KI-Übersetzung mit OpenAI (Feature-Branch)
+## KI-Übersetzung mit OpenAI
 
 Im Sprachvergleich einen **deutschen** Text auswählen und **KI-Übersetzung …** anklicken. In dem Dialog einen eigenen OpenAI API-Key eingeben oder `OPENAI_API_KEY` als Umgebungsvariable setzen; Modell und RP-Stil können angepasst werden. Erst **Vorschläge erzeugen** sendet Originaltext, AddOn, Rasse und Stil über die OpenAI Responses API an den Dienst (API-Nutzung kann Kosten verursachen).
 
@@ -238,13 +249,15 @@ Die Vorschläge für `enUS` und `frFR` werden zunächst nur angezeigt. Sie könn
 
 Die Anwendung nutzt jetzt die Menüleiste **Datei, Bearbeiten, Projekt, Übersetzungen, Ansicht, Hilfe** und eine kompakte Standardsymbolleiste. Die wichtigsten Kürzel: **Strg+O** Projekt öffnen, **Strg+S** speichern, **Strg+N** Text hinzufügen, **Strg+D** duplizieren, **Strg+F** Suche fokussieren, **F7** Projekt prüfen, **F1** Handbuch.
 
-Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählte Textzeile und ungespeicherte Textpool-/Verknüpfungsänderungen. Die bisherigen Texteditoren, Sprachvergleiche und Prüfungen bleiben erhalten. Der optionale Workflow-Assistent und eine projektweite Rückgängig-Funktion sind **nicht** Bestandteil dieser Version; sie sind für Folgeversionen vorgesehen.
+Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählte Textzeile und ungespeicherte Textpool-/Verknüpfungsänderungen. Die bisherigen Texteditoren, Sprachvergleiche und Prüfungen bleiben erhalten.
 
 ## Geführter Workflow-Assistent (0.1.14)
 
 Über **Hilfe → Workflow-Assistent…** oder **F2** startet ein dreistufiger Assistent. Er bietet **Text bearbeiten**, **Zauber ergänzen**, **KI-Übersetzung** und **Projekt prüfen**. Der Dialog beschreibt Voraussetzungen (geöffnetes Projekt, markierter Textpool, markierte Textzeile und bei KI-Übersetzung `deDE`). Nach **Fertigstellen** wird das entsprechende bestehende Werkzeug geöffnet. Es erfolgen **keine automatischen Schreibvorgänge** und **keine API-Anfragen**, bis du diese Aktionen im jeweiligen Werkzeug ausdrücklich auslöst.
 
-Hinweis: Der Assistent ist bewusst eine geführte Navigation. Ein vollständig transaktionaler Mehrschritt-Assistent und die Rassen-/Klassen-Neuanlage innerhalb desselben Dialogs bleiben Folgeschritte.
+Der Assistent in 0.1.14 war eine geführte Navigation. Der spätere
+Arbeitsassistent mit Entwurf, Prüfung und Speichern ist unter 0.1.15
+beschrieben; die Anlage neuer Strukturen kam in 0.1.16 hinzu.
 
 ## Arbeitsassistent mit Schrittnavigation (0.1.15)
 
@@ -257,7 +270,9 @@ Der neue **große Arbeitsassistent** startet über **Hilfe → Arbeitsassistent�
 
 Ohne API-Schlüssel können Übersetzungen manuell eingetragen werden. Fehlerhafte `%s`/`%p`/`%%`-Platzhalter oder Emote-Markierungen werden nicht übernommen. Bereits bestehende Links werden nicht ersetzt. Zielsprachpools müssen vorhanden sein. Der frühere einfache Navigationsassistent steht über **Hilfe → Einfacher Assistent…** weiterhin zur Verfügung.
 
-**Noch nicht enthalten:** Vollständig neue Zauber- und Rassenstrukturen innerhalb dieses Dialogs; diese werden bis auf Weiteres über die vorhandenen Manager angelegt. Ein Windows-GUI-Test ist noch erforderlich.
+Die Neuanlage von Zauber- und Rassenstrukturen gehörte noch nicht zu 0.1.15;
+sie ist im folgenden Abschnitt für 0.1.16 beschrieben. Ein Windows-GUI-Test
+ist weiterhin erforderlich.
 
 ## Arbeitsassistent: neue Strukturen anlegen (0.1.16)
 

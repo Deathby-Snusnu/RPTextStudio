@@ -1,5 +1,12 @@
 # RP Text Studio 1.0: universeller AddOn-Katalog
 
+> **Planungs- und Implementierungsnotiz:** Dieses Dokument hält Entwürfe und
+> einzelne Entwicklungsschritte fest. Es ist kein aktuelles Bedienhandbuch;
+> maßgeblich für den Funktionsstand sind die [README](README.md), das
+> [Bedienungshandbuch](../../docs/RPTextStudio/HANDBUCH.md) und die
+> verlinkten Feature-Dokumente. Aussagen zu damals geplanten oder noch nicht
+> enthaltenen Funktionen beziehen sich auf den jeweiligen Entwicklungsstand.
+
 ## Leitprinzip
 **Maximale Flexibilität für Entwickler, minimaler Aufwand für Anwender.**
 PaladinRP, JaegerRP, DruidenRP, HexerRP und alle zukünftigen RP-AddOns

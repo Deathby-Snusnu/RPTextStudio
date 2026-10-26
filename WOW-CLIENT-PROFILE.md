@@ -18,7 +18,12 @@ Ein lokal installiertes AddOn in der Tabelle auswählen und **TOC-Vorschau…** 
 - **Getestete AddOn-Kompatibilität:** separate Freigabe. Alle sechs vorhandenen AddOns sind derzeit nur für die Forever-Zielplattform vorgesehen; die Implementierung erklärt andere erkannte Clienttypen **nicht** automatisch für kompatibel. Ein benutzerdefinierter Forever-Ordner wird auch nicht anhand seines Namens allein als geprüft eingestuft.
 - **TOC-Vorschau:** dient nur der Information. Ein neuer Eintrag kann die fehlende WoW-API-Kompatibilität nicht herstellen.
 
-Der Helper `preview_toc(..., compatible=True)` ist nur für *explizit autorisierte Vorschau* verwendbar. Es gibt in diesem PR **keinen TOC-Schreibvorgang, keinen automatischen Import und keine Installation**. Eine spätere Installation muss separat per Client und AddOn kompatibilitätsgeprüft, bestätigt und gesichert werden.
+`preview_toc(..., compatible=True)` erzeugt selbst nur den angepassten
+TOC-Inhalt und schreibt keine Datei. Die getrennte, ausdrücklich bestätigte
+Installation verwendet diese Vorschau nach Prüfung des WoW-Profils; sie sichert
+den vorherigen AddOn-Ordner und verändert erst dann die Installation. Siehe
+[sichere GitHub-Installation](SAFE-GITHUB-INSTALL.md) und
+[Erstinstallation](FIRST-INSTALL-RP-ADDONS.md).
 
 ## Tests
 
