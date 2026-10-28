@@ -143,3 +143,8 @@ for _language in ("deDE", "enUS", "frFR"):
         _record["gruppe"].extend(_GROUP_LINES[_language])
         if _key not in SELF_KEYS:
             _record["ziel"].extend(_TARGET_LINES[_language])
+
+# Distinctive German text pools per school and functional spell family.
+from magier_voice_banks import BANKS, theme_for
+for _key in SPELL_KEYS:
+    SPELL_DATA["deDE"][_key]["gruppe"].extend(BANKS["deDE"][theme_for(_key)])
