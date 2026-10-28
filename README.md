@@ -220,7 +220,7 @@ Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 | `addon_manager.py`, `user_addon_manager.py` | AddOn-Erkennung, Vorschau und sichere Installations-/Updateoperationen |
 | `github_updates.py`, `github_staging.py`, `safe_github_install.py` | Versionsprüfung, validiertes Paket-Staging und bestätigte Installation |
 | `wow_detection.py`, `wow_client_profiles.py` | WoW-Installationen erkennen und Interface-Profile verwalten |
-| `addon_project_generator.py`, `addon_registry.py` | Unterstütztes AddOn-Projekt erzeugen und lokal registrieren |
+| `addon_registry.py` | Vorhandene AddOn-Projekte erkennen und lokal registrieren |
 | `ai_translation.py`, `workspace_wizard.py`, `workflow_wizard.py` | Geprüfte Übersetzungsvorschläge und geführte Arbeitsabläufe |
 
 ## Lizenz
@@ -281,3 +281,11 @@ Der mit **F2** erreichbare große Arbeitsassistent enthält zusätzlich **Strukt
 Die Vorschau prüft Kennungen, vorhandene Dateien, eindeutige Lua-Root-Strukturen und doppelte Einträge auf temporären Kopien. Erst **Struktur prüfen und anlegen** plus eine weitere Bestätigung verändern Dateien; Lua-Dateien erhalten Backups. Danach wird das Projekt neu geladen, damit neue Schlüssel im Texteditor sichtbar sind.
 
 **Grenzen:** Neue Schlüssel sind reine RP-Textdaten. Die Zauber- oder Rassenerkennung im laufenden WoW-AddOn wird dadurch nicht automatisch erweitert. Für vorhandene Texte und Übersetzungen gelten weiterhin die getrennten Schritte **Text auswählen → Bearbeiten → Übersetzen → Prüfen & speichern**.
+
+## Eigenständige Klassen-AddOns
+
+Klassen-AddOns wie MagierRP werden in ihren eigenen GitHub-Repositories entwickelt.
+RP Text Studio erzeugt keine neuen AddOn-Quellcodeprojekte mehr. Bestehende
+RP-AddOns lassen sich weiterhin öffnen, bearbeiten, übersetzen, prüfen,
+installieren und aktualisieren. Die lokale AddOn-Erkennung über `.toc`
+und `addons.json` bleibt erhalten.
