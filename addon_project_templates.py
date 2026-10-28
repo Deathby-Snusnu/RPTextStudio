@@ -1,6 +1,7 @@
 """Lua sources for the MagierRP project skeleton."""
 from magier_spell_catalog import SPELL_DATA, SPELL_KEYS, FRIENDLY_KEYS, SELF_KEYS
 from magier_ambient_catalog import THEMES, NEUTRAL
+from magier_racial_spell_voices import voice_lines, RACES
 
 def q(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
@@ -27,7 +28,18 @@ def source_files(name: str, title: str, langs: tuple[str,...], version: str, int
                         ", ziel = { " + target + " }, gruppe = { " + group + " } },")
         files[f"locales/{lang}/Texts.lua"] = ("local _, addon = ...\naddon.localeData." + lang +
                                             ".texts = {\n" + "\n".join(rows) + "\n}\n")
-        files[f"locales/{lang}/Racial.lua"] = f"local _, addon = ...\naddon.localeData.{lang}.racial = {{}}\n"
+        racial_rows = []
+        for race in RACES:
+            spells = []
+            for key in SPELL_KEYS:
+                lines = voice_lines(lang, race, key)
+                if lines:
+                    spells.append("        " + key + " = { " + ", ".join(q(line) for line in lines) + " },")
+            racial_rows.append("    " + race + " = {\n" + "\n".join(spells) + "\n    },")
+        files[f"locales/{lang}/Racial.lua"] = (
+            "local _, addon = ...\naddon.localeData." + lang + ".racial = {\n"
+            + "\n".join(racial_rows) + "\n}\n"
+        )
     files["core/Database.lua"] = ('local _, addon = ...\nfunction addon.InitializeDatabase()\n' +
         '    if type(' + db + ') ~= "table" then ' + db + ' = {} end\n' +
         '    addon.db = ' + db + '\n' +
@@ -48,6 +60,13 @@ function addon.BuildText(key)
         target = UnitName("target")
     end
     local pool = target and entry.ziel or entry.gruppe
+    -- Give a known race its own voice on some casts; fall back to spell pool.
+    local _, race = UnitRace("player")
+    local racial = addon.localeData[lang] and addon.localeData[lang].racial
+    local racePool = racial and racial[race] and racial[race][key]
+    if type(racePool) == "table" and #racePool > 0 and math.random(100) <= 40 then
+        pool = racePool
+    end
     if type(pool) ~= "table" or #pool == 0 then pool = entry.gruppe end
     if type(pool) ~= "table" or #pool == 0 then return nil end
     return pool[math.random(#pool)]:gsub("%%([%%s])", function(token)
