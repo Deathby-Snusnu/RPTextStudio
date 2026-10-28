@@ -32,8 +32,12 @@ class RacialMageVoiceTests(unittest.TestCase):
                 self.assertIn(key + " = {", lua)
         text = files["core/Text.lua"]
         self.assertIn('UnitRace("player")', text)
+        self.assertIn("race = addon.NormalizeRace(race)", text)
         self.assertIn("racePool", text)
         self.assertIn("pool = entry.gruppe", text)
+        database = files["core/Database.lua"]
+        self.assertIn('if race == "SCOURGE" then return "UNDEAD" end', database)
+        self.assertIn('if race == "HIGHELF" then return "HIGH_ELF" end', database)
 
 if __name__ == "__main__":
     unittest.main()

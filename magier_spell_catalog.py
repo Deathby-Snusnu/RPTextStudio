@@ -92,7 +92,7 @@ SPELL_DATA = {
         "DETECT_MAGIC": {"name": "Détection de la magie", "ziel": ["Voyons quels secrets vous portez, %s.","*lance Détection de la magie on %s.*"], "gruppe": ["Voyons quels secrets vous portez.","*conjures Détection de la magie.*"]},
     },
 }
-FRIENDLY_KEYS = ["ARCANE_INTELLECT","ARCANE_BRILLIANCE","SLOW_FALL","REMOVE_LESSER_CURSE"]
+FRIENDLY_KEYS = ["ARCANE_INTELLECT","ARCANE_BRILLIANCE","SLOW_FALL","REMOVE_LESSER_CURSE","DAMPEN_MAGIC","AMPLIFY_MAGIC"]
 SELF_KEYS = ["ICE_BARRIER","ICE_BLOCK","BLINK","EVOCATION","MANA_SHIELD","CONJURE_FOOD","CONJURE_WATER","CREATE_MANA_GEM","PORTAL","TELEPORT"]
 
 # Additional Classic/Forever candidate keys. Talent spells and client-specific

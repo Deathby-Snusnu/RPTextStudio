@@ -28,6 +28,13 @@ class ExpandedMageTests(unittest.TestCase):
                 self.assertIn(entry.replace("\\", "/"), files)
         self.assertIn("addon.AmbientText()", files["MagierRP.lua"])
         self.assertIn('key == "AMBIENT"', files["core/Commands.lua"])
+        core = files["MagierRP.lua"]
+        ambient = core.split("function addon.TryAmbient()", 1)[1].split(
+            "function addon.TryText", 1
+        )[0]
+        self.assertIn('if class ~= "MAGE"', ambient)
+        self.assertIn("math.random(100) > addon.db.textChance", ambient)
+        self.assertIn("race = addon.NormalizeRace(race)", files["core/Ambient.lua"])
         for lang in ("deDE", "enUS", "frFR"):
             self.assertIn("NEUTRAL", files[f"locales/{lang}/Ambient.lua"])
             self.assertNotIn(r"\n", files[f"locales/{lang}/Ambient.lua"])

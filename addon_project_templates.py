@@ -46,7 +46,7 @@ def source_files(name: str, title: str, langs: tuple[str,...], version: str, int
         '    for key, value in pairs(addon.defaults) do if addon.db[key] == nil then addon.db[key] = value end end\n' +
         '    if type(addon.db.textChance) ~= "number" or addon.db.textChance < 0 or addon.db.textChance > 100 then addon.db.textChance = 100 end\n' +
         '    if type(addon.db.cooldown) ~= "number" or addon.db.cooldown < 0 then addon.db.cooldown = 0 end\n    if type(addon.db.racialTextChance) ~= "number" then addon.db.racialTextChance = 40 end\n    addon.db.racialTextChance = math.max(0, math.min(100, addon.db.racialTextChance))\nend\n')
-    files["core/Text.lua"] = """local _, addon = ...\nlocal friendly = { ARCANE_INTELLECT=true, ARCANE_BRILLIANCE=true, SLOW_FALL=true, REMOVE_LESSER_CURSE=true }\nlocal selfOnly = { ICE_BARRIER=true, ICE_BLOCK=true, BLINK=true, EVOCATION=true, MANA_SHIELD=true, CONJURE_FOOD=true, CONJURE_WATER=true, CREATE_MANA_GEM=true, PORTAL=true, TELEPORT=true }
+    files["core/Text.lua"] = """local _, addon = ...\nlocal friendly = { FRIENDLY_KEYS_PLACEHOLDER }\nlocal selfOnly = { ICE_BARRIER=true, ICE_BLOCK=true, BLINK=true, EVOCATION=true, MANA_SHIELD=true, CONJURE_FOOD=true, CONJURE_WATER=true, CREATE_MANA_GEM=true, PORTAL=true, TELEPORT=true }
 function addon.BuildText(key)
     local lang = addon.db.outputLanguage
     if not addon.availableLocales[lang] then lang = "deDE" end
@@ -62,6 +62,7 @@ function addon.BuildText(key)
     local pool = target and entry.ziel or entry.gruppe
     -- Give a known race its own voice on some casts; fall back to spell pool.
     local _, race = UnitRace("player")
+    race = addon.NormalizeRace(race)
     local racial = addon.localeData[lang] and addon.localeData[lang].racial
     local racePool = racial and racial[race] and racial[race][key]
     if type(racePool) == "table" and #racePool > 0 and math.random(100) <= (addon.db.racialTextChance or 40) then
@@ -74,6 +75,10 @@ function addon.BuildText(key)
     end)
 end
 """
+    files["core/Text.lua"] = files["core/Text.lua"].replace(
+        "FRIENDLY_KEYS_PLACEHOLDER",
+        ", ".join(key + "=true" for key in FRIENDLY_KEYS),
+    )
     files["core/Chat.lua"] = """local _, addon = ...
 function addon.SendText(line)
     if type(line) ~= "string" or line == "" then return false end
@@ -101,6 +106,7 @@ function addon.AmbientText()
     if not addon.availableLocales[lang] then lang = "deDE" end
     local data = addon.localeData[lang].ambient or addon.localeData.deDE.ambient
     local _, race = UnitRace("player")
+    race = addon.NormalizeRace(race)
     local pool = data[race] or data.NEUTRAL
     if type(pool) ~= "table" or #pool == 0 then pool = data.NEUTRAL end
     return pool[math.random(#pool)]
@@ -129,6 +135,9 @@ function addon.StartCooldown() addon.nextTextTime = GetTime() + addon.db.cooldow
     files[name + ".lua"] = ('local _, addon = ...\n_G.MagierRP = addon\naddon.spellKeys = { ' + ", ".join(q(k) for k in SPELL_KEYS) + ' }\naddon.ready = false\n' +
         'function addon.TryAmbient()\n' +
         '    if not addon.ready or not addon.CooldownReady() then return false end\n' +
+        '    local _, class = UnitClass("player")\n' +
+        '    if class ~= "MAGE" then print("' + name + ': nur für Magier."); return false end\n' +
+        '    if math.random(100) > addon.db.textChance then return false end\n' +
         '    if not addon.SendText(addon.AmbientText()) then return false end\n' +
         '    addon.StartCooldown(); return true\nend\n' +
         'function addon.TryText(key)\n' +
@@ -147,4 +156,11 @@ function addon.StartCooldown() addon.nextTextTime = GetTime() + addon.db.cooldow
     files["tests/test_addon.lua"] = """-- Lua smoke test, load TOC file list in the integration suite.
 assert(type("MAGE") == "string")
 """
+    files["core/Database.lua"] += (
+        'function addon.NormalizeRace(race)\n'
+        '    race = (race or ""):upper()\n'
+        '    if race == "SCOURGE" then return "UNDEAD" end\n'
+        '    if race == "HIGHELF" then return "HIGH_ELF" end\n'
+        '    return race\nend\n'
+    )
     return files

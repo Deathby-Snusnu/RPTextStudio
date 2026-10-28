@@ -30,6 +30,8 @@ class MageSpellCatalogTests(unittest.TestCase):
         text = files["core/Text.lua"]
         self.assertIn("UnitCanAssist", text)
         self.assertIn("selfOnly", text)
+        for key in FRIENDLY_KEYS:
+            self.assertIn(key + "=true", text)
         commands = files["core/Commands.lua"]
         self.assertIn('key == "LIST"', commands)
         self.assertNotIn("\\n", commands)
@@ -41,6 +43,7 @@ class MageSpellCatalogTests(unittest.TestCase):
         self.assertFalse(set(FRIENDLY_KEYS) & set(SELF_KEYS))
         self.assertTrue(set(FRIENDLY_KEYS) <= set(SPELL_KEYS))
         self.assertTrue(set(SELF_KEYS) <= set(SPELL_KEYS))
+        self.assertTrue({"DAMPEN_MAGIC", "AMPLIFY_MAGIC"} <= set(FRIENDLY_KEYS))
 
 
 if __name__ == "__main__":
