@@ -1,30 +1,32 @@
 # Integration: dynamische AddOn-Verwaltung
 
-Diese Übersicht beschreibt die integrierten AddOn-Verwaltungsfunktionen.
+Die Klassen-AddOns werden in eigenen GitHub-Repositories gepflegt.
+RP Text Studio bearbeitet, erkennt, installiert und aktualisiert vorhandene
+AddOns, erzeugt aber keine AddOn-Quellcodeprojekte.
 
 ## Ablauf
 
-1. RPAddOns-Projektwurzel in RP Text Studio öffnen.
-2. Projekt → Neues Klassen-AddOn erstellen: erzeugt `addons/MagierRP` nach
-   Vorschau und registriert es in `addons.json`.
-3. AddOns → Anwender: Installierte AddOns prüfen… öffnet die Verwaltung für
-   bestätigte WoW-Installationen und die sechs bekannten RP-AddOns.
+1. Vorhandene RPAddOns-Projektwurzel in RP Text Studio öffnen.
+2. Bestehende AddOns werden über ihre gleichnamige TOC erkannt. Optional
+   lassen sie sich mit dem unabhängigen `addon_registry.py` registrieren.
+3. AddOns → Anwender: Installierte AddOns prüfen… öffnet die Verwaltung
+   für bestätigte WoW-Installationen und den eingebauten AddOn-Katalog.
 4. **GitHub-Versionen prüfen** liest Release-/Branch-Metadaten. **AddOn
-   herunterladen und prüfen…** stellt ein validiertes Paket außerhalb von WoW
-   bereit; die getrennte Installationsaktion benötigt eine Vorschau und
+   herunterladen und prüfen…** stellt ein validiertes Paket außerhalb
+   von WoW bereit; die Installation benötigt eine Vorschau und
    ausdrückliche Bestätigung.
-5. Fehlende bekannte AddOns können gesammelt vorbereitet und anschließend mit
-   gemeinsamer Vorschau installiert werden.
+5. Fehlende bekannte AddOns können gesammelt vorbereitet und nach Vorschau
+   installiert werden.
 
 ## Herkunftssicherung
 
-Neue AddOns ohne bestätigte GitHub-Zuordnung werden als nicht zugeordnet
-angezeigt. Für neue Projekte wird nur eine explizite Zuordnung
-`Deathby-Snusnu/<AddOn-ID>` akzeptiert. Andere Repositories werden nicht
-still und automatisch kontaktiert.
+Repository-Zuordnungen werden nicht allein aus Ordnernamen hergeleitet.
+Externe Quellen bleiben durch die bestehende Vertrauensprüfung eingeschränkt.
 
 ## Tests
 
+```powershell
 python -m unittest discover -s tests
+```
 
-Zusätzlich sind die Lua-Ladefolge und die Sicherungs-/Wiederherstellungswege unter Windows und WoW Forever mit einem Testverzeichnis zu prüfen. Keine produktive Freigabe vor erfolgreichen Tests.
+Zusätzlich Lua-Ladefolge und Backup/Rollback unter Windows und im WoW-Client prüfen.
