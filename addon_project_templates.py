@@ -1,5 +1,6 @@
 """Lua sources for the MagierRP project skeleton."""
 from magier_spell_catalog import SPELL_DATA, SPELL_KEYS, FRIENDLY_KEYS, SELF_KEYS
+from magier_ambient_catalog import THEMES, NEUTRAL
 
 def q(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
@@ -9,9 +10,9 @@ def source_files(name: str, title: str, langs: tuple[str,...], version: str, int
     toc = [f"## Interface: {interface}", f"## Title: {title}", f"## Version: {version}",
            f"## SavedVariablesPerCharacter: {db}", "", "config\\Settings.lua", "locales\\Init.lua"]
     for lang in langs:
-        toc += [f"locales\\{lang}\\Texts.lua", f"locales\\{lang}\\Racial.lua"]
+        toc += [f"locales\\{lang}\\Texts.lua", f"locales\\{lang}\\Racial.lua", f"locales\\{lang}\\Ambient.lua"]
     toc += ["locales\\Finalize.lua", "core\\Database.lua", "core\\Text.lua",
-            "core\\Chat.lua", "core\\Cooldown.lua", "core\\Commands.lua", name + ".lua", ""]
+            "core\\Chat.lua", "core\\Cooldown.lua", "core\\Ambient.lua", "core\\Commands.lua", name + ".lua", ""]
     files = {name + ".toc": "\n".join(toc)}
     files["config/Settings.lua"] = 'local _, addon = ...\naddon.defaults = { textChance = 100, cooldown = 0, outputLanguage = "deDE" }\n'
     files["locales/Init.lua"] = "local _, addon = ...\naddon.localeData = addon.localeData or {}\n" + "".join("addon.localeData."+l+" = {}\n" for l in langs)
@@ -63,6 +64,27 @@ function addon.SendText(line)
         SendChatMessage(line, "SAY")
     end
     return true
+end
+"""
+    for lang in langs:
+        # The ambient tables are data-only and selected by UnitRace in the client.
+        rows = []
+        for race, lines in THEMES[lang].items():
+            rows.append("    " + race + " = { " + ", ".join(q(x) for x in lines) + " },")
+        files["locales/" + lang + "/Ambient.lua"] = (
+            "local _, addon = ...\\naddon.localeData." + lang + ".ambient = {\\n"
+            + "\\n".join(rows) + "\\n    NEUTRAL = { "
+            + ", ".join(q(x) for x in NEUTRAL[lang]) + " },\\n}\\n"
+        )
+    files["core/Ambient.lua"] = """local _, addon = ...
+function addon.AmbientText()
+    local lang = addon.db.outputLanguage
+    if not addon.availableLocales[lang] then lang = "deDE" end
+    local data = addon.localeData[lang].ambient or addon.localeData.deDE.ambient
+    local _, race = UnitRace("player")
+    local pool = data[race] or data.NEUTRAL
+    if type(pool) ~= "table" or #pool == 0 then pool = data.NEUTRAL end
+    return pool[math.random(#pool)]
 end
 """
     files["core/Cooldown.lua"] = """local _, addon = ...
