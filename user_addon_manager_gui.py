@@ -70,6 +70,8 @@ class UserAddonManagerDialog(QDialog):
         self.installed = {}
         self.catalog = {entry.id: entry for entry in load_catalog()}
         self.staged_packages = {}
+        self._guided_update_name = None
+        self._guided_update_target = None
         self.missing_batch = None
         self._scan_after_cleanup = False
         self._operation = None
@@ -110,6 +112,9 @@ class UserAddonManagerDialog(QDialog):
         actions.addWidget(self.channel)
         actions.addWidget(self.check_button)
         actions.addWidget(self.stage_button)
+        self.update_button = QPushButton("Ausgewähltes AddOn aktualisieren…")
+        self.update_button.clicked.connect(self.update_selected)
+        actions.addWidget(self.update_button)
         self.install_button = QPushButton("Geprüftes Paket installieren…")
         self.install_button.clicked.connect(self.install_selected)
         self.install_button.setEnabled(False)
@@ -133,6 +138,9 @@ class UserAddonManagerDialog(QDialog):
         self.check_button.setEnabled(not busy and self.current_target() is not None)
         self.stage_button.setEnabled(not busy and self.current_target() is not None and
                                      0 <= self.table.currentRow() < self.table.rowCount())
+        selected = self._selected_addon_id()
+        self.update_button.setEnabled(not busy and selected in self.installed and
+                                      self.installed[selected].state == "Installiert")
         self.install_button.setEnabled(not busy and self.current_target() is not None and
                                         self.selected_staged() is not None)
         self.missing_button.setEnabled(not busy and self.current_target() is not None)
@@ -411,6 +419,28 @@ class UserAddonManagerDialog(QDialog):
             return
         self._start("install", staging_target=(plan, profile))
 
+    def update_selected(self):
+        """Guide an existing addon from verified download into guarded review."""
+        target = self.current_target()
+        if self.thread is not None or target is None:
+            return
+        name = self._selected_addon_id()
+        if name not in self.installed or self.installed[name].state != "Installiert":
+            return
+        # No user files are modified until the standard install confirmation.
+        channel = self.channel.currentData()
+        if QMessageBox.question(self, "Update herunterladen",
+                f"Aktuelle {self.channel.currentText()} für {name} laden und "
+                "eine sichere Änderungsvorschau öffnen?\\n\\n"
+                "Vorhandene Texte bleiben standardmäßig geschützt. "
+                "Jede Ersetzung muss einzeln bestätigt werden.",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+            return
+        self._guided_update_name = name
+        self._guided_update_target = target
+        destination = Path(tempfile.gettempdir()) / ("rptextstudio-" + name + "-" + uuid4().hex)
+        self._start("stage", name=name, staging_target=destination)
+
     def stage_selected(self):
         if self.thread is not None:
             return
@@ -509,11 +539,21 @@ class UserAddonManagerDialog(QDialog):
             self._scan_after_cleanup = True
         elif operation == "stage":
             self.staged_packages[results.name] = results
+            guided = self._guided_update_name == results.name
+            guided_target = self._guided_update_target if guided else None
+            self._guided_update_name = None
+            self._guided_update_target = None
             self.status.setText(f"Paket vorbereitet: {results.directory}")
-            QMessageBox.information(self, "Paket geprüft und bereitgestellt",
-                f"{results.name} {results.version} wurde ohne Installation vorbereitet.\n"
-                f"Commit: {results.commit}\nSHA-256 (Archiv): {results.archive_sha256}\n"
-                f"Dateien: {results.files}\nZiel: {results.directory}")
+            if guided:
+                # Reuse the existing protected-file selection and explicit approval.
+                # The worker still exists until _cleanup; schedule a UI continuation.
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(0, lambda: self._review_guided_update(results.name, guided_target))
+            else:
+                QMessageBox.information(self, "Paket geprüft und bereitgestellt",
+                    f"{results.name} {results.version} wurde ohne Installation vorbereitet.\n"
+                    f"Commit: {results.commit}\nSHA-256 (Archiv): {results.archive_sha256}\n"
+                    f"Dateien: {results.files}\nZiel: {results.directory}")
         elif operation == "install":
             backup_path = Path(results)
             self.status.setText("AddOn installiert. Sicherung erstellt.")
@@ -543,8 +583,24 @@ class UserAddonManagerDialog(QDialog):
         if operation == "discover" and self.candidates:
             self._scan_after_cleanup = True
 
+    def _review_guided_update(self, name, target):
+        if not self.isVisible() or self.current_target() != target:
+            return
+        if self.thread is not None:
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(100, lambda: self._review_guided_update(name, target))
+            return
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if item and (item.data(Qt.UserRole) or item.text()) == name:
+                self.table.selectRow(row)
+                self.install_selected()
+                return
+
     @Slot(str)
     def _failed(self, message):
+        self._guided_update_name = None
+        self._guided_update_target = None
         self.status.setText("Prüfung fehlgeschlagen: " + message)
 
     def _cleanup(self):
