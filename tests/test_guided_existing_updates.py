@@ -21,6 +21,9 @@ class ExistingUpdateFlowTests(unittest.TestCase):
         source = (ROOT / "user_addon_manager_gui.py").read_text(encoding="utf-8")
         self.assertIn('self.installed[name].state != "Installiert"', source)
         self.assertIn('self._guided_update_name = None', source)
+        self.assertIn('self._guided_update_target = target', source)
+        self.assertIn('if not self.isVisible() or self.current_target() != target:', source)
+        self.assertIn('self._review_guided_update(name, target)', source)
 
 
 if __name__ == "__main__":
