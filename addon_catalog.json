@@ -42,6 +42,16 @@
       "description": "Rollenspieltexte für Paladine"
     },
     {
+      "id": "MagierRP",
+      "title": "Magier RP",
+      "repository": "Deathby-Snusnu/MagierRP",
+      "supported_clients": [],
+      "classes": [
+        "MAGE"
+      ],
+      "description": "Rollenspieltexte für Magier"
+    },
+    {
       "id": "RPChatMod",
       "title": "RP Chat Mod",
       "repository": "Deathby-Snusnu/RPChatMod",
