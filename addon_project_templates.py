@@ -72,9 +72,9 @@ end
         for race, lines in THEMES[lang].items():
             rows.append("    " + race + " = { " + ", ".join(q(x) for x in lines) + " },")
         files["locales/" + lang + "/Ambient.lua"] = (
-            "local _, addon = ...\\naddon.localeData." + lang + ".ambient = {\\n"
-            + "\\n".join(rows) + "\\n    NEUTRAL = { "
-            + ", ".join(q(x) for x in NEUTRAL[lang]) + " },\\n}\\n"
+            "local _, addon = ...\naddon.localeData." + lang + ".ambient = {\n"
+            + "\n".join(rows) + "\n    NEUTRAL = { "
+            + ", ".join(q(x) for x in NEUTRAL[lang]) + " },\n}\n"
         )
     files["core/Ambient.lua"] = """local _, addon = ...
 function addon.AmbientText()
@@ -100,6 +100,7 @@ function addon.StartCooldown() addon.nextTextTime = GetTime() + addon.db.cooldow
         '        print("' + name + ': /mrp list | /mrp <SCHLUESSEL>")\n' +
         '        return\n' +
         '    end\n' +
+        '    if key == "AMBIENT" then addon.TryAmbient(); return end\n' +
         '    if key == "LIST" then\n' +
         '        print("' + name + ' Zauberschluessel:")\n' +
         '        for _, spell in ipairs(addon.spellKeys) do print("  " .. spell) end\n' +
@@ -107,6 +108,10 @@ function addon.StartCooldown() addon.nextTextTime = GetTime() + addon.db.cooldow
         '    end\n' +
         '    addon.TryText(key)\nend\n')
     files[name + ".lua"] = ('local _, addon = ...\naddon.spellKeys = { ' + ", ".join(q(k) for k in SPELL_KEYS) + ' }\naddon.ready = false\n' +
+        'function addon.TryAmbient()\n' +
+        '    if not addon.ready or not addon.CooldownReady() then return false end\n' +
+        '    if not addon.SendText(addon.AmbientText()) then return false end\n' +
+        '    addon.StartCooldown(); return true\nend\n' +
         'function addon.TryText(key)\n' +
         '    if not addon.ready then return false end\n' +
         '    local _, class = UnitClass("player")\n' +
