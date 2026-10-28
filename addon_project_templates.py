@@ -1,10 +1,5 @@
 """Lua sources for the MagierRP project skeleton."""
-SPELLS = {
- "deDE": [("Feuerball","Ich hoffe, Ihr mögt es warm, %s.","*schleudert einen Feuerball auf %s.*","Ein Funke Magie!"),("Frostblitz","Ein frostiger Gruß, %s.","*wirft einen Frostblitz auf %s.*","Die Luft wird kälter."),("Arkane Geschosse","Arkane Grüße, %s.","*lenkt arkane Geschosse auf %s.*","Die Magie erwacht.")],
- "enUS": [("Fireball","I hope you like it warm, %s.","*hurls a fireball at %s.*","A spark of magic!"),("Frostbolt","A chilly greeting, %s.","*casts a frostbolt at %s.*","The air grows colder."),("Arcane Missiles","Arcane greetings, %s.","*guides arcane missiles toward %s.*","Magic awakens.")],
- "frFR": [("Boule de feu","J'espère que vous aimez la chaleur, %s.","*lance une boule de feu sur %s.*","Une étincelle de magie !"),("Éclair de givre","Un salut glacé, %s.","*lance un éclair de givre sur %s.*","L'air se refroidit."),("Projectiles des Arcanes","Salutations arcaniques, %s.","*dirige des projectiles arcaniques vers %s.*","La magie s'éveille.")]
-}
-KEYS = ("FIREBALL","FROSTBOLT","ARCANE_MISSILES")
+from magier_spell_catalog import SPELL_DATA, SPELL_KEYS, FRIENDLY_KEYS, SELF_KEYS
 
 def q(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
@@ -23,9 +18,12 @@ def source_files(name: str, title: str, langs: tuple[str,...], version: str, int
     files["locales/Finalize.lua"] = "local _, addon = ...\naddon.availableLocales = { " + ", ".join(l+" = true" for l in langs) + " }\n"
     for lang in langs:
         rows = []
-        for key, (spell, target, emote, group) in zip(KEYS, SPELLS[lang]):
-            rows.append("    " + key + " = { name = " + q(spell) + ", ziel = { " +
-                        q(target) + ", " + q(emote) + " }, gruppe = { " + q(group) + " } },")
+        for key in SPELL_KEYS:
+            entry = SPELL_DATA[lang][key]
+            target = ", ".join(q(text) for text in entry["ziel"])
+            group = ", ".join(q(text) for text in entry["gruppe"])
+            rows.append("    " + key + " = { name = " + q(entry["name"]) +
+                        ", ziel = { " + target + " }, gruppe = { " + group + " } },")
         files[f"locales/{lang}/Texts.lua"] = ("local _, addon = ...\naddon.localeData." + lang +
                                             ".texts = {\n" + "\n".join(rows) + "\n}\n")
         files[f"locales/{lang}/Racial.lua"] = f"local _, addon = ...\naddon.localeData.{lang}.racial = {{}}\n"
@@ -35,15 +33,21 @@ def source_files(name: str, title: str, langs: tuple[str,...], version: str, int
         '    for key, value in pairs(addon.defaults) do if addon.db[key] == nil then addon.db[key] = value end end\n' +
         '    if type(addon.db.textChance) ~= "number" or addon.db.textChance < 0 or addon.db.textChance > 100 then addon.db.textChance = 100 end\n' +
         '    if type(addon.db.cooldown) ~= "number" or addon.db.cooldown < 0 then addon.db.cooldown = 0 end\nend\n')
-    files["core/Text.lua"] = """local _, addon = ...
+    files["core/Text.lua"] = """local _, addon = ...\nlocal friendly = { ARCANE_INTELLECT=true, ARCANE_BRILLIANCE=true, SLOW_FALL=true, REMOVE_LESSER_CURSE=true }\nlocal selfOnly = { ICE_BARRIER=true, ICE_BLOCK=true, BLINK=true, EVOCATION=true, MANA_SHIELD=true, CONJURE_FOOD=true, CONJURE_WATER=true, CREATE_MANA_GEM=true, PORTAL=true, TELEPORT=true }
 function addon.BuildText(key)
     local lang = addon.db.outputLanguage
     if not addon.availableLocales[lang] then lang = "deDE" end
     local entries = addon.localeData[lang] and addon.localeData[lang].texts
     local entry = (entries and entries[key]) or (addon.localeData.deDE.texts and addon.localeData.deDE.texts[key])
     if type(entry) ~= "table" then return nil end
-    local target = UnitExists("target") and UnitName("target") or nil
+    local target = nil
+    if friendly[key] then
+        target = UnitExists("target") and UnitCanAssist("player", "target") and UnitName("target") or UnitName("player")
+    elseif not selfOnly[key] and UnitExists("target") then
+        target = UnitName("target")
+    end
     local pool = target and entry.ziel or entry.gruppe
+    if type(pool) ~= "table" or #pool == 0 then pool = entry.gruppe end
     if type(pool) ~= "table" or #pool == 0 then return nil end
     return pool[math.random(#pool)]:gsub("%%([%%s])", function(token)
         return token == "%" and "%" or (target or "")
