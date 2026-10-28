@@ -69,21 +69,21 @@ end
 function addon.CooldownReady() return GetTime() >= (addon.nextTextTime or 0) end
 function addon.StartCooldown() addon.nextTextTime = GetTime() + addon.db.cooldown end
 """
-    files["core/Commands.lua"] = ('local _, addon = ...\\n' +
-        'SLASH_' + name.upper() + '1 = "/mrp"\\n' +
-        'SLASH_' + name.upper() + '2 = "/magierrp"\\n' +
-        'SlashCmdList["' + name.upper() + '"] = function(message)\\n' +
-        '    local key = (message or ""):match("^%s*(.-)%s*$"):upper()\\n' +
-        '    if key == "" or key == "HELP" then\\n' +
-        '        print("' + name + ': /mrp list | /mrp <SCHLUESSEL>")\\n' +
-        '        return\\n' +
-        '    end\\n' +
-        '    if key == "LIST" then\\n' +
-        '        print("' + name + ' Zauberschluessel:")\\n' +
-        '        for _, spell in ipairs(addon.spellKeys) do print("  " .. spell) end\\n' +
-        '        return\\n' +
-        '    end\\n' +
-        '    addon.TryText(key)\\nend\\n')
+    files["core/Commands.lua"] = ('local _, addon = ...\n' +
+        'SLASH_' + name.upper() + '1 = "/mrp"\n' +
+        'SLASH_' + name.upper() + '2 = "/magierrp"\n' +
+        'SlashCmdList["' + name.upper() + '"] = function(message)\n' +
+        '    local key = (message or ""):match("^%s*(.-)%s*$"):upper()\n' +
+        '    if key == "" or key == "HELP" then\n' +
+        '        print("' + name + ': /mrp list | /mrp <SCHLUESSEL>")\n' +
+        '        return\n' +
+        '    end\n' +
+        '    if key == "LIST" then\n' +
+        '        print("' + name + ' Zauberschluessel:")\n' +
+        '        for _, spell in ipairs(addon.spellKeys) do print("  " .. spell) end\n' +
+        '        return\n' +
+        '    end\n' +
+        '    addon.TryText(key)\nend\n')
     files[name + ".lua"] = ('local _, addon = ...\naddon.spellKeys = { ' + ", ".join(q(k) for k in SPELL_KEYS) + ' }\naddon.ready = false\n' +
         'function addon.TryText(key)\n' +
         '    if not addon.ready then return false end\n' +
