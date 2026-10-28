@@ -146,5 +146,6 @@ for _language in ("deDE", "enUS", "frFR"):
 
 # Distinctive German text pools per school and functional spell family.
 from magier_voice_banks import BANKS, theme_for
-for _key in SPELL_KEYS:
-    SPELL_DATA["deDE"][_key]["gruppe"].extend(BANKS["deDE"][theme_for(_key)])
+for _language in ("deDE", "enUS", "frFR"):
+    for _key in SPELL_KEYS:
+        SPELL_DATA[_language][_key]["gruppe"].extend(BANKS[_language][theme_for(_key)])
