@@ -108,3 +108,38 @@ for key, de, en, fr, phrase in _additional:
         spoken = phrase if lang == "deDE" else (f"Arcane forces shape {label}." if lang == "enUS" else f"Les arcanes façonnent {label}.")
         emote = f"*{label}: die Magie nimmt Gestalt an.*" if lang == "deDE" else (f"*channels {label}.*" if lang == "enUS" else f"*canalise {label}.*")
         SPELL_DATA[lang][key] = {"name": label, "ziel": [] if key in _self_additional else [spoken + " %s", emote[:-2] + " %s.*"], "gruppe": [spoken, emote]}
+
+# Additional spoken/emote variety, shared across each supported key and locale.
+# Keep each pool non-empty even where no enemy target exists.
+_GROUP_LINES = {
+    "deDE": [
+        "Die arkane Theorie sieht das jedenfalls so vor.",
+        "*zieht mit zwei Fingern eine flüchtige Rune in die Luft.*",
+        "Der letzte Versuch war weniger elegant.",
+        "*murmelt eine Formel und verfolgt aufmerksam die aufsteigenden Funken.*",
+    ],
+    "enUS": [
+        "At least, that is what the arcane theory predicts.",
+        "*traces a fleeting rune in the air.*",
+        "The last attempt was less elegant.",
+        "*murmurs an incantation and watches the rising sparks.*",
+    ],
+    "frFR": [
+        "Du moins, c'est ce que prévoit la théorie des arcanes.",
+        "*trace une rune fugitive dans les airs.*",
+        "La dernière tentative fut moins élégante.",
+        "*murmure une formule en observant les étincelles.*",
+    ],
+}
+_TARGET_LINES = {
+    "deDE": ["%s, Ihr werdet noch von dieser Formel hören!", "*richtet eine sorgfältig gezogene Rune auf %s.*"],
+    "enUS": ["%s, you will remember this formula!", "*aims a carefully traced rune at %s.*"],
+    "frFR": ["%s, vous vous souviendrez de cette formule !", "*dirige une rune soigneusement tracée vers %s.*"],
+}
+for _language in ("deDE", "enUS", "frFR"):
+    for _key in SPELL_KEYS:
+        _record = SPELL_DATA[_language][_key]
+        # Format with the translated spell name, retaining natural text/emote markers.
+        _record["gruppe"].extend(_GROUP_LINES[_language])
+        if _key not in SELF_KEYS:
+            _record["ziel"].extend(_TARGET_LINES[_language])
