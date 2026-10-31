@@ -655,10 +655,16 @@ class UserAddonManagerDialog(QDialog):
     def _failed(self, message):
         self._guided_update_name = None
         self._guided_update_target = None
+        refresh_batch = (self._batch_update_target is not None
+                         and self.current_target() == self._batch_update_target)
+        if refresh_batch:
+            self._scan_after_cleanup = True
         self._update_queue = []
         self._batch_update_target = None
         self._batch_waiting_install = False
         self.status.setText("Prüfung fehlgeschlagen: " + message)
+        if refresh_batch:
+            QMessageBox.warning(self, "Prüfung fehlgeschlagen", message)
 
     def _cleanup(self):
         completed_install = self._operation == "install" and self._batch_waiting_install
