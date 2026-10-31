@@ -435,12 +435,20 @@ class UserAddonManagerDialog(QDialog):
             return
         # No user files are modified until the standard install confirmation.
         channel = self.channel.currentData()
-        if QMessageBox.question(self, "Update herunterladen",
-                f"Aktuelle {self.channel.currentText()} für {name} laden und "
-                "eine sichere Änderungsvorschau öffnen?\\n\\n"
-                "Vorhandene Texte bleiben standardmäßig geschützt. "
-                "Jede Ersetzung muss einzeln bestätigt werden.",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Update herunterladen")
+        dialog.setIcon(QMessageBox.Question)
+        dialog.setText(
+            f"Aktuelle {self.channel.currentText()} für {name} laden und "
+            "eine sichere Änderungsvorschau öffnen?\n\n"
+            "Vorhandene Texte bleiben standardmäßig geschützt. "
+            "Jede Ersetzung muss einzeln bestätigt werden."
+        )
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setDefaultButton(QMessageBox.No)
+        dialog.button(QMessageBox.Yes).setText("Update prüfen")
+        dialog.button(QMessageBox.No).setText("Abbrechen")
+        if dialog.exec() != QMessageBox.Yes:
             return
         self._guided_update_name = name
         self._guided_update_target = target
