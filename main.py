@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app_build_info import window_title
+from app_build_info import APP_VERSION, window_title
 import sys
 import zipfile
 import copy
@@ -276,7 +276,7 @@ class Studio(QMainWindow):
             f'{pending} Pool(s) geändert' + (' · Links' if self.links_dirty else '')
             if pending or self.links_dirty else 'Gespeichert')
         self.setWindowModified(bool(pending or self.links_dirty))
-        self.setWindowTitle('RP Text Studio 0.1.13' + (' *' if pending or self.links_dirty else ''))
+        self.setWindowTitle(window_title() + (' *' if pending or self.links_dirty else ''))
 
     def open_folder(self):
         folder=QFileDialog.getExistingDirectory(self,'AddOns-Hauptordner auswählen')
@@ -1017,7 +1017,7 @@ class Studio(QMainWindow):
         dlg.exec()
 
     def show_about(self):
-        QMessageBox.information(self,'Über RP Text Studio','RP Text Studio 0.1.11\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
+        QMessageBox.information(self,'Über RP Text Studio',f'RP Text Studio {APP_VERSION}\nPySide6-Editor für RP-Textlisten in Lua.\nF1 öffnet die Hilfe.')
 
     def add_entry(self):
         if self.current is None:return

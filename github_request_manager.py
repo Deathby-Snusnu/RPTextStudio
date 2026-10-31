@@ -32,6 +32,8 @@ _MEMORY = {}
 
 
 class RequestGuardError(RuntimeError):
+    """A guarded GitHub request failed, was rejected, or is temporarily blocked."""
+
     pass
 
 
@@ -133,6 +135,7 @@ def _headers(response):
 
 
 def status():
+    """Return cached request counts, last rate-limit values, and cache location."""
     with _LOCK:
         _load()
         now = time.time()
@@ -143,7 +146,12 @@ def status():
 
 
 def get_json(path):
-    """Fetch one allowlisted GitHub REST path, without retry storms."""
+    """Fetch an allowed owner-scoped GitHub REST path with bounded caching.
+
+    Public requests need no credentials; GH_TOKEN or GITHUB_TOKEN is optional.
+    The local API cache may be written. Raises RequestGuardError for guarded
+    network, rate-limit, and response failures.
+    """
     global _NEXT_CALL, _BLOCK_UNTIL
     if not path.startswith("/repos/Deathby-Snusnu/") or "://" in path or "\n" in path:
         raise RequestGuardError("Unzulässige GitHub-Adresse.")

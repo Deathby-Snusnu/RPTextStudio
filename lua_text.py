@@ -12,6 +12,8 @@ from datetime import datetime
 
 @dataclass
 class Token:
+    """Represent a Lua token with its source-text offsets."""
+
     kind: str
     value: str
     start: int
@@ -19,6 +21,8 @@ class Token:
 
 @dataclass
 class Pool:
+    """Represent a parsed literal text list and its enclosing source tokens."""
+
     path: tuple[str, ...]
     opener: Token
     closer: Token
@@ -28,6 +32,7 @@ class Pool:
 class ParseError(Exception): pass
 
 def lex(src: str) -> list[Token]:
+    """Tokenize supported Lua syntax without evaluating it."""
     out = []
     n = len(src)
     i = 0
@@ -70,6 +75,7 @@ def lex(src: str) -> list[Token]:
     return out
 
 def decode_string(raw: str) -> str:
+    """Decode common escapes in a quoted Lua string literal."""
     # Lua string escapes: handle common escapes without interpreting unsafe code.
     body = raw[1:-1]
     d = {'n':'\n','r':'\r','t':'\t','a':'\a','b':'\b','f':'\f','v':'\v','\\':'\\','\"':'\"',"'":"'"}
@@ -80,9 +86,16 @@ def decode_string(raw: str) -> str:
     return re.sub(r'\\(\d{1,3}|.)',sub,body,flags=re.S)
 
 def encode_string(s: str) -> str:
+    """Encode text as a double-quoted Lua string literal."""
     return '"' + (s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n').replace('\r','\\r').replace('\t','\\t')) + '"'
 
 def parse_pools(src: str, *, rejected_paths: set[tuple[str,...]] | None = None) -> dict[tuple[str,...],Pool]:
+    """Find nonempty literal leaf lists in addon table assignments.
+
+    Paths omit the leading ``addon``. When supplied, ``rejected_paths`` is
+    updated for nonliteral leaf lists that contain string entries; Lua is
+    never executed.
+    """
     ts=lex(src); pools={}; n=len(ts)
     def table(idx: int, path: tuple[str,...]):
         opener=ts[idx]; idx+=1; entries=[]; children=False; is_literal=True
@@ -132,10 +145,16 @@ def parse_pools(src: str, *, rejected_paths: set[tuple[str,...]] | None = None) 
     return pools
 
 def render_pool(pool:Pool,entries:list[str],newline:str='\n') -> str:
+    """Render replacement list contents using the pool's indentation."""
     indent=pool.indent+'    '
     return (newline + ''.join(indent+encode_string(s)+','+newline for s in entries) + pool.indent)
 
 def update_file(path:Path,updates:dict[tuple[str,...],list[str]], backup=True):
+    """Validate and write changed literal pools, optionally backing up the file.
+
+    Raises ValueError for missing pools, invalid text, or failed round-tripping.
+    Returns True when written and None when the requested contents are unchanged.
+    """
     with path.open('r',encoding='utf-8',newline='') as f:src=f.read()
     pools=parse_pools(src)
     missing=set(updates)-set(pools)
@@ -166,6 +185,7 @@ def update_file(path:Path,updates:dict[tuple[str,...],list[str]], backup=True):
     return True
 
 def validate_file(path:Path):
+    """Return parsed pools and text-format problems, not a full Lua syntax check."""
     with path.open(encoding='utf-8',newline='') as f:src=f.read()
     pools=parse_pools(src); problems=[]
     for key,pool in pools.items():

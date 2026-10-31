@@ -43,6 +43,22 @@ class SpellManagerTests(unittest.TestCase):
             self.assertIn(key, found)
         self.assertNotIn("PRAYER", found)
 
+    def test_paladin_greater_blessing_base_key_maps_to_runtime_key(self):
+        path = Path("addons/PaladinRP/locales/deDE/GreaterBlessings.lua")
+        pools = parse_pools(
+            'addon.localeData.deDE.GreaterBlessings = { '
+            'MIGHT = { gruppe = { "Greater blessing", }, }, }'
+        )
+        found = candidate_keys({path: pools}, "PaladinRP")
+        self.assertIn("GREATER_MIGHT", found)
+        self.assertNotIn("MIGHT", found)
+        self.assertEqual(
+            make_macro("PaladinRP", "Greater Blessing of Might",
+                       "GREATER_MIGHT", found),
+            "#showtooltip Greater Blessing of Might\n"
+            "/cast Greater Blessing of Might\n/prp greater_might",
+        )
+
     def test_all_other_class_spell_keys(self):
         examples = {
             "HexerRP": ("SHADOW_BOLT", "IMMOLATE"),

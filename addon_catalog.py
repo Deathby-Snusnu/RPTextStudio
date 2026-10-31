@@ -19,6 +19,8 @@ BUILTIN_PATH = Path(__file__).with_name("addon_catalog.json")
 
 @dataclass(frozen=True)
 class CatalogAddon:
+    """Describe a catalog entry without asserting client compatibility."""
+
     id: str
     title: str
     repository: str
@@ -91,4 +93,5 @@ def load_catalog(path: Path | None = None) -> tuple[CatalogAddon, ...]:
 
 
 def catalog_ids(path: Path | None = None) -> tuple[str, ...]:
+    """Return IDs from the validated bundled catalog or the supplied catalog."""
     return tuple(addon.id for addon in load_catalog(path))

@@ -1,27 +1,50 @@
-# RP Text Studio 0.2.0
+# RP Text Studio 1.0.0 (Quellstand, unveröffentlicht)
 
 ![RP Text Studio – Texte gestalten. Welten erzählen.](assets/rp_text_studio_logo.svg)
 
-Python-/PySide6-Desktopeditor für die RP-Textpools der AddOns **RPChatMod, HexerRP, PaladinRP, JaegerRP und DruidenRP**.
+Python-/PySide6-Desktopeditor für statische RP-Textpools, unter anderem von
+**RPChatMod, HexerRP, PaladinRP, JaegerRP, DruidenRP und MagierRP**.
+RPControlCenter enthält keine entsprechenden Textpools.
 
 ## Dokumentation
 
 [Sammlungsübersicht](../../README.md) · [Bedienungsanleitung](../../docs/RPTextStudio/HANDBUCH.md) ·
 [Changelog](CHANGELOG.md) · [Verpackung](../../docs/VERPACKUNG.md)
 
-Der Editor liegt unter `apps\RPTextStudio`, die sechs AddOns unter `addons`.
+Weitere Anleitungen: [Anwender-Modus](ANWENDER-ADDON-MODUS.md),
+[Erstinstallation](FIRST-INSTALL-RP-ADDONS.md),
+[sichere Updates](SAFE-GITHUB-INSTALL.md), [GitHub-Staging](GITHUB-STAGING.md),
+[Client-Profile](WOW-CLIENT-PROFILE.md), [Text-Merge-Vorschau](RP-TEXT-MERGE.md)
+und [Windows-Installer](WINDOWS-INSTALLER.md).
+
+Der Editor liegt unter `apps\RPTextStudio`, die sieben AddOns des aktuellen
+Arbeitsstands unter `addons`.
 Beim Öffnen sind sowohl der Projektstamm als auch dessen `addons`-Ordner
 möglich. Entpackte Installations-ZIPs mit direkten AddOn-Unterordnern bleiben
-unterstützt. Editor-Register werden im jeweiligen Projekt unter `data` gespeichert.
-Alte Register direkt im Projektstamm werden weiterhin gelesen, solange
-keine neuere Fassung in `data` existiert; beim Speichern entsteht die
-kanonische Datei in `data`, ohne das Original zu entfernen.
+unterstützt. Die drei Text-, Zauber- und Profilregister werden im jeweiligen
+Projekt unter `data` gespeichert. Ihre älteren Fassungen direkt im
+Projektstamm werden weiterhin gelesen, solange keine neuere Fassung in
+`data` existiert; beim Speichern entsteht die kanonische Datei in `data`,
+ohne das Original zu entfernen. Das optionale AddOn-Register `addons.json`
+liegt dagegen im Projektstamm und ist vom mitgelieferten Katalog getrennt.
 Vorhandene EXEs wurden beim Umzug erhalten, aber nicht neu gebaut.
 Für den aktuellen Quellstand Python direkt verwenden oder die EXE neu bauen.
+Die oben verlinkten gemeinsamen Handbücher liegen außerhalb des
+Editor-Repositories und setzen den vollständigen Sammlungs-Checkout voraus;
+sie stehen auch im
+[Sammlungsrepository](https://github.com/Deathby-Snusnu/RPAddOns).
+Ein einzelner Editor-Checkout benötigt für den EXE-Build ein `HANDBUCH.md`
+neben dem Build-Skript oder das Handbuch an der gemeinsamen Projektposition.
 
-## Windows-Setup (derzeit nicht als Release freigegeben)
+## Windows-Setup
 
-Ein reguläres Windows-Setup mit Startmenü, optionaler Desktopverknüpfung und Deinstallation lässt sich mit `build_installer.bat` erzeugen. Dazu werden Python und Inno Setup 6 benötigt. Das Paket wird unter `installer-dist/` abgelegt. Details und manuelle Abnahmeschritte stehen in [WINDOWS-INSTALLER.md](WINDOWS-INSTALLER.md). Das Setup installiert ausschließlich den Editor, keine WoW-AddOns. Der Build wurde bisher nicht auf Windows ausgeführt und ist vor einer Installer-Freigabe noch zu validieren.
+Ein Windows-Setup mit Startmenü, optionaler Desktopverknüpfung und
+Deinstallation lässt sich mit `build_installer.bat` erzeugen. Dazu werden
+Python, Git und Inno Setup 6 benötigt. Das Paket wird unter `installer-dist/`
+abgelegt und installiert ausschließlich den Editor, keine WoW-AddOns.
+Build-Voraussetzungen und manuelle Abnahmeschritte stehen in
+[WINDOWS-INSTALLER.md](WINDOWS-INSTALLER.md). Ein aktueller Windows-Abnahmestand
+oder eine Installer-Freigabe wird dadurch nicht belegt.
 
 ## Installation (Windows)
 
@@ -30,7 +53,8 @@ Windows-Rechner mit Python eine einzelne `dist\RPTextStudio.exe` erstellen.
 Sie enthält Python, Qt und das Handbuch und kann ohne die Python-Ordnerstruktur
 weitergegeben werden. Die bearbeiteten AddOn-Dateien bleiben separat und
 werden über **Projektordner öffnen** geladen.
-Build-Anleitung, Schreibrechte und Hinweise zur Weitergabe:
+Der Build benötigt außerdem Git und eine Arbeitskopie ohne Änderungen an
+verfolgten Dateien. Build-Anleitung, Schreibrechte und Hinweise zur Weitergabe:
 [Windows-EXE bauen](../../docs/RPTextStudio/HANDBUCH.md#windows-exe-bauen).
 Im vollständigen Entwicklungsprojekt startet `Start.bat` immer den aktuellen
 Python-Quellstand, damit eine alte EXE keine veralteten Pfade verwendet.
@@ -64,11 +88,10 @@ Die Umgebung nur erstellen, wenn noch keine passende `.venv` existiert.
 Bei bereits installierten Abhängigkeiten kann der letzte Befehl den Editor
 ohne den pip-Schritt des Starters öffnen. Es wird keine Aktivierung der
 Umgebung und keine Änderung der PowerShell-Ausführungsrichtlinie benötigt.
-Der dokumentierte Anwendungsstand ist `0.2.0`; siehe
-[CHANGELOG.md](CHANGELOG.md). In der aktuellen Quelle sind die fest codierten
-Fenstertitel noch nicht synchronisiert: `main.py` enthält `0.1.15`,
-`0.1.13` und `0.1.11`. Für den dokumentierten Quellstand ist der Changelog
-maßgeblich.
+Die Versionskonstante in [app_build_info.py](app_build_info.py) deklariert
+`1.0.0`; Fenstertitel und Info-Dialog verwenden diese gemeinsame
+unveröffentlichte Quellversion. Dies ist keine Aussage über einen Release.
+Die dokumentierte Historie steht im [Changelog](CHANGELOG.md).
 
 ## Einstieg
 
@@ -164,9 +187,16 @@ fehlenden Sprachdateien.
 Über **Zauber-Manager** lassen sich vorhandene RP-Schlüssel für die AddOns
 HexerRP, PaladinRP, JaegerRP und DruidenRP mit einem WoW-Zaubernamen
 verknüpfen. Angeboten werden aus geladenen `Texts.lua`, `Racial.lua`,
-`Classes.lua` und `RaceClass.lua` ermittelte Schlüssel. Andere Kategorien,
-etwa reine Paladin-Segen aus `Blessings.lua`, werden derzeit nicht generell
-erfasst; der Dialog ist keine vollständige Laufzeit-Schlüsselliste.
+`Classes.lua` und `RaceClass.lua` ermittelte Schlüssel. Für PaladinRP werden
+zusätzlich unterstützte Pools aus `Abilities.lua`, `Blessings.lua`,
+`GreaterBlessings.lua`, `Auras.lua` und `Seals.lua` berücksichtigt.
+Ambient-Pools und MagierRP sind nicht Bestandteil dieses Makro-Managers;
+die Vorschläge sind keine vollständige Laufzeit-Schlüsselliste.
+
+Bei PaladinRP liegen große Segen in `GreaterBlessings.lua` beispielsweise
+unter `MIGHT`. Der Manager bietet dafür den Laufzeitschlüssel `GREATER_MIGHT`
+an und erzeugt `/prp greater_might`. Die verfügbaren Aufrufe mit
+`/prp list` überprüfen.
 
 1. Projektordner mit AddOns öffnen.
 2. **Zauber-Manager** anklicken und AddOn auswählen.
@@ -197,13 +227,16 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 | `data\.rptextstudio-translations.json` | Explizite Übersetzungsgruppen | Keine |
 | `data\.rptextstudio-spells.json` | Zauber-/Schlüsselzuordnungen für Makros | Erst durch Nutzung des erzeugten Makros |
 | `data\.rptextstudio-races-classes.json` | Redaktionelle Rassen-/Klassenprofile | Keine; optionale Lua-Zweige sind separat |
+| `addons.json` im Projektstamm | Optionale lokale AddOn- und Repository-Zuordnungen | Keine |
 
-Die Register liegen unter `data` im geöffneten Projekt, nicht zwingend neben dem
-Editor. Bei Auswahl von `addons` im vollständigen Quellprojekt wird dafür
-der übergeordnete Projektstamm verwendet. Installationspakete lassen diese
-Register aus; bei einem Projektumzug den gesamten `data`-Ordner mitnehmen.
-Lua-Sicherungen tragen einen Zeitstempel vor `.bak`; JSON-Sicherungen
-verwenden den Namen der jeweiligen Datei mit zusätzlichem `.bak`.
+Bei Auswahl von `addons` im vollständigen Quellprojekt wird der übergeordnete
+Projektstamm verwendet. Installationspakete lassen diese Register aus; bei
+einem Projektumzug den gesamten `data`-Ordner und gegebenenfalls die
+`addons.json` mitnehmen. Lua-Sicherungen liegen neben der jeweiligen Datei
+und tragen einen Zeitstempel vor `.bak`. Beim Überschreiben des Übersetzungs-
+oder Zauberregisters entsteht eine JSON-Sicherung mit zusätzlichem `.bak`.
+Das Rassen-/Klassenregister und `addons.json` erhalten beim Speichern keine
+solche automatische Sicherung; vor Änderungen bei Bedarf selbst sichern.
 Zusammenhängende Änderungen über mehrere Dateien sind nicht atomar.
 
 ## Module
@@ -243,17 +276,27 @@ Im Sprachvergleich einen **deutschen** Text auswählen und **KI-Übersetzung …
 
 Die Vorschläge für `enUS` und `frFR` werden zunächst nur angezeigt. Sie können korrigiert und **einzeln freigegeben** werden. Der Editor prüft dabei `%s`, `%p`, `%%`, `*...*` und Zeilenumbrüche. Erst nach Freigabe werden Varianten in die vorhandenen Sprachpools übernommen und dem deutschen Text zugeordnet. Bestehende Sprachvarianten werden **nicht überschrieben**. Abschließend **Änderungen speichern** wählen, um Lua-Änderungen und Übersetzungsverknüpfungen mit Backups zu sichern.
 
-**Sicherheit und Grenzen:** API-Schlüssel werden nicht in Projektdateien gespeichert. Es gibt keine automatische Stapelverarbeitung. Zielsprach-Textpools müssen schon existieren. Ein vorhandener Übersetzungslink wird nicht automatisch geändert. Es fand noch kein echter API- oder Windows-GUI-Test statt; der API-Test nutzt ein Mock.
+**Sicherheit und Grenzen:** API-Schlüssel werden nicht in Projektdateien gespeichert. Es gibt keine automatische Stapelverarbeitung. Zielsprach-Textpools müssen schon existieren. Ein vorhandener Übersetzungslink wird nicht automatisch geändert. Die automatisierten API-Tests nutzen Mocks; eine aktuelle Abnahme mit echtem Online-Dienst und Windows-GUI ist hier nicht belegt.
 
 ## Klassische Menüführung (0.1.13)
 
-Die Anwendung nutzt jetzt die Menüleiste **Datei, Bearbeiten, Projekt, Übersetzungen, Ansicht, Hilfe** und eine kompakte Standardsymbolleiste. Die wichtigsten Kürzel: **Strg+O** Projekt öffnen, **Strg+S** speichern, **Strg+N** Text hinzufügen, **Strg+D** duplizieren, **Strg+F** Suche fokussieren, **F7** Projekt prüfen, **F1** Handbuch.
+Die Anwendung nutzt die Menüleiste **Datei, Bearbeiten, Projekt, AddOns,
+Übersetzungen, Ansicht, Hilfe** und eine kompakte Standardsymbolleiste.
+Die wichtigsten Kürzel: **Strg+O** Projekt öffnen, **Strg+S** speichern,
+**Strg+N** Text hinzufügen, **Strg+D** duplizieren, **Strg+F** Suche
+fokussieren, **F7** Projekt prüfen, **F1** Handbuch und **F2**
+Arbeitsassistent.
 
 Unten zeigt die dauerhafte Statusleiste Projekt, Navigationssprache, ausgewählte Textzeile und ungespeicherte Textpool-/Verknüpfungsänderungen. Die bisherigen Texteditoren, Sprachvergleiche und Prüfungen bleiben erhalten.
 
 ## Geführter Workflow-Assistent (0.1.14)
 
-Über **Hilfe → Workflow-Assistent…** oder **F2** startet ein dreistufiger Assistent. Er bietet **Text bearbeiten**, **Zauber ergänzen**, **KI-Übersetzung** und **Projekt prüfen**. Der Dialog beschreibt Voraussetzungen (geöffnetes Projekt, markierter Textpool, markierte Textzeile und bei KI-Übersetzung `deDE`). Nach **Fertigstellen** wird das entsprechende bestehende Werkzeug geöffnet. Es erfolgen **keine automatischen Schreibvorgänge** und **keine API-Anfragen**, bis du diese Aktionen im jeweiligen Werkzeug ausdrücklich auslöst.
+Über **Hilfe → Einfacher Assistent…** startet der frühere dreistufige
+Navigationsassistent. Er bietet **Text bearbeiten**, **Zauber ergänzen**,
+**KI-Übersetzung** und **Projekt prüfen**. Der Dialog beschreibt die
+Voraussetzungen und öffnet nach **Fertigstellen** das jeweilige Werkzeug.
+Er schreibt keine Dateien und sendet keine API-Anfragen selbstständig.
+**F2** öffnet stattdessen den nachfolgend beschriebenen Arbeitsassistenten.
 
 Der Assistent in 0.1.14 war eine geführte Navigation. Der spätere
 Arbeitsassistent mit Entwurf, Prüfung und Speichern ist unter 0.1.15

@@ -41,11 +41,15 @@ def _linked(path: Path) -> bool:
 
 
 class InstallError(RuntimeError):
+    """Report an unsafe or invalid addon installation operation."""
+
     pass
 
 
 @dataclass(frozen=True)
 class AddonChange:
+    """Describe file differences and fingerprints for a reviewed installation."""
+
     name: str
     added: tuple[str, ...]
     changed: tuple[str, ...]
@@ -56,6 +60,7 @@ class AddonChange:
 
     @property
     def is_changed(self) -> bool:
+        """Return whether the source and target differ."""
         return bool(self.added or self.changed or self.removed)
 
 
@@ -126,6 +131,12 @@ def _validate_selection(source: Path, target: Path, names: tuple[str, ...]) -> N
 
 
 def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tuple[AddonChange, ...]:
+    """Compare selected source addons with an Interface/AddOns target.
+
+    The preview includes target-only files as removals and records hashes for
+    later approval. Unsafe paths or invalid addon selections raise InstallError.
+    No target files are changed.
+    """
     source = Path(source).resolve()
     target = _validate_target(Path(target), source)
     resolved_target = target.resolve()
@@ -148,7 +159,13 @@ def preview(source: Path, target: Path, names: tuple[str, ...] = ADDONS) -> tupl
 
 def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
             *, approved: tuple[AddonChange, ...] | None = None) -> Path:
-    """Apply only a reviewed plan. Backups remain under AddOns/.addon-backups."""
+    """Replace selected addon folders only if the reviewed plan is unchanged.
+
+    The replacement contains source runtime files; target-only files are
+    removed from the installed folder but kept in its backup. Returns the
+    backup path under AddOns/.addon-backups. A missing or stale approval raises
+    InstallError.
+    """
     source = Path(source).resolve()
     target = _validate_target(Path(target), source)
     plan = preview(source, target, names)
@@ -205,7 +222,11 @@ def install(source: Path, target: Path, names: tuple[str, ...] = ADDONS,
 
 
 def rollback(target: Path, backup: Path) -> None:
-    """Restore a previous installation, keeping the replaced version separately."""
+    """Restore a validated backup, keeping the replaced version separately.
+
+    The backup must be a direct child of the target's .addon-backups folder.
+    Addons first installed by that backup are removed from the target.
+    """
     target = Path(target).absolute()
     backup = Path(backup).absolute()
     if target.name.casefold() != "addons" or target.parent.name.casefold() != "interface":

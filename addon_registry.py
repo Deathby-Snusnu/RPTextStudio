@@ -39,6 +39,7 @@ def _registry_lock(root: Path):
 
 
 def discover(root: Path) -> dict[str, Path]:
+    """Find local addon directories with valid IDs and same-named TOC files."""
     folder = addons_root(root)
     result = {}
     if not folder.is_dir():
@@ -52,6 +53,10 @@ def discover(root: Path) -> dict[str, Path]:
 
 
 def load_registry(root: Path) -> dict:
+    """Read project-root addons.json, or return an empty registry if absent.
+
+    Malformed data and duplicate or invalid entries raise ValueError.
+    """
     path = project_root(root) / REGISTRY
     if not path.exists():
         return {"schema": 1, "addons": []}
@@ -72,7 +77,12 @@ def load_registry(root: Path) -> dict:
 
 
 def register(root: Path, entry: dict, *, persist=True) -> dict:
-    """Add a validated local addon; never replace existing registrations."""
+    """Add a validated local addon without replacing existing registrations.
+
+    With ``persist=False`` the returned registry is not saved, although a
+    project-local lock file is still used. Registration does not by itself
+    authorize an external repository for downloads.
+    """
     name = entry.get("id", "")
     if not isinstance(name, str) or not ID.fullmatch(name):
         raise ValueError("Ungültige AddOn-ID.")
@@ -104,6 +114,6 @@ def register(root: Path, entry: dict, *, persist=True) -> dict:
 
 
 def available(root: Path) -> list[dict]:
-    """Registered entries with a valid local source, including future addons."""
+    """Return enabled registered entries with matching local source folders."""
     projects = discover(root)
     return [entry for entry in load_registry(root)["addons"] if entry["id"] in projects and entry.get("enabled", True)]

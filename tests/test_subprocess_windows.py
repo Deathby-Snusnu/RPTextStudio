@@ -1,7 +1,9 @@
 """Regression tests for invisible GitHub CLI subprocesses."""
 import io
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 from subprocess_windows import hidden_subprocess_kwargs
 
@@ -20,15 +22,21 @@ class WindowsSubprocessTests(unittest.TestCase):
         self.assertEqual(opts["startupinfo"].wShowWindow, subprocess.SW_HIDE)
 
     def test_github_api_uses_https_without_subprocess(self):
+        import github_request_manager as guard
         import github_updates
         class Response(io.BytesIO):
             status = 200
+            headers = {}
 
             def getcode(self):
                 return 200
 
         response = Response(b"{}")
-        with patch("github_updates.urllib.request.urlopen", return_value=response) as request, \
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch.multiple(guard, _MEMORY={}, _NEXT_CALL=0.0, _BLOCK_UNTIL=0.0), \
+             patch.object(guard, "_store_path", return_value=Path(tmp) / "cache.json"), \
+             patch.dict(os.environ, {"GH_TOKEN": "", "GITHUB_TOKEN": ""}), \
+             patch("github_updates.urllib.request.urlopen", return_value=response) as request, \
              patch("subprocess.run") as run, \
              patch("subprocess.Popen") as popen:
             github_updates._api("/repos/Deathby-Snusnu/PaladinRP")

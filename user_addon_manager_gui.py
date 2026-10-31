@@ -1,4 +1,4 @@
-"""User mode: read-only WoW addon overview with background discovery and GitHub checks."""
+"""User-mode addon discovery, version checks, staging, installation, and updates."""
 from __future__ import annotations
 from github_request_manager import status as github_api_status
 from pathlib import Path

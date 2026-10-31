@@ -1,8 +1,9 @@
 """Conservative install of a verified GitHub staging directory.
 
-Existing files are retained byte-for-byte, except for the explicitly approved
-TOC Interface line. New runtime files are copied. A full folder backup is kept.
-No automatic merge or overwrite of existing Lua, text, XML or assets.
+Existing files are retained by default; individually approved replacements
+and the TOC Interface line are the explicit exceptions. New runtime files are
+copied and an existing addon folder is backed up. No automatic text merge is
+performed.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -21,6 +22,8 @@ from wow_client_profiles import preview_toc, ClientProfile
 
 @dataclass(frozen=True)
 class SafePlan:
+    """Capture a preview, file hashes, and individually approved replacements."""
+
     name: str
     target: Path
     source: Path
@@ -59,6 +62,14 @@ def _casefold_index(files: dict[str, Path]) -> dict[str, str]:
 
 def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientProfile,
                          *, approved_overwrites: tuple[str, ...] = ()) -> SafePlan:
+    """Build a reviewable installation plan without modifying the target.
+
+    ``target`` must be a verified client's Interface/AddOns directory and
+    ``staged`` must contain the same-named TOC outside that directory.
+    Existing differing non-TOC files are protected unless individually listed
+    in ``approved_overwrites``. The plan records source and target hashes;
+    invalid selections and unsafe paths raise InstallError.
+    """
     staged, target = Path(staged).absolute(), Path(target).absolute()
     _validate(name, staged, target, profile)
     src = _files(staged, runtime=True)
@@ -96,7 +107,12 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
                     selected)
 
 def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
-    """Apply previously approved exact plan, then return persistent backup path."""
+    """Apply an unchanged reviewed plan and return its backup directory.
+
+    An existing addon folder is backed up before replacement. The source,
+    target and profile are rechecked against the plan; changed inputs and plans
+    with no applicable changes raise InstallError.
+    """
     if preview_safe_install(plan.name, plan.source, plan.target, profile,
                             approved_overwrites=plan.approved_overwrites) != plan:
         raise InstallError("Dateien oder Installationsprofil wurden seit der Vorschau geändert.")

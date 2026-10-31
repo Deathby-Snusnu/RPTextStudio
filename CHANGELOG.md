@@ -3,6 +3,55 @@
 Die dokumentierte Historie wird nach Versionen geordnet. Undatierte
 Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
+## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
+
+GitHub veröffentlichte zuletzt `v0.2.2` am 28.10.2026. Der Quellstand
+dieses Tags und der veröffentlichte Installer weisen intern noch `0.2.1`
+aus. Vorhandene Build-Metadaten und Installer bleiben bis zu einem neuen
+Build dem älteren Stand zugeordnet.
+
+- Der mitgelieferte AddOn-Katalog enthält MagierRP neben den sechs bisherigen
+  AddOns. Fehlende AddOns werden im Anwenderdialog ausdrücklich ausgewählt.
+- Titel und Info-Dialog verwenden dieselbe Quellversion.
+- Der Paladin-Zauber-Manager bildet GreaterBlessings-Basisschlüssel auf die
+  benötigten `GREATER_`-Aufrufschlüssel ab.
+- Die lokale AddOn-Übersicht und Versionsprüfung akzeptieren nur eindeutige
+  AddOn-IDs aus dem vertrauenswürdigen Katalog.
+- Abweichende bestehende Dateien bleiben beim GitHub-Update standardmäßig
+  geschützt und können einzeln zur Ersetzung freigegeben werden.
+- Der Zauber-Manager berücksichtigt unterstützte Paladin-Segen, Auren,
+  Siegel und Fähigkeiten und bildet große Segen auf passende `GREATER_`-
+  Aufrufschlüssel ab. MagierRP ist kein Makro-Manager-Ziel.
+- Der EXE-Build ermittelt Version und Commit-ID und verlangt eine
+  Git-Arbeitskopie ohne Änderungen an verfolgten Dateien.
+- Nach `v0.2.2` wurde MagierRP in den vertrauenswürdigen AddOn-Katalog
+  aufgenommen; der AddOn-Generator wurde entfernt und seine Magier-
+  Textquellen werden im MagierRP-Projekt gepflegt.
+- GitHub-API-Anfragen laufen über einen gemeinsamen Request-Manager mit
+  Cache, Warteschlange und Rate-Limit-Wiederholungen.
+- README, Handbuch und Feature-Anleitungen an den aktuellen Quellstand
+  angepasst; historische Einträge bleiben erhalten.
+
+## [0.2.2] - 2026-10-28
+
+### AddOn-Verwaltung
+
+- Geführte Updates bestehender AddOns mit Vorschau und Bestandsschutz
+  ergänzt.
+
+### MagierRP
+
+- MagierRP-Unterstützung mit 28 Zaubern, drei Sprachen und dem Befehl
+  `/mrp list` ergänzt.
+
+## [0.2.1] - 2026-10-27
+
+### Windows-Paket
+
+- Windows-Build und Installer verwenden nachvollziehbare Versions- und
+  Commit-Metadaten; die Build-Vorbereitung und Installationsprüfung wurden
+  erweitert.
+
 ## [0.2.0] - 2026-10-26
 
 ### AddOn-Verwaltung

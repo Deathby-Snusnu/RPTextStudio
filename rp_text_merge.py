@@ -10,6 +10,8 @@ from lua_text import parse_pools, ParseError
 
 @dataclass(frozen=True)
 class PoolMerge:
+    """Describe one local pool, proposed additions, and any conflict."""
+
     path: tuple[str, ...]
     status: str
     local: tuple[str, ...]
@@ -19,15 +21,19 @@ class PoolMerge:
 
 @dataclass(frozen=True)
 class MergePreview:
+    """Collect pool-level results and safe proposed updates without writing."""
+
     pools: tuple[PoolMerge, ...]
     safe_updates: dict[tuple[str, ...], list[str]]
 
     @property
     def conflicts(self) -> int:
+        """Return the number of pools requiring manual review."""
         return sum(p.status == "Konflikt" for p in self.pools)
 
     @property
     def additions(self) -> int:
+        """Return the number of proposed new text entries."""
         return sum(len(p.additions) for p in self.pools)
 
 

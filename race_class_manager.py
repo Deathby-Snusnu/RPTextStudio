@@ -17,6 +17,7 @@ REGISTRY = '.rptextstudio-races-classes.json'
 KEYS = {'race':'races', 'class':'classes'}
 
 def load_registry(root:Path)->dict:
+    """Read project profiles or return an empty registry if none exists."""
     file=metadata_path(root, REGISTRY)
     if not file.exists():return {'version':1,'races':{},'classes':{}}
     raw=json.loads(file.read_text(encoding='utf-8'))
@@ -25,6 +26,7 @@ def load_registry(root:Path)->dict:
     return raw
 
 def validate_profile(kind:str, key:str, display:str, style:str):
+    """Validate the profile kind, identifier, display name, and text limits."""
     if kind not in KEYS:raise ValueError('Unbekannter Typ')
     ensure_key(key)
     if key.lower() in {'true','false','nil','function','end','local','return','if','then','else'}:
@@ -34,6 +36,10 @@ def validate_profile(kind:str, key:str, display:str, style:str):
     if any(c in key for c in '\r\n'):raise ValueError('Ungültige ID')
 
 def register(root:Path,kind:str,key:str,display:str,style:str,addons:list[str]|None=None)->None:
+    """Add a validated, unique profile to the project-local registry.
+
+    The registry is replaced using a temporary file; no backup is created.
+    """
     validate_profile(kind,key,display,style)
     obj=load_registry(root); bucket=obj[KEYS[kind]]
     if key in bucket:raise ValueError(f'{key} ist bereits registriert')
@@ -48,7 +54,7 @@ def register(root:Path,kind:str,key:str,display:str,style:str,addons:list[str]|N
         if os.path.exists(temp):os.unlink(temp)
 
 def discover_targets(root:Path,addon:str,kind:str):
-    """Only existing literal Racial.lua / Classes.lua locale structures are editable."""
+    """Find existing literal locale structures for a validated race/class kind."""
     filename='Racial.lua' if kind=='race' else 'Classes.lua'
     targets=[]
     for locale in ('deDE','enUS','frFR'):
@@ -66,7 +72,8 @@ def discover_targets(root:Path,addon:str,kind:str):
 def add_lua_profile(root:Path,addon:str,kind:str,key:str,seed_key:str='RP_GREETING'):
     """Create first usable text pool under a previously absent race/class branch.
 
-    Dry-run every language before touching any original file.
+    Dry-run every language before touching any original file, then back up
+    each original before editing it. Returns the number of edited files.
     """
     validate_profile(kind,key,key,'')
     ensure_key(seed_key)

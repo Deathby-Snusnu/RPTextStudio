@@ -1,14 +1,15 @@
-"""Read the single app version and bundled build identity."""
+"""Read the declared app version and bundled build identity."""
 from __future__ import annotations
 import json
 from pathlib import Path
 import sys
 
-APP_VERSION = "0.2.1"
+APP_VERSION = "1.0.0"
 INFO_FILE = Path(__file__).with_name("build_info.json")
 
 
 def build_identity() -> str:
+    """Return a bundled commit prefix or 'Quellcode' when unavailable."""
     if not getattr(sys, "frozen", False):
         return "Quellcode"
     try:
@@ -24,5 +25,6 @@ def build_identity() -> str:
 
 
 def window_title() -> str:
+    """Format the declared version and available build identity for a title."""
     identity = build_identity()
     return f"RP Text Studio {APP_VERSION}" + (f" · {identity}" if identity != "Quellcode" else " · Quellcode")

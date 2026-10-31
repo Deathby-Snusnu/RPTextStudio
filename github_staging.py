@@ -1,8 +1,9 @@
-"""Authenticated, bounded GitHub archive staging. Never modifies WoW installations.
+"""Bounded GitHub archive staging. Never modifies WoW installations.
 
 The chosen GitHub ref is resolved to a commit before downloading. The resulting
 ZIP is checked for path traversal, links, duplicate paths, oversized content and
-missing TOC references. Only runtime files are staged.
+missing TOC references. Only runtime files are staged. Authentication via
+GH_TOKEN or GITHUB_TOKEN is optional for public repositories.
 """
 from __future__ import annotations
 
@@ -32,11 +33,14 @@ VERSION = re.compile(r"^\d+(?:\.\d+){1,3}$")
 
 
 class DownloadError(RuntimeError):
+    """Report an invalid staging request, archive, or download."""
     pass
 
 
 @dataclass(frozen=True)
 class StagedAddon:
+    """Describe a staged package; archive_sha256 is not a signature."""
+
     name: str
     channel: str
     version: str
@@ -179,10 +183,17 @@ def _validate_zip(archive: Path, name: str) -> tuple[dict[str, zipfile.ZipInfo],
 
 
 def stage(name: str, channel: str, destination: Path) -> StagedAddon:
-    """Stage new addon under an existing user-chosen empty directory.
+    """Download and validate an addon into a new staging directory.
 
-    Nothing is installed. Stage may be discarded simply by deleting its output
-    directory. Caller must not choose any WoW Interface/AddOns directory.
+    The destination must not already exist. Its parent must exist and neither
+    it nor its ancestors may be linked directories. The destination must be
+    outside the WoW Interface tree. The channel is ``stable`` or
+    ``development``; only catalogued addon IDs are accepted.
+
+    Returns the staged metadata, commit and archive SHA-256. No addon is
+    installed and the archive hash does not authenticate its contents.
+    Validation failures raise DownloadError; GitHub and filesystem errors may
+    also propagate.
     """
     dest = Path(destination).absolute()
     if dest.exists() or dest.is_symlink():

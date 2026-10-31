@@ -34,7 +34,8 @@ class BuildInfoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "build_info.json"
             path.write_text(json.dumps({"version": "0.0.0", "commit": "a" * 40}), encoding="utf-8")
-            with patch.object(app_build_info, "INFO_FILE", path):
+            with patch.object(app_build_info, "INFO_FILE", path), \
+                    patch.object(app_build_info.sys, "frozen", True, create=True):
                 self.assertIn("Quellcode", app_build_info.window_title())
 
 

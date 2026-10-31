@@ -12,6 +12,7 @@ LANGS = ('deDE', 'enUS', 'frFR')
 FILE_NAME = '.rptextstudio-translations.json'
 
 def pool_id(relative_path: str, key: tuple[str, ...]) -> str:
+    """Build a pool identity, normalizing a localeData language when present."""
     parts = Path(relative_path).parts
     if len(parts) < 4 or parts[-2] not in LANGS:
         raise ValueError('Unrecognized locale text path')
@@ -21,6 +22,10 @@ def pool_id(relative_path: str, key: tuple[str, ...]) -> str:
     return json.dumps([parts[-4], parts[-1], normalized], ensure_ascii=False)
 
 def resolve(entries: list[str], ref: dict | None) -> int | None:
+    """Resolve a saved index and text, or a uniquely matching moved text.
+
+    If the saved index no longer matches, missing or non-unique text returns None.
+    """
     if not ref or not isinstance(ref.get('text'), str):
         return None
     text = ref['text']
@@ -31,11 +36,13 @@ def resolve(entries: list[str], ref: dict | None) -> int | None:
     return matches[0] if len(matches) == 1 else None
 
 def reference(entries: list[str], index: int) -> dict:
+    """Capture an existing entry's index and text; reject out-of-range indices."""
     if not 0 <= index < len(entries):
         raise IndexError(index)
     return {'index': index, 'text': entries[index]}
 
 def read_links(root: Path) -> dict:
+    """Read and validate associations, normalizing legacy locale identifiers."""
     file = metadata_path(root, FILE_NAME)
     if not file.exists():
         return {}
@@ -66,6 +73,7 @@ def read_links(root: Path) -> dict:
     return normalized
 
 def write_links(root: Path, pools: dict) -> None:
+    """Write changed associations and back up an existing registry first."""
     file = metadata_path(root, FILE_NAME, write=True)
     payload = {'version': 1, 'description': 'Explicit editor-only text associations; game Lua files are unaffected.', 'pools': pools}
     data = json.dumps(payload, indent=2, ensure_ascii=False) + '\n'

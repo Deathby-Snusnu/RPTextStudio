@@ -12,6 +12,7 @@ from rp_text_merge import preview_text_merge
 
 
 def main() -> int:
+    """Print a read-only three-way merge report; return 2 if conflicts remain."""
     parser = argparse.ArgumentParser(description="Vorschau: Neue Repo-RP-Texte integrieren")
     parser.add_argument("baseline", type=Path, help="Original-Textdatei der vorherigen Repo-Version")
     parser.add_argument("local", type=Path, help="Lokal angepasste Textdatei")

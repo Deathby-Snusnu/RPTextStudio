@@ -20,6 +20,8 @@ from wow_detection import inspect_client
 
 @dataclass(frozen=True)
 class MissingBatch:
+    """Hold prepared first-install plans and their temporary staging folder."""
+
     target: Path
     profile: ClientProfile
     channel: str
@@ -40,6 +42,12 @@ def missing_names(target: Path) -> tuple[str, ...]:
 
 def prepare_missing(target: Path, profile: ClientProfile, channel: str = "stable",
                     names: tuple[str, ...] | None = None) -> MissingBatch:
+    """Stage selected missing addons and build plans without installing them.
+
+    If ``names`` is None, all known missing addons are selected. The target
+    must match a verified client profile. The returned batch owns its temporary
+    staging folder until ``discard_missing`` is called.
+    """
     target = Path(target).absolute()
     installation = inspect_client(target.parent.parent)
     if installation is None or not installation.verified or installation.client_root.resolve() != profile.client_root.resolve():
@@ -68,7 +76,12 @@ def prepare_missing(target: Path, profile: ClientProfile, channel: str = "stable
 
 
 def install_missing(batch: MissingBatch) -> tuple[Path, ...]:
-    """Commit approved batch; best-effort rollback if a later installation fails."""
+    """Install a reviewed batch, returning one backup path per addon.
+
+    Plans and target absence are rechecked before installation. If a later
+    install fails, earlier installs are rolled back best-effort; incomplete
+    rollback is reported via InstallError.
+    """
     if not batch.plans:
         raise InstallError("Keine AddOns zur Installation.")
     if any(name not in missing_names(batch.target) for name in (plan.name for plan in batch.plans)):
@@ -99,4 +112,5 @@ def install_missing(batch: MissingBatch) -> tuple[Path, ...]:
 
 
 def discard_missing(batch: MissingBatch) -> None:
+    """Remove the batch's temporary staging folder after it is no longer needed."""
     shutil.rmtree(batch.scratch, ignore_errors=True)

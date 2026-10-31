@@ -50,6 +50,15 @@ class UserAddonManagerTests(unittest.TestCase):
                 check_installed(Path(self.temp.name), ("HexerRP",))
         mocked.assert_not_called()
 
+    def test_untrusted_or_duplicate_names_rejected_before_path_or_network_use(self):
+        for names in (("../outside",), ("UnknownRP",), ("HexerRP", "HexerRP")):
+            with self.subTest(names=names):
+                with patch("user_addon_manager.check_addon") as mocked:
+                    with self.assertRaises(ValueError):
+                        inspect_installed(self.addons, names)
+                mocked.assert_not_called()
+        self.assertFalse((self.addons.parent / "outside").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

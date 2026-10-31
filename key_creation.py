@@ -8,6 +8,7 @@ from lua_text import lex, parse_pools, encode_string, ParseError
 IDENT=re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
 
 def ensure_key(value):
+    """Check identifier syntax and return the value; reserved words are not checked."""
     if not IDENT.fullmatch(value):
         raise ValueError(f'Ungueltiger Lua-Schluessel: {value!r}. Nur Buchstaben, Zahlen und _; keine fuehrende Zahl.')
     return value
@@ -60,9 +61,12 @@ def find_table(src, path):
     return ts[idx],ts[closing(idx)]
 
 def new_spell(path:Path, parent:tuple[str,...], branches:tuple[str,...], spell:str, text='Neuer RP-Text', backup=True, direct=False):
-    """Insert missing race/class ancestors and a new spell with ziel/gruppe.
+    """Insert missing ancestors and a new spell in a literal Lua table.
 
-    Existing paths are rejected. The caller must select a known root parent.
+    The caller selects the root parent; an existing spell table is rejected. Unless
+    ``direct`` is true, the new key contains separate ``ziel`` and ``gruppe``
+    pools. The modified source is parsed before writing, and ``backup`` creates
+    a timestamped sibling backup. Returns the new key path.
     """
     for x in (*branches,spell):ensure_key(x)
     if not branches and not spell:raise ValueError('Schluessel fehlt')

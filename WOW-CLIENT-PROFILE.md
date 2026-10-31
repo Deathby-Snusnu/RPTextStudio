@@ -7,7 +7,11 @@
 /dump select(4, GetBuildInfo())
 ```
 
-Das Profil wird pro Installation ausschließlich im lokalen Benutzerprofil unter `RPTextStudio/client_profiles.json` gespeichert und verändert keine AddOn-Dateien. Die Profilnummer wird nicht aus dem Verzeichnisnamen als aktuelle Patchnummer abgeleitet.
+Das Profil wird pro Installation im lokalen Benutzerprofil unter
+`%LOCALAPPDATA%\RPTextStudio\client_profiles.json` gespeichert und verändert
+keine AddOn-Dateien. Ohne `LOCALAPPDATA` wird stattdessen
+`~\.rptextstudio\client_profiles.json` verwendet. Die Profilnummer wird nicht
+aus dem Verzeichnisnamen als aktuelle Patchnummer abgeleitet.
 
 Ein lokal installiertes AddOn in der Tabelle auswählen und **TOC-Vorschau…** klicken. Der Dialog zeigt die bisherige und die vorgeschlagene `## Interface:`-Zeile sowie den Kompatibilitätsstatus, ohne etwas zu schreiben.
 
@@ -15,7 +19,12 @@ Ein lokal installiertes AddOn in der Tabelle auswählen und **TOC-Vorschau…** 
 
 - **AddOn-Version:** Repository-Version.
 - **Client-Interface:** Versionsnummer des lokal gestarteten WoW-Clients.
-- **Getestete AddOn-Kompatibilität:** separate Freigabe. Alle sechs vorhandenen AddOns sind derzeit nur für die Forever-Zielplattform vorgesehen; die Implementierung erklärt andere erkannte Clienttypen **nicht** automatisch für kompatibel. Ein benutzerdefinierter Forever-Ordner wird auch nicht anhand seines Namens allein als geprüft eingestuft.
+- **AddOn-Kompatibilität:** separate Freigabe. Der Code deklariert für die
+  sechs bisherigen AddOns einen Eintrag `forever`; für MagierRP gibt es in
+  dieser Zuordnung keinen Eintrag. Andere erkannte Clienttypen werden nicht
+  automatisch als kompatibel eingestuft. Ein benutzerdefinierter
+  Forever-Ordner wird auch nicht anhand seines Namens allein als geprüft
+  erkannt. Ein Eintrag oder eine Interface-Nummer ersetzt keinen Clienttest.
 - **TOC-Vorschau:** dient nur der Information. Ein neuer Eintrag kann die fehlende WoW-API-Kompatibilität nicht herstellen.
 
 `preview_toc(..., compatible=True)` erzeugt selbst nur den angepassten
@@ -31,4 +40,5 @@ den vorherigen AddOn-Ordner und verändert erst dann die Installation. Siehe
 python -m unittest discover -s tests -p "test_wow_client_profiles.py" -v
 ```
 
-Tests erstellt, nicht auf Windows ausgeführt. Die Client-Profilseite benötigt noch einen Windows-Praxistest mit Forever, Classic Era und optional Retail.
+Den Befehl im RPTextStudio-Quellverzeichnis ausführen. Ein Windows-Praxistest
+mit den jeweils eingesetzten Clients bleibt zusätzlich erforderlich.

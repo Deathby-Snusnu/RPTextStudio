@@ -13,6 +13,11 @@ from project_paths import addons_root
 
 FILES = ("Texts.lua", "Racial.lua", "Classes.lua", "RaceClass.lua")
 def plan_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: str):
+    """Validate and dry-run a spell insertion for each available locale.
+
+    Modes 0 through 3 select general, race, class, and race/class files.
+    Returns the target descriptors and intermediate key branches.
+    """
     if mode not in range(4):
         raise ValueError("Ungültiger Textstruktur-Typ.")
     branches = ((race,) if mode in (1,3) else ()) + ((klass,) if mode in (2,3) else ())
@@ -49,12 +54,17 @@ def plan_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: 
     return targets,branches
 
 def create_spell(root: Path, addon: str, mode: int, race: str, klass: str, spell: str):
+    """Preflight and insert a spell, backing up each changed file.
+
+    Returns the number of edited locale files; writes are not atomic as a group.
+    """
     targets, branches = plan_spell(root,addon,mode,race,klass,spell)
     for path,base,direct in targets:
         new_spell(path,base,branches,spell,backup=True,direct=direct)
     return len(targets)
 
 def plan_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_lua:bool):
+    """Validate a new profile and dry-run optional Lua additions."""
     validate_profile(kind,key,name,style)
     registry=load_registry(root)
     bucket=registry["races" if kind=="race" else "classes"]
@@ -75,6 +85,11 @@ def plan_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_l
     return targets
 
 def create_profile(root:Path, addon:str,kind:str,key:str,name:str,style:str,with_lua:bool):
+    """Create the profile and optional backed-up Lua branches.
+
+    Returns the number of edited locale files. Lua edits and registry writes
+    are separate operations and are not atomic as a group.
+    """
     targets=plan_profile(root,addon,kind,key,name,style,with_lua)
     if targets:
         add_lua_profile(root,addon,kind,key)

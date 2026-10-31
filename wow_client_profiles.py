@@ -18,6 +18,8 @@ TESTED_COMPATIBILITY = {name: {"forever"} for name in (
 
 @dataclass(frozen=True)
 class ClientProfile:
+    """Associate a client root and type with a manually stored interface value."""
+
     client_root: Path
     client_type: str
     interface: str
@@ -25,6 +27,7 @@ class ClientProfile:
 
 
 def profile_path() -> Path:
+    """Return the per-user client profile file beside installation settings."""
     return settings_path().with_name("client_profiles.json")
 
 
@@ -43,6 +46,7 @@ def _load(path: Path) -> dict:
 
 
 def get_profile(root: Path, path: Path | None = None) -> ClientProfile | None:
+    """Read a valid stored profile for a detected client, or return None."""
     detected = inspect_client(root, "profile")
     if detected is None:
         return None
@@ -54,6 +58,11 @@ def get_profile(root: Path, path: Path | None = None) -> ClientProfile | None:
 
 
 def save_profile(root: Path, interface: str, path: Path | None = None) -> ClientProfile:
+    """Save an interface value for a verified client, or raise ValueError.
+
+    The value must be a positive four- to seven-digit number. Storing it does
+    not modify addon files or establish game API compatibility.
+    """
     detected = inspect_client(root, "profile")
     if detected is None or not detected.verified:
         raise ValueError("Nur bestätigte WoW-Installationen erlauben ein Interface-Profil.")
@@ -70,6 +79,7 @@ def save_profile(root: Path, interface: str, path: Path | None = None) -> Client
 
 
 def compatibility(addon: str, profile: ClientProfile) -> str:
+    """Return a descriptive compatibility status, not a client test result."""
     if profile.client_type == "custom":
         return "Manuell prüfen: Custom-Client, nicht automatisch als Forever bestätigt"
     if profile.client_type not in TESTED_COMPATIBILITY.get(addon, set()):
@@ -78,12 +88,18 @@ def compatibility(addon: str, profile: ClientProfile) -> str:
 
 
 def interface_line(toc: str) -> str | None:
+    """Return the first TOC Interface line without its newline, if present."""
     match = INTERFACE_RE.search(toc)
     return match.group(0).rstrip("\r\n") if match else None
 
 
 def preview_toc(toc: str, interface: str, *, compatible: bool = False) -> str:
-    """Return adapted content without writing; compatibility must be explicitly approved."""
+    """Return TOC content with one adapted Interface line, without writing.
+
+    The caller must pass ``compatible=True``; this flag is approval to prepare
+    the change, not proof of game compatibility. Invalid interface values or
+    a missing or ambiguous Interface line raise ValueError.
+    """
     if not compatible:
         raise ValueError("Keine bestätigte Kompatibilität; TOC wird nicht angepasst.")
     if not VALID_INTERFACE.fullmatch(str(interface)):

@@ -31,6 +31,8 @@ MAX_DEPTH = 4
 
 @dataclass(frozen=True)
 class WoWInstallation:
+    """Describe a detected client, its evidence, confidence, and target path."""
+
     client_root: Path
     addons_path: Path
     client_type: str
@@ -88,6 +90,12 @@ def _candidate_roots(path: Path) -> list[Path]:
 
 
 def inspect_client(path: Path, source: str = "scan") -> WoWInstallation | None:
+    """Inspect one local candidate without creating or changing files.
+
+    A plausible candidate may be returned without ``verified``; automatic
+    verification requires high confidence. Linked and network paths are not
+    accepted. A verified installation is not an addon compatibility claim.
+    """
     root = _normalize_hint(path)
     if not _local_root(root):
         return None
@@ -184,6 +192,7 @@ def _local_drive_roots() -> tuple[Path, ...]:
 
 def known_locations(env: dict[str, str] | None = None,
                     drives: tuple[Path, ...] | None = None) -> list[Path]:
+    """Construct standard local installation hints without validating them."""
     env = os.environ if env is None else env
     bases = [Path(env[k]) for k in ("ProgramFiles(x86)", "ProgramFiles", "PUBLIC")
              if env.get(k)]
@@ -259,6 +268,11 @@ def discover_wow_installations(saved_paths=(), *, custom_paths=(),
                                extra_roots=(), deep_scan=False,
                                drives=(), cancelled=None,
                                include_standard=True) -> list[WoWInstallation]:
+    """Inspect supplied and optional standard hints, merging duplicate clients.
+
+    A bounded drive search is used only when ``deep_scan`` and ``drives`` are
+    supplied. Cancellation can return partial results; nothing is installed.
+    """
     hints = [(Path(path), "gespeichert") for path in saved_paths]
     hints += [(Path(path), "manuell") for path in custom_paths]
     hints += [(Path(path), "Hinweis") for path in extra_roots]

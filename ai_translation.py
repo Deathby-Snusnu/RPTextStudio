@@ -11,6 +11,7 @@ LANGUAGES = {"enUS": "English", "frFR": "French"}
 TOKENS = re.compile(r"%(?:%|s|p)")
 
 def inspect_translation(source: str, result: str) -> list[str]:
+    """Report placeholder, emote-marker, newline, and NUL-character problems."""
     problems = []
     if not result.strip():
         problems.append("Übersetzung ist leer.")
@@ -28,6 +29,13 @@ def inspect_translation(source: str, result: str) -> list[str]:
 
 def translate(source: str, language: str, *, api_key: str, model: str,
               addon: str, race: str = "", character_style: str = "", timeout: int = 60) -> str:
+    """Request one translation from OpenAI's Responses API.
+
+    The source text, addon, race, style and target language are sent to the
+    service. The returned text is not automatically approved or validated;
+    callers should review it and use ``inspect_translation`` before applying it.
+    Invalid input raises ValueError; HTTP and network failures raise RuntimeError.
+    """
     if language not in LANGUAGES:
         raise ValueError("Unbekannte Zielsprache.")
     if not api_key.strip() or not model.strip() or not source.strip():

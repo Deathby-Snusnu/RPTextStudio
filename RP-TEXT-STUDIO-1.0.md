@@ -7,6 +7,12 @@
 > verlinkten Feature-Dokumente. Aussagen zu damals geplanten oder noch nicht
 > enthaltenen Funktionen beziehen sich auf den jeweiligen Entwicklungsstand.
 
+Der aktuelle Quellstand bindet den lokalen Katalog bereits an die
+Anwenderverwaltung an, unterstützt öffentliche GitHub-Abfragen ohne CLI
+und bietet bestätigte Installations- und Updatevorschauen. Die folgenden
+Phasen und PR-Abschnitte sind historische Planungsstände, keine aktuelle
+Liste noch fehlender Funktionen.
+
 ## Leitprinzip
 **Maximale Flexibilität für Entwickler, minimaler Aufwand für Anwender.**
 PaladinRP, JaegerRP, DruidenRP, HexerRP und alle zukünftigen RP-AddOns

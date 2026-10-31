@@ -1,16 +1,30 @@
 # Windows-Installer für RP Text Studio
 
-Ein eigenständiges Windows-Setup kann auf einem Windows-Rechner mit Python 3.11–3.13 und Inno Setup 6 erzeugt werden.
+Ein eigenständiges Windows-Setup kann auf einem Windows-Rechner mit Python,
+Git und Inno Setup 6 erzeugt werden. Der bisher dokumentierte Python-Bereich
+ist 3.11–3.13; eine vollständige Testmatrix ist nicht belegt.
 
 ## Voraussetzungen
 
 - Python und `py` oder `python` im PATH
+- Git im PATH und eine Git-Arbeitskopie ohne Änderungen an verfolgten
+  Dateien; nicht verfolgte Dateien werden von der Build-Prüfung nicht erfasst
 - Inno Setup 6 mit `ISCC.exe` im PATH oder unter dem Standardpfad in Program Files
 - Zugriff auf PyPI für den erstmaligen PyInstaller/PySide6-Build
+- Das gemeinsame Handbuch oder ein `HANDBUCH.md` neben dem Build-Skript
+- Ein x64-kompatibles Windows für das Setup
 
 ## Erstellung
 
-Im RPTextStudio-Verzeichnis `build_installer.bat` ausführen. Das Skript ruft erst `build_exe.bat` auf und beendet sich bei einem Fehler. Danach baut Inno Setup das Installationspaket unter `installer-dist/RPTextStudio-Setup-0.2.0.exe`. Die Installer-Version stimmt mit der freigegebenen Anwendungsversion 0.2.0 überein. Der Build und die manuelle Windows-Abnahme sind vor einer Installer-Freigabe noch durchzuführen.
+Im RPTextStudio-Verzeichnis `build_installer.bat` ausführen. Das Skript ruft
+erst `build_exe.bat` auf und beendet sich bei einem Fehler. Danach baut Inno
+Setup das Installationspaket unter `installer-dist`. Ein neuer Build des
+aktuellen Quellstands würde `RPTextStudio-Setup-1.0.0.exe` heißen; die Version
+stammt aus `app_build_info.py` und wird beim Build nach `build_version.issinc`
+übernommen. Vorhandene Build-Metadaten und Installer können noch zu einem
+älteren Build gehören. `build_setup.bat` baut ebenfalls zuerst die EXE und
+prüft anschließend die erzeugten Versionsdateien. Eine veröffentlichte
+Version oder erfolgreiche Windows-Abnahme wird dadurch nicht belegt.
 
 ## Verhalten
 
@@ -34,4 +48,7 @@ Im RPTextStudio-Verzeichnis `build_installer.bat` ausführen. Das Skript ruft er
 
 ## Einschränkungen
 
-Das Setup wurde in diesem GitHub-Branch erstellt, aber der EXE- und Installer-Build wurde hier **nicht unter Windows ausgeführt**. Die Paketierung und alle Upgrade- und Uninstall-Szenarien müssen daher vor einem Release auf Windows getestet werden. Der Installer bringt keine automatische Aktualisierung aus GitHub mit. Eine Code-Signatur ist nicht enthalten; Windows SmartScreen kann bei nicht signierten Downloads warnen.
+Die Paketierung und alle Upgrade- und Uninstall-Szenarien müssen vor einem
+Release auf Windows getestet werden. Der Installer bringt keine automatische
+Aktualisierung aus GitHub mit. Eine Code-Signatur ist nicht enthalten;
+Windows SmartScreen kann bei nicht signierten Downloads warnen.

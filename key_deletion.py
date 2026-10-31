@@ -13,6 +13,7 @@ from key_creation import find_table
 
 
 def spell_path(pool_path: tuple[str, ...]) -> tuple[str, ...]:
+    """Return a deletable spell path, removing a trailing ziel/gruppe pool."""
     if len(pool_path) < 4:
         raise ValueError('Kein loeschbarer Zauberschluessel ausgewaehlt.')
     if pool_path[-1] in ('ziel', 'gruppe'):
@@ -57,7 +58,10 @@ def prepare_deletion(src: str, parent_path: tuple[str,...], spell: str) -> tuple
 
 
 def delete_from_files(targets: list[tuple[Path,tuple[str,...],str]]) -> int:
-    """Preflight every file, then back up all originals before writing."""
+    """Preflight every target, back up originals, and return removed pool count.
+
+    All backups are created before writing; writes across files are not atomic.
+    """
     patches=[]
     for path,parent,spell in targets:
         with path.open('r',encoding='utf-8',newline='') as f:src=f.read()

@@ -19,7 +19,10 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
     The parser paths are relative to the Lua assignment (without `addon`):
     localeData.deDE.texts.SHADOW_BOLT.ziel, or
     localeData.deDE.Abilities.LAYONHANDS.ziel.
-    Ambient collections are deliberately excluded from spell macros.
+    Ambient collections are deliberately excluded from spell macros. The
+    result is not a complete list of runtime keys; unsupported addons return
+    an empty list. Paladin GreaterBlessings base keys are exposed with the
+    GREATER_ prefix required by the runtime command.
     """
     if addon not in COMMANDS:
         return []
@@ -43,7 +46,10 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
                         and any(section in parts for section in paladin_sources)
                         and path.stem in paladin_sources
                         and parts[-1] in ("ziel", "gruppe")):
-                    result.add(parts[-2])
+                    key = parts[-2]
+                    if path.stem == "GreaterBlessings" and not key.startswith("GREATER_"):
+                        key = "GREATER_" + key
+                    result.add(key)
                 elif (path.name == "Racial.lua"
                       and any(part.casefold() == "racial" for part in parts)
                       and len(parts) >= 5):
@@ -60,6 +66,10 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
 
 
 def validate_entry(addon: str, spell: str, key: str, known_keys: list[str]):
+    """Validate an addon, spell name, and known RP key or raise ValueError.
+
+    This checks the macro format, not whether the spell exists in the client.
+    """
     if addon not in COMMANDS:
         raise ValueError('Für dieses AddOn ist kein sicherer RP-Makrobefehl hinterlegt.')
     if not spell or '\n' in spell or '\r' in spell or spell.startswith('/'):
@@ -71,6 +81,7 @@ def validate_entry(addon: str, spell: str, key: str, known_keys: list[str]):
 
 
 def make_macro(addon: str, spell: str, key: str, known_keys: list[str]) -> str:
+    """Return a validated cast-and-RP macro without modifying the game."""
     validate_entry(addon, spell, key, known_keys)
     # Macro uses the current client-language spell name. The mapping does not
     # claim any implicit cast detection or guaranteed protected-chat behavior.
@@ -78,6 +89,10 @@ def make_macro(addon: str, spell: str, key: str, known_keys: list[str]) -> str:
 
 
 def load_mappings(root: Path) -> list[dict[str,str]]:
+    """Read project spell mappings, or return an empty list if absent.
+
+    Malformed data or an unsupported schema raises ValueError.
+    """
     p = metadata_path(root, FILENAME)
     if not p.exists():
         return []
@@ -91,6 +106,10 @@ def load_mappings(root: Path) -> list[dict[str,str]]:
 
 
 def save_mappings(root: Path, rows: list[dict[str,str]]) -> None:
+    """Write supplied project mappings, backing up an existing changed file.
+
+    The caller is responsible for validating the rows before saving.
+    """
     p = metadata_path(root, FILENAME, write=True)
     payload = json.dumps({'schema': 1, 'mappings': rows}, indent=2, ensure_ascii=False) + '\n'
     if p.exists() and p.read_text(encoding='utf-8') == payload:

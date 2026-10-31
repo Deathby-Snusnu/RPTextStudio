@@ -1,8 +1,10 @@
 """Read-only GitHub version checks for RP Text Studio.
 
-A newer repository commit does not imply a released update. Private repositories
-are accessed via GitHub CLI (gh auth login) or GITHUB_TOKEN / GH_TOKEN.
-No package downloads or installation are performed in this module.
+A newer repository commit does not imply a released update. Public repositories
+can be queried without a token; private access uses GH_TOKEN or GITHUB_TOKEN.
+The shared REST client does not use GitHub CLI authentication. No package
+downloads or installation are performed in this module, but API responses
+can be stored in the user's local cache.
 """
 from __future__ import annotations
 
@@ -30,6 +32,8 @@ MAX_RESPONSE = 2 * 1024 * 1024
 
 @dataclass(frozen=True)
 class VersionCheck:
+    """Describe a comparison; development commit_sha may be a TOC blob SHA."""
+
     name: str
     installed: str | None
     available: str | None
@@ -41,10 +45,13 @@ class VersionCheck:
 
 
 class GitHubCheckError(RuntimeError):
+    """Report a guarded GitHub request or response failure."""
+
     pass
 
 
 def parse_toc(text: str) -> tuple[str | None, str | None]:
+    """Return the first TOC version and interface values, if present."""
     version = VERSION_RE.search(text)
     interface = INTERFACE_RE.search(text)
     return (version.group(1).strip() if version else None,
@@ -52,7 +59,10 @@ def parse_toc(text: str) -> tuple[str | None, str | None]:
 
 
 def compare_versions(installed: str, available: str) -> int | None:
-    """Return -1 for newer available, 0 for equal, 1 for older available."""
+    """Compare numeric versions; return None if either version is unsupported.
+
+    Returns -1 for newer available, 0 for equal, and 1 for older available.
+    """
     if not NUMERIC_VERSION.fullmatch(installed) or not NUMERIC_VERSION.fullmatch(available):
         return None
     a = tuple(map(int, installed.split(".")))
@@ -142,6 +152,14 @@ def _resolve_repository(name: str, project: Path | None) -> str | None:
 
 
 def check_addon(name: str, target: Path, channel: str = "stable", *, project: Path | None = None) -> VersionCheck:
+    """Compare local TOC metadata with a release or development version.
+
+    ``target`` contains addon directories. If ``project`` is supplied, its
+    registry controls repository association; otherwise the catalog is used.
+    An unassociated addon is reported without a GitHub query. Invalid channels
+    or repository associations raise ValueError; request failures are
+    represented in the returned status.
+    """
     if channel not in ("stable", "development"):
         raise ValueError("Ungültiger Update-Kanal.")
     repo_name = _resolve_repository(name, project)
@@ -190,6 +208,7 @@ def check_addon(name: str, target: Path, channel: str = "stable", *, project: Pa
 
 
 def check_all(target: Path, names=None, channel="stable", *, project: Path | None = None) -> tuple[VersionCheck, ...]:
+    """Compare selected addon IDs, or all catalog IDs when names is None."""
     if names is None:
         names = known_addons()
     return tuple(check_addon(name, target, channel, project=project) for name in names)
