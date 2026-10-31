@@ -10,7 +10,7 @@ from project_paths import metadata_path, addons_root
 
 FILENAME = '.rptextstudio-spells.json'
 COMMANDS = {'HexerRP': '/wrp', 'PaladinRP': '/prp', 'JaegerRP': '/jrp', 'DruidenRP': '/drp'}
-SLASH_PATTERN = re.compile(r'^\\s*SLASH_([A-Z0-9_]+)1\\s*=\\s*["\\'](/[-a-z0-9]+)["\\']', re.M)
+SLASH_PATTERN = re.compile(r"^\s*SLASH_([A-Z0-9_]+)1\s*=\s*[\"'](/[-a-z0-9]+)[\"']", re.M)
 KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
 
 
