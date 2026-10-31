@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def prepare(root: Path = ROOT) -> dict:
-    check = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", ".",
+    check = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", ":/",
                             ":(exclude)build_info.json", ":(exclude)build_version.issinc"], cwd=root,
                            check=True, capture_output=True, text=True, timeout=15)
     # Generated metadata from a previous build may be tracked and dirty.

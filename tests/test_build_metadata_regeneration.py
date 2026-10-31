@@ -18,6 +18,7 @@ class BuildMetadataRegression(unittest.TestCase):
             with patch.object(prepare_build.subprocess, "run", side_effect=fake_run):
                 result = prepare_build.prepare(root)
             self.assertEqual(result["version"], prepare_build.APP_VERSION)
+            self.assertIn(":/", calls[0])
             self.assertIn(":(exclude)build_info.json", calls[0])
             self.assertIn(":(exclude)build_version.issinc", calls[0])
             self.assertEqual((root / "build_info.json").exists(), True)
