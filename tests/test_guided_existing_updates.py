@@ -19,9 +19,11 @@ class ExistingUpdateFlowTests(unittest.TestCase):
 
     def test_existing_update_reuses_installed_guard(self):
         source = (ROOT / "user_addon_manager_gui.py").read_text(encoding="utf-8")
-        self.assertIn('self.installed[name].state != "Installiert"', source)
+        self.assertIn('names = [name for name in self._selected_addon_ids()', source)
+        self.assertIn('if name in self.installed and self.installed[name].state == "Installiert"]', source)
+        self.assertIn('self._batch_update_target = target', source)
+        self.assertIn('self._guided_update_target = self._batch_update_target', source)
         self.assertIn('self._guided_update_name = None', source)
-        self.assertIn('self._guided_update_target = target', source)
         self.assertIn('if not self.isVisible() or self.current_target() != target:', source)
         self.assertIn('self._review_guided_update(name, target)', source)
 
