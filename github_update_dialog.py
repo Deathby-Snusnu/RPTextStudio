@@ -1,5 +1,6 @@
 """Read-only GitHub update status dialog, with background network worker."""
 from __future__ import annotations
+from github_request_manager import status as github_api_status
 
 from pathlib import Path
 from PySide6.QtCore import QObject, QThread, Signal, Slot
@@ -83,7 +84,9 @@ class GitHubUpdateDialog(QDialog):
             for j, value in enumerate((record.name, record.installed or "—",
                                       record.available or "—", record.status, record.detail)):
                 self.table.setItem(i, j, QTableWidgetItem(str(value)))
-        self.status.setText("Prüfung beendet. Versionsstand ist keine Installationsfreigabe.")
+        state = github_api_status()
+        quota = ("%s/%s" % (state["remaining"], state["limit"])) if state["limit"] is not None else "unbekannt"
+        self.status.setText("Prüfung beendet. GitHub-Budget: %s | Cache: %d | Pause: %ds." % (quota, state["cached"], state["blocked_seconds"]))
         self.refresh.setEnabled(True)
         self.channel.setEnabled(True)
 
