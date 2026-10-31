@@ -7,11 +7,29 @@ import json
 import re
 from pathlib import Path
 from project_paths import metadata_path, addons_root
+from lua_text import ParseError, decode_string, lex
 
 FILENAME = '.rptextstudio-spells.json'
 COMMANDS = {'HexerRP': '/wrp', 'PaladinRP': '/prp', 'JaegerRP': '/jrp', 'DruidenRP': '/drp'}
 SLASH_PATTERN = re.compile(r"^\s*SLASH_([A-Z0-9_]+)1\s*=\s*[\"'](/[-a-z0-9]+)[\"']", re.M)
 KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
+
+
+def _has_handler_assignment(content: str, handler: str) -> bool:
+    try:
+        tokens = lex(content)
+    except ParseError:
+        return False
+    for index in range(len(tokens) - 4):
+        target = tokens[index:index + 5]
+        if ([token.value for token in target[:2]] == ["SlashCmdList", "["]
+                and target[2].kind == "string"
+                and target[3].value == "]"
+                and target[4].value == "="
+                and decode_string(target[2].value) == handler
+                and (index == 0 or tokens[index - 1].value not in {".", ":"})):
+            return True
+    return False
 
 
 def candidate_keys(files: dict, addon: str) -> list[str]:
@@ -140,12 +158,10 @@ def discover_commands(root: Path, files: dict | None = None) -> dict[str, str]:
             except (OSError, UnicodeError):
                 continue
             for match in SLASH_PATTERN.finditer(content):
-                if ('SlashCmdList["' + match.group(1) + '"]') in content or (
-                        "SlashCmdList['" + match.group(1) + "']") in content:
+                if _has_handler_assignment(content, match.group(1)):
                     found[addon] = match.group(2)
                     break
             if addon in found:
                 break
     return found
-
 

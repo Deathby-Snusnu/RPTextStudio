@@ -41,5 +41,22 @@ class DynamicSpellDiscoveryTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 make_macro("TestRP", "Test", "TEST", ["TEST"], commands={})
 
+    def test_ignores_commented_out_handler_assignment(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            addon = root / "TestRP"
+            (addon / "core").mkdir(parents=True)
+            (addon / "core" / "Commands.lua").write_text(
+                'SLASH_TESTRP1 = "/test"\n'
+                '-- SlashCmdList["TESTRP"] = function(message) end\n',
+                encoding="utf-8")
+            locale = addon / "locales" / "deDE"
+            locale.mkdir(parents=True)
+            path = locale / "Texts.lua"
+            files = {path: parse_pools(
+                'addon.localeData.deDE.texts = { TEST = { ziel = {"x",},},}')}
+
+            self.assertEqual(discover_commands(root, files), {})
+
 if __name__ == "__main__":
     unittest.main()

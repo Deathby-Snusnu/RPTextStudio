@@ -943,9 +943,9 @@ class Studio(QMainWindow):
             if not 0 <= index < len(mappings):
                 return
             item = mappings[index]
-            addon.setCurrentText(item['addon'])
+            addon.setCurrentIndex(addon.findText(item['addon']))
             spell.setText(item['spell'])
-            key.setCurrentText(item['key'])
+            key.setCurrentIndex(key.findText(item['key']))
             refresh_preview()
 
         def add_mapping():
