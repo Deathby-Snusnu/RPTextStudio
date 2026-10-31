@@ -26,7 +26,7 @@ class VersionCheckerTests(unittest.TestCase):
             (addon / "HexerRP.toc").write_text("## Version: 0.3.9\n## Interface: 16001\n")
             with patch.object(updates, "_development", return_value=("0.3.10", "16001", "abcd")):
                 row = updates.check_addon("HexerRP", target, "development")
-            self.assertEqual(row.status, "Neuer Quellstand")
+            self.assertEqual(row.status, "Update verfügbar")
             self.assertEqual(row.commit_sha, "abcd")
 
     def test_semver_suffixes_are_incomparable(self):
@@ -89,7 +89,8 @@ class VersionCheckerTests(unittest.TestCase):
             }
             with patch.object(updates, "_api", side_effect=(release, toc)) as api:
                 row = updates.check_addon("HexerRP", Path(d), "stable")
-            self.assertEqual(row.status, "Kompatibilität prüfen")
+            self.assertEqual(row.status, "Update verfügbar")
+            self.assertIn("Interface-Abweichung", row.detail)
             self.assertEqual(
                 api.call_args_list[1].args[0],
                 "/repos/Deathby-Snusnu/HexerRP/contents/HexerRP.toc?ref=v0.3.0",
