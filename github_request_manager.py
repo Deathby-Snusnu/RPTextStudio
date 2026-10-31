@@ -65,10 +65,21 @@ def _save():
     try:
         destination = _store_path()
         destination.parent.mkdir(parents=True, exist_ok=True)
-        items = sorted(_MEMORY.items(), key=lambda x: x[1].get("stored", 0), reverse=True)[:MAX_CACHE_RECORDS]
-        payload = json.dumps({"schema": 1, "entries": dict(items)}, ensure_ascii=False).encode("utf-8")
-        if len(payload) > MAX_BYTES:
-            return
+        items = sorted(_MEMORY.items(), key=lambda x: x[1].get("stored", 0), reverse=True)
+        retained = {}
+        payload = json.dumps({"schema": 1, "entries": retained}, ensure_ascii=False).encode("utf-8")
+        for key, entry in items:
+            candidate = dict(retained)
+            candidate[key] = entry
+            encoded = json.dumps({"schema": 1, "entries": candidate}, ensure_ascii=False).encode("utf-8")
+            if len(encoded) > MAX_BYTES:
+                continue
+            retained = candidate
+            payload = encoded
+            if len(retained) >= MAX_CACHE_RECORDS:
+                break
+        _MEMORY.clear()
+        _MEMORY.update(retained)
         fd, tmp = tempfile.mkstemp(dir=destination.parent, prefix=".github-", suffix=".tmp")
         try:
             with os.fdopen(fd, "wb") as stream:
