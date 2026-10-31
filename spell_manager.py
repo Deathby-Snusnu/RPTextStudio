@@ -6,10 +6,11 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from project_paths import metadata_path
+from project_paths import metadata_path, addons_root
 
 FILENAME = '.rptextstudio-spells.json'
 COMMANDS = {'HexerRP': '/wrp', 'PaladinRP': '/prp', 'JaegerRP': '/jrp', 'DruidenRP': '/drp'}
+SLASH_PATTERN = re.compile(r'^\\s*SLASH_([A-Z0-9_]+)1\\s*=\\s*["\\'](/[-a-z0-9]+)["\\']', re.M)
 KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
 
 
@@ -24,8 +25,6 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
     an empty list. Paladin GreaterBlessings base keys are exposed with the
     GREATER_ prefix required by the runtime command.
     """
-    if addon not in COMMANDS:
-        return []
     result = set()
     paladin_sources = {"Abilities", "Blessings", "GreaterBlessings", "Auras", "Seals"}
     for path, pools in files.items():
@@ -65,13 +64,13 @@ def candidate_keys(files: dict, addon: str) -> list[str]:
     return sorted(key for key in result if KEY_PATTERN.fullmatch(key))
 
 
-def validate_entry(addon: str, spell: str, key: str, known_keys: list[str]):
+def validate_entry(addon: str, spell: str, key: str, known_keys: list[str], commands=None):
     """Validate an addon, spell name, and known RP key or raise ValueError.
 
     This checks the macro format, not whether the spell exists in the client.
     """
-    if addon not in COMMANDS:
-        raise ValueError('Für dieses AddOn ist kein sicherer RP-Makrobefehl hinterlegt.')
+    if addon not in (commands if commands is not None else COMMANDS):
+        raise ValueError('Für dieses AddOn wurde kein registrierter RP-Slash-Befehl gefunden.')
     if not spell or '\n' in spell or '\r' in spell or spell.startswith('/'):
         raise ValueError('Ungültiger Zaubername (keine Zeilenumbrüche oder Slash-Befehle).')
     if not KEY_PATTERN.fullmatch(key):
@@ -80,12 +79,12 @@ def validate_entry(addon: str, spell: str, key: str, known_keys: list[str]):
         raise ValueError(f'RP-Schlüssel {key} fehlt in den geladenen Textpools.')
 
 
-def make_macro(addon: str, spell: str, key: str, known_keys: list[str]) -> str:
+def make_macro(addon: str, spell: str, key: str, known_keys: list[str], commands=None) -> str:
     """Return a validated cast-and-RP macro without modifying the game."""
-    validate_entry(addon, spell, key, known_keys)
+    validate_entry(addon, spell, key, known_keys, commands)
     # Macro uses the current client-language spell name. The mapping does not
     # claim any implicit cast detection or guaranteed protected-chat behavior.
-    return f'#showtooltip {spell}\n/cast {spell}\n{COMMANDS[addon]} {key.lower()}'
+    return f'#showtooltip {spell}\n/cast {spell}\n{(commands if commands is not None else COMMANDS)[addon]} {key.lower()}'
 
 
 def load_mappings(root: Path) -> list[dict[str,str]]:
@@ -120,3 +119,33 @@ def save_mappings(root: Path, rows: list[dict[str,str]]) -> None:
     tmp = p.with_name(p.name + '.tmp')
     tmp.write_text(payload, encoding='utf-8')
     tmp.replace(p)
+def discover_commands(root: Path, files: dict | None = None) -> dict[str, str]:
+    """Discover real /slash commands only from installed project Lua sources.
+
+    A candidate must register the matching SlashCmdList handler. Never infer
+    commands from a name or allow arbitrary user-defined macro statements.
+    """
+    found = {}
+    directory = addons_root(Path(root))
+    addons = {p.parent.parent.parent.name for p in (files or {})
+              if Path(p).parent.parent.name == "locales"}
+    for addon in sorted(addons):
+        base = directory / addon
+        candidates = [base / "core" / "Commands.lua", base / (addon + ".lua")]
+        for path in candidates:
+            if not path.is_file():
+                continue
+            try:
+                content = path.read_text(encoding="utf-8-sig")
+            except (OSError, UnicodeError):
+                continue
+            for match in SLASH_PATTERN.finditer(content):
+                if ('SlashCmdList["' + match.group(1) + '"]') in content or (
+                        "SlashCmdList['" + match.group(1) + "']") in content:
+                    found[addon] = match.group(2)
+                    break
+            if addon in found:
+                break
+    return found
+
+
