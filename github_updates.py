@@ -197,13 +197,15 @@ def check_addon(name: str, target: Path, channel: str = "stable", *, project: Pa
         status, detail = "Nicht prüfbar", "Lokale TOC-Datei enthält keine Versionsnummer."
     elif local_version is None:
         status, detail = "Nicht installiert", "Lokale TOC-Datei fehlt."
-    elif remote_interface and local_interface and remote_interface != local_interface:
-        status, detail = "Kompatibilität prüfen", f"Interface {local_interface} vs. {remote_interface}."
     else:
         cmp = compare_versions(local_version, available)
-        status = {-1: "Neuer Quellstand", 0: "Versionsgleich", 1: "Lokal neuer", None: "Unvergleichbar"}[cmp]
+        status = {-1: "Update verfügbar", 0: "Versionsgleich", 1: "Lokal neuer", None: "Unvergleichbar"}[cmp]
         detail = ("Nur Versionsnummern geprüft; Dateiintegrität und Installierbarkeit "
                   "sind nicht bestätigt.")
+        if remote_interface and local_interface and remote_interface != local_interface:
+            detail += (f" Interface-Abweichung: lokal {local_interface}, GitHub {remote_interface}. "
+                       "Bei bestätigter Installation kann die TOC-Zeile nach Vorschau "
+                       "für den Zielclient angepasst werden.")
     return VersionCheck(name, local_version, available, channel, status, detail, url, sha)
 
 

@@ -52,3 +52,15 @@ Der ältere Entwickler-Versionsdialog zeigt noch Hinweise auf sechs private
 Repositories und `gh auth login`. Die aktuellen HTTP-Abfragen benötigen für
 öffentliche Repositories keine GitHub-CLI; für authentifizierte Zugriffe
 werden `GH_TOKEN` oder `GITHUB_TOKEN` verwendet.
+
+
+## Updates bei abweichender TOC-Interface-Nummer
+
+Die Versionsprüfung vergleicht Versionsnummern unabhängig von der `## Interface`-Zeile.
+Eine Abweichung wird zusätzlich als Hinweis angezeigt und verhindert nicht,
+dass ein vorhandenes AddOn zur Aktualisierung ausgewählt wird.
+Bei der Installation bleiben Paketprüfung, Änderungsvorschau, Bestandsschutz,
+Backup und ausdrückliche Bestätigung erforderlich. Das gespeicherte
+Interface-Profil des **tatsächlich ausgewählten WoW-Clients** wird für die
+TOC-Anpassung verwendet. Eine Änderung dieser Metadaten beweist keine
+Laufzeitkompatibilität mit beliebigen anderen WoW-Versionen.

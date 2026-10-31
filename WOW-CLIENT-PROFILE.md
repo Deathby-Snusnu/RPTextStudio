@@ -42,3 +42,15 @@ python -m unittest discover -s tests -p "test_wow_client_profiles.py" -v
 
 Den Befehl im RPTextStudio-Quellverzeichnis ausführen. Ein Windows-Praxistest
 mit den jeweils eingesetzten Clients bleibt zusätzlich erforderlich.
+
+
+## Updates bei abweichender TOC-Interface-Nummer
+
+Die Versionsprüfung vergleicht Versionsnummern unabhängig von der `## Interface`-Zeile.
+Eine Abweichung wird zusätzlich als Hinweis angezeigt und verhindert nicht,
+dass ein vorhandenes AddOn zur Aktualisierung ausgewählt wird.
+Bei der Installation bleiben Paketprüfung, Änderungsvorschau, Bestandsschutz,
+Backup und ausdrückliche Bestätigung erforderlich. Das gespeicherte
+Interface-Profil des **tatsächlich ausgewählten WoW-Clients** wird für die
+TOC-Anpassung verwendet. Eine Änderung dieser Metadaten beweist keine
+Laufzeitkompatibilität mit beliebigen anderen WoW-Versionen.
