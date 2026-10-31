@@ -128,8 +128,8 @@ def get_json(path):
         raise RequestGuardError("Unzulässige GitHub-Adresse.")
     token = (os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or "").strip()
     key = _identity(token) + ":" + path
-    now = time.time()
     with _LOCK:
+        now = time.time()
         _load()
         cached = _MEMORY.get(key, {})
         if cached.get("expires", 0) > now:
@@ -168,7 +168,7 @@ def get_json(path):
                 _save()
                 return cached["value"]
             remaining = exc.headers.get("X-RateLimit-Remaining")
-            if exc.code in (403, 429) and (remaining == "0" or exc.headers.get("Retry-After") or exc.code == 429):
+            if exc.code in (403, 429):
                 _BLOCK_UNTIL = _delay(exc.headers, now)
                 raise RequestGuardError("GitHub-API-Limit erreicht; weitere Abfragen pausiert.") from exc
             if exc.code == 404:
