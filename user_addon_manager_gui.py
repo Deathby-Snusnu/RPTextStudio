@@ -448,6 +448,7 @@ class UserAddonManagerDialog(QDialog):
                  if name in self.installed and self.installed[name].state == "Installiert"]
         if not names:
             return
+        # No user files are modified until the standard install confirmation.
         dialog = QMessageBox(self)
         dialog.setWindowTitle("Updates herunterladen")
         dialog.setIcon(QMessageBox.Question)
@@ -456,7 +457,8 @@ class UserAddonManagerDialog(QDialog):
             "nacheinander herunterladen und prüfen?\\n\\n"
             "Jedes AddOn erhält eine eigene Änderungsvorschau. "
             "Vorhandene Texte bleiben geschützt und jede Ersetzung "
-            "muss ausdrücklich bestätigt werden."
+            "muss ausdrücklich bestätigt werden. WoW-Dateien werden erst "
+            "nach der jeweiligen Installationsbestätigung geändert."
         )
         dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         dialog.setDefaultButton(QMessageBox.No)
