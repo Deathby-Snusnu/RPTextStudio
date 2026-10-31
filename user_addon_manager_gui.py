@@ -473,8 +473,11 @@ class UserAddonManagerDialog(QDialog):
         if self.thread is not None:
             return
         if not self._update_queue or self.current_target() != self._batch_update_target:
+            finished_target = self._batch_update_target
             self._update_queue = []
             self._batch_update_target = None
+            if finished_target is not None and self.current_target() == finished_target:
+                self.select_installation()
             return
         name = self._update_queue.pop(0)
         self._guided_update_name = name
@@ -663,6 +666,7 @@ class UserAddonManagerDialog(QDialog):
         self._operation = None
         self._set_busy(False)
         if completed_install:
+            self._scan_after_cleanup = False  # Batch scan once after last addon.
             self._batch_waiting_install = False
             from PySide6.QtCore import QTimer
             QTimer.singleShot(0, self._advance_update_queue)
