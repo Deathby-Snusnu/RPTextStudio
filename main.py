@@ -10,7 +10,7 @@ from lua_text import parse_pools,update_file,validate_file,ParseError
 from key_creation import new_spell
 from key_deletion import spell_path, delete_from_files, prepare_deletion
 from race_class_manager import load_registry, register, add_lua_profile, discover_targets
-from spell_manager import COMMANDS, candidate_keys, load_mappings, save_mappings, make_macro
+from spell_manager import candidate_keys, discover_commands, load_mappings, save_mappings, make_macro
 from ai_translation import inspect_translation
 try:
     from workflow_wizard import WorkflowWizard, prerequisites
@@ -893,8 +893,9 @@ class Studio(QMainWindow):
         layout.addWidget(note)
         grid = QHBoxLayout()
         addon = QComboBox()
-        addon.addItems(sorted(COMMANDS))
-        addon.setToolTip('Nur AddOns mit bekanntem RP-Slash-Befehl werden angeboten.')
+        commands = discover_commands(self.root, self.files)
+        addon.addItems(sorted(name for name in commands if candidate_keys(self.files, name)))
+        addon.setToolTip('AddOns mit registriertem RP-Slash-Befehl und vorhandenen Zauberschlüsseln.')
         spell = QLineEdit()
         spell.setPlaceholderText('Zaubername im WoW-Client, z. B. Schattenblitz')
         spell.setToolTip('Genauer, lokalisierter Name des Zaubers für /cast.')
@@ -932,7 +933,7 @@ class Studio(QMainWindow):
         def refresh_preview():
             try:
                 macro = make_macro(addon.currentText(), spell.text().strip(), key.currentText(),
-                                   candidate_keys(self.files, addon.currentText()))
+                                   candidate_keys(self.files, addon.currentText()), commands=commands)
             except ValueError as exc:
                 preview.setPlainText(str(exc))
                 return
@@ -952,7 +953,7 @@ class Studio(QMainWindow):
             name_spell = spell.text().strip()
             value_key = key.currentText()
             try:
-                make_macro(name, name_spell, value_key, candidate_keys(self.files, name))
+                make_macro(name, name_spell, value_key, candidate_keys(self.files, name), commands=commands)
             except ValueError as exc:
                 QMessageBox.warning(dlg, 'Ungültige Zuordnung', str(exc))
                 return
@@ -971,7 +972,7 @@ class Studio(QMainWindow):
         def copy_macro():
             try:
                 macro = make_macro(addon.currentText(), spell.text().strip(), key.currentText(),
-                                   candidate_keys(self.files, addon.currentText()))
+                                   candidate_keys(self.files, addon.currentText()), commands=commands)
             except ValueError as exc:
                 QMessageBox.warning(dlg, 'Makro nicht verfügbar', str(exc))
                 return
