@@ -9,11 +9,13 @@ from unittest.mock import patch
 
 import github_updates
 import github_staging
+import github_request_manager as guard
 
 
 class Response:
     def __init__(self, payload):
         self.payload = io.BytesIO(payload)
+        self.headers = {}
     def __enter__(self):
         return self
     def __exit__(self, *args):
@@ -23,6 +25,28 @@ class Response:
 
 
 class PublicGithubTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self._guard_state = (
+            guard._MEMORY, guard._NEXT_CALL, guard._BLOCK_UNTIL,
+            guard._LAST_LIMIT, guard._LAST_REMAINING,
+        )
+        guard._MEMORY, guard._NEXT_CALL, guard._BLOCK_UNTIL = {}, 0, 0
+        guard._LAST_LIMIT = guard._LAST_REMAINING = None
+        self.addCleanup(self._restore_guard_state)
+        store_path = patch.object(
+            guard, "_store_path", return_value=Path(self.tmp.name) / "cache.json"
+        )
+        store_path.start()
+        self.addCleanup(store_path.stop)
+
+    def _restore_guard_state(self):
+        (
+            guard._MEMORY, guard._NEXT_CALL, guard._BLOCK_UNTIL,
+            guard._LAST_LIMIT, guard._LAST_REMAINING,
+        ) = self._guard_state
+
     def test_public_api_does_not_need_cli_or_token(self):
         with patch.dict(os.environ, {}, clear=True), \
              patch("github_updates.urllib.request.urlopen", return_value=Response(b'{"tag_name":"v1.0.0"}')) as call, \

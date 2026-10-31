@@ -64,34 +64,12 @@ def compare_versions(installed: str, available: str) -> int | None:
 
 
 def _api(path: str) -> object:
-    if not path.startswith("/repos/" + OWNER + "/"):
-        raise GitHubCheckError("Unzulässige GitHub-Adresse.")
-    endpoint = "https://api.github.com" + path
-    # Public repositories work anonymously. Authentication is optional for
-    # private/development use, never a prerequisite for a normal user.
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    headers = {"Accept": "application/vnd.github+json",
-               "User-Agent": "RPTextStudio-UpdateChecker"}
-    if token:
-        headers["Authorization"] = "Bearer " + token
-    request = urllib.request.Request(endpoint, headers=headers)
+    """Shared guarded REST access used by version checks and staging."""
+    from github_request_manager import get_json, RequestGuardError
     try:
-        with urllib.request.urlopen(request, timeout=12) as response:
-            data = response.read(MAX_RESPONSE + 1)
-    except urllib.error.HTTPError as exc:
-        if exc.code in (401, 403):
-            raise GitHubCheckError("GitHub-Zugriff verweigert oder API-Limit erreicht.") from exc
-        if exc.code == 404:
-            raise GitHubCheckError("Repository oder Release nicht öffentlich verfügbar.") from exc
-        raise GitHubCheckError(f"GitHub-HTTP-Fehler: {exc.code}") from exc
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        raise GitHubCheckError(f"GitHub-Zugriff fehlgeschlagen: {exc}") from exc
-    if len(data) > MAX_RESPONSE:
-        raise GitHubCheckError("GitHub-Antwort zu groß.")
-    try:
-        return json.loads(data)
-    except (ValueError, UnicodeDecodeError) as exc:
-        raise GitHubCheckError("Ungültige GitHub-Antwort.") from exc
+        return get_json(path)
+    except RequestGuardError as exc:
+        raise GitHubCheckError(str(exc)) from exc
 
 
 def _release(name: str) -> tuple[str, str | None, str]:
