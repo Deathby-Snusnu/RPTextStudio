@@ -1,5 +1,6 @@
 """User mode: read-only WoW addon overview with background discovery and GitHub checks."""
 from __future__ import annotations
+from github_request_manager import status as github_api_status
 from pathlib import Path
 import tempfile
 from uuid import uuid4
@@ -125,10 +126,15 @@ class UserAddonManagerDialog(QDialog):
         actions.addStretch(1)
         layout.addLayout(actions)
         self.status = QLabel("Suche nach vorhandenen WoW-Installationen …")
+        self.github_budget = QLabel("GitHub: Cache bereit")
+        layout.addWidget(self.github_budget)
         layout.addWidget(self.status)
         self._start("discover")
 
     def _set_busy(self, busy):
+        state = github_api_status()
+        quota = ("%s/%s" % (state["remaining"], state["limit"])) if state["limit"] is not None else "unbekannt"
+        self.github_budget.setText("GitHub API: %s verbleibend | Cache: %d | Pause: %ds" % (quota, state["cached"], state["blocked_seconds"]))
         self.find_button.setEnabled(not busy)
         self.profile_button.setEnabled(not busy and self.current_target() is not None)
         self.toc_button.setEnabled(not busy and self.current_target() is not None and
