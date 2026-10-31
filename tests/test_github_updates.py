@@ -49,8 +49,9 @@ class VersionCheckerTests(unittest.TestCase):
             addon.mkdir()
             (addon / "HexerRP.toc").write_text("## Version: 0.2.0\n## Interface: 16001\n")
             with patch.object(updates, "_development", return_value=("0.3.0", "11000", "abcd")):
-                self.assertEqual(updates.check_addon("HexerRP", Path(d), "development").status,
-                                 "Kompatibilität prüfen")
+                result = updates.check_addon("HexerRP", Path(d), "development")
+                self.assertEqual(result.status, "Update verfügbar")
+                self.assertIn("Interface-Abweichung", result.detail)
 
     def test_missing_local(self):
         with tempfile.TemporaryDirectory() as d:
