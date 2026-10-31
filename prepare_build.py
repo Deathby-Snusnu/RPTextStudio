@@ -10,8 +10,11 @@ ROOT = Path(__file__).resolve().parent
 
 
 def prepare(root: Path = ROOT) -> dict:
-    check = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root,
+    check = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", ":/",
+                            ":(exclude)build_info.json", ":(exclude)build_version.issinc"], cwd=root,
                            check=True, capture_output=True, text=True, timeout=15)
+    # Generated metadata from a previous build may be tracked and dirty.
+    # Only these two reproducible output files are exempted; source edits still abort.
     if check.stdout.strip():
         raise RuntimeError("Build abgebrochen: Git-Arbeitskopie enthält nicht committete Änderungen.")
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,

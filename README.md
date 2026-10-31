@@ -8,8 +8,8 @@ RPControlCenter enthält keine entsprechenden Textpools.
 
 ## Dokumentation
 
-[Sammlungsübersicht](../../README.md) · [Bedienungsanleitung](../../docs/RPTextStudio/HANDBUCH.md) ·
-[Changelog](CHANGELOG.md) · [Verpackung](../../docs/VERPACKUNG.md)
+[Sammlungsübersicht](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/README.md) · [Bedienungsanleitung](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/RPTextStudio/HANDBUCH.md) ·
+[Changelog](CHANGELOG.md) · [Verpackung](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/VERPACKUNG.md)
 
 Weitere Anleitungen: [Anwender-Modus](ANWENDER-ADDON-MODUS.md),
 [Erstinstallation](FIRST-INSTALL-RP-ADDONS.md),
@@ -100,7 +100,7 @@ Die dokumentierte Historie steht im [Changelog](CHANGELOG.md).
 3. Rechts den Text bearbeiten oder unten Deutsch, Englisch und Französisch parallel vergleichen/bearbeiten.
 4. **Alles prüfen**, dann **Änderungen speichern**. Der Editor legt Sicherungen als `.bak` an.
 
-**Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird das [Handbuch](../../docs/RPTextStudio/HANDBUCH.md) im Programm angezeigt. Beim EXE-Build wird es eingebettet. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
+**Hilfe:** Über das Menü **Hilfe > Bedienungsanleitung** oder **F1** wird das [Handbuch](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/RPTextStudio/HANDBUCH.md) im Programm angezeigt. Beim EXE-Build wird es eingebettet. Kurze Hinweise erscheinen als Tooltips an den Bedienelementen.
 
 ## Übersetzungszuordnung
 
@@ -129,7 +129,7 @@ Die dokumentierte Historie steht im [Changelog](CHANGELOG.md).
   KI-Übersetzungsvorschläge erfordern eine ausdrückliche Prüfung und Freigabe;
   es gibt keine unbeaufsichtigte Stapelverarbeitung.
 
-Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen im [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
+Detaillierte Arbeitsschritte, Einschränkungen und Fehlerbehebung stehen im [Handbuch](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/RPTextStudio/HANDBUCH.md).
 
 ## Tests
 
@@ -218,7 +218,7 @@ Vor einem Überschreiben der Zuordnungsdatei entsteht `.bak`.
 
 Über **Rassen-/Klassen-Manager** neue redaktionelle Profile mit Anzeigenamen, interner ID und RP-Sprachstil anlegen. Beispiel: `Nachtelf` / `NightElf` / `Naturverbunden, geheimnisvoll, traditionsbewusst`. Das neue Projektregister `.rptextstudio-races-classes.json` hält diese Metadaten unabhängig von den WoW-Dateien. Optional wird in vorhandenen `Racial.lua` oder `Classes.lua` des gewählten AddOns in allen verfügbaren Sprachen ein neuer Textzweig mit `RP_GREETING` erstellt. Eingaben werden validiert; vor Lua-Änderungen erfolgen Testläufe auf temporären Kopien und Backups.
 
-**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
+**Kein Runtime-Patch:** Das Programm macht keine Rassen/Klassen spielbar und passt die Rassen-/Klassen-Erkennung im AddOn nicht automatisch an. ID-Schreibweise und Core-Handler müssen gesondert geprüft werden. Details siehe [Handbuch](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/RPTextStudio/HANDBUCH.md).
 
 ## Projektdateien und Sicherungen
 
@@ -268,7 +268,7 @@ Neu: `Ambient.lua` und `AmbientRacial.lua` in JaegerRP, PaladinRP und DruidenRP.
 
 ### Falsch angelegte Schlüssel entfernen (0.1.12)
 
-Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe [Handbuch](../../docs/RPTextStudio/HANDBUCH.md).
+Gewünschten Textpool auswählen und **Schlüssel löschen** anklicken. Vor dem Löschen wird die Liste der betroffenen Sprachdateien gezeigt und eine Bestätigung verlangt. Es werden nur die Texte des gewählten Schlüssels (inklusive `ziel`/`gruppe`), nicht der übergeordnete Rassen-/Klassenzweig gelöscht. Alle geänderten Lua-Dateien erhalten ein `.bak`-Backup. Makro- und Übersetzungsmetadaten bei Bedarf separat prüfen. Siehe [Handbuch](https://github.com/Deathby-Snusnu/RPAddOns/blob/main/docs/RPTextStudio/HANDBUCH.md).
 
 ## KI-Übersetzung mit OpenAI
 
