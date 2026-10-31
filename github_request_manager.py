@@ -93,23 +93,33 @@ def _save():
 
 
 def _delay(headers, now):
+    from math import isfinite
+
+    deadlines = []
     retry = headers.get("Retry-After")
     if retry:
         try:
-            return now + max(60, min(float(retry), 3600))
+            seconds = float(retry)
         except (TypeError, ValueError):
             try:
                 parsed = parsedate_to_datetime(retry)
-                return now + max(60, min((parsed - datetime.now(timezone.utc)).total_seconds(), 3600))
-            except (TypeError, ValueError, OverflowError):
-                pass
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                seconds = parsed.timestamp() - now
+            except (TypeError, ValueError, OverflowError, OSError):
+                seconds = None
+        if seconds is not None and isfinite(seconds):
+            deadlines.append(now + max(60, seconds))
+
     reset = headers.get("X-RateLimit-Reset")
-    if reset:
+    if reset and (not deadlines or headers.get("X-RateLimit-Remaining") == "0"):
         try:
-            return max(now + 60, min(float(reset) + 5, now + 3600))
+            deadline = float(reset)
+            if isfinite(deadline):
+                deadlines.append(max(now + 60, deadline + 5))
         except (TypeError, ValueError):
             pass
-    return now + 120
+    return max(deadlines) if deadlines else now + 120
 
 
 def _headers(response):
