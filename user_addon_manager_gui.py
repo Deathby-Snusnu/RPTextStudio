@@ -73,6 +73,9 @@ class UserAddonManagerDialog(QDialog):
         self.staged_packages = {}
         self._guided_update_name = None
         self._guided_update_target = None
+        self._update_queue = []
+        self._batch_update_target = None
+        self._batch_waiting_install = False
         self.missing_batch = None
         self._scan_after_cleanup = False
         self._operation = None
@@ -95,6 +98,8 @@ class UserAddonManagerDialog(QDialog):
         layout.addLayout(top)
 
         self.table = QTableWidget(0, 5)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
         self.table.setHorizontalHeaderLabels(("AddOn", "Installiert", "Interface", "GitHub", "Status"))
         self.table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.table)
@@ -109,11 +114,11 @@ class UserAddonManagerDialog(QDialog):
         self.stage_button = QPushButton("AddOn herunterladen und prüfen…")
         self.stage_button.clicked.connect(self.stage_selected)
         self.stage_button.setEnabled(False)
-        self.table.currentCellChanged.connect(lambda *_: self._set_busy(self.thread is not None))
+        self.table.itemSelectionChanged.connect(lambda: self._set_busy(self.thread is not None))
         actions.addWidget(self.channel)
         actions.addWidget(self.check_button)
         actions.addWidget(self.stage_button)
-        self.update_button = QPushButton("Ausgewähltes AddOn aktualisieren…")
+        self.update_button = QPushButton("Ausgewählte AddOns aktualisieren…")
         self.update_button.clicked.connect(self.update_selected)
         actions.addWidget(self.update_button)
         self.install_button = QPushButton("Geprüftes Paket installieren…")
@@ -144,12 +149,21 @@ class UserAddonManagerDialog(QDialog):
         self.check_button.setEnabled(not busy and self.current_target() is not None)
         self.stage_button.setEnabled(not busy and self.current_target() is not None and
                                      0 <= self.table.currentRow() < self.table.rowCount())
-        selected = self._selected_addon_id()
-        self.update_button.setEnabled(not busy and selected in self.installed and
-                                      self.installed[selected].state == "Installiert")
+        selected_names = self._selected_addon_ids()
+        self.update_button.setEnabled(not busy and any(
+            name in self.installed and self.installed[name].state == "Installiert"
+            for name in selected_names))
         self.install_button.setEnabled(not busy and self.current_target() is not None and
                                         self.selected_staged() is not None)
         self.missing_button.setEnabled(not busy and self.current_target() is not None)
+
+    def _selected_addon_ids(self):
+        names = []
+        for index in self.table.selectionModel().selectedRows():
+            item = self.table.item(index.row(), 0)
+            if item:
+                names.append(item.data(Qt.UserRole) or item.text())
+        return names
 
     def _selected_addon_id(self):
         item = self.table.item(self.table.currentRow(), 0)
@@ -426,25 +440,48 @@ class UserAddonManagerDialog(QDialog):
         self._start("install", staging_target=(plan, profile))
 
     def update_selected(self):
-        """Guide an existing addon from verified download into guarded review."""
+        """Sequentially review and update all selected installed addons."""
         target = self.current_target()
         if self.thread is not None or target is None:
             return
-        name = self._selected_addon_id()
-        if name not in self.installed or self.installed[name].state != "Installiert":
+        names = [name for name in self._selected_addon_ids()
+                 if name in self.installed and self.installed[name].state == "Installiert"]
+        if not names:
             return
-        # No user files are modified until the standard install confirmation.
-        channel = self.channel.currentData()
-        if QMessageBox.question(self, "Update herunterladen",
-                f"Aktuelle {self.channel.currentText()} für {name} laden und "
-                "eine sichere Änderungsvorschau öffnen?\\n\\n"
-                "Vorhandene Texte bleiben standardmäßig geschützt. "
-                "Jede Ersetzung muss einzeln bestätigt werden.",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Updates herunterladen")
+        dialog.setIcon(QMessageBox.Question)
+        dialog.setText(
+            f"{len(names)} ausgewählte AddOn(s) aus {self.channel.currentText()} "
+            "nacheinander herunterladen und prüfen?\\n\\n"
+            "Jedes AddOn erhält eine eigene Änderungsvorschau. "
+            "Vorhandene Texte bleiben geschützt und jede Ersetzung "
+            "muss ausdrücklich bestätigt werden."
+        )
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setDefaultButton(QMessageBox.No)
+        dialog.button(QMessageBox.Yes).setText("Updates prüfen")
+        dialog.button(QMessageBox.No).setText("Abbrechen")
+        if dialog.exec() != QMessageBox.Yes:
             return
+        self._update_queue = list(names)
+        self._batch_update_target = target
+        self._advance_update_queue()
+
+    def _advance_update_queue(self):
+        """Stage the next queued addon only when no worker is running."""
+        if self.thread is not None:
+            return
+        if not self._update_queue or self.current_target() != self._batch_update_target:
+            self._update_queue = []
+            self._batch_update_target = None
+            return
+        name = self._update_queue.pop(0)
         self._guided_update_name = name
-        self._guided_update_target = target
-        destination = Path(tempfile.gettempdir()) / ("rptextstudio-" + name + "-" + uuid4().hex)
+        self._guided_update_target = self._batch_update_target
+        destination = Path(tempfile.gettempdir()) / (
+            "rptextstudio-" + name + "-" + uuid4().hex)
+        self.status.setText(f"Update vorbereiten: {name}")
         self._start("stage", name=name, staging_target=destination)
 
     def stage_selected(self):
@@ -600,22 +637,35 @@ class UserAddonManagerDialog(QDialog):
             item = self.table.item(row, 0)
             if item and (item.data(Qt.UserRole) or item.text()) == name:
                 self.table.selectRow(row)
+                self._batch_waiting_install = True
                 self.install_selected()
+                if self.thread is None:
+                    self._batch_waiting_install = False
+                    from PySide6.QtCore import QTimer
+                    QTimer.singleShot(0, self._advance_update_queue)
                 return
 
     @Slot(str)
     def _failed(self, message):
         self._guided_update_name = None
         self._guided_update_target = None
+        self._update_queue = []
+        self._batch_update_target = None
+        self._batch_waiting_install = False
         self.status.setText("Prüfung fehlgeschlagen: " + message)
 
     def _cleanup(self):
+        completed_install = self._operation == "install" and self._batch_waiting_install
         if self.thread:
             self.thread.deleteLater()
         self.thread = None
         self.worker = None
         self._operation = None
         self._set_busy(False)
+        if completed_install:
+            self._batch_waiting_install = False
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(0, self._advance_update_queue)
         if self._scan_after_cleanup:
             self._scan_after_cleanup = False
             self.select_installation()
