@@ -190,7 +190,7 @@ def get_json(path):
                 return cached["value"]
             remaining = exc.headers.get("X-RateLimit-Remaining")
             if exc.code in (403, 429):
-                _BLOCK_UNTIL = _delay(exc.headers, now)
+                _BLOCK_UNTIL = _delay(exc.headers, time.time())
                 raise RequestGuardError("GitHub-API-Limit erreicht; weitere Abfragen pausiert.") from exc
             if exc.code == 404:
                 _MEMORY[key] = {"not_found": True, "stored": now, "expires": now + NOT_FOUND_TTL}
