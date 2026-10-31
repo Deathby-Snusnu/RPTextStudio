@@ -115,6 +115,7 @@ class UserAddonManagerDialog(QDialog):
         self.stage_button.clicked.connect(self.stage_selected)
         self.stage_button.setEnabled(False)
         self.table.itemSelectionChanged.connect(lambda: self._set_busy(self.thread is not None))
+        self.table.currentCellChanged.connect(lambda *_: self._set_busy(self.thread is not None))
         actions.addWidget(self.channel)
         actions.addWidget(self.check_button)
         actions.addWidget(self.stage_button)
