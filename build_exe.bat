@@ -13,7 +13,7 @@ set "MANUAL=%~dp0..\..\docs\RPTextStudio\HANDBUCH.md"
 if exist "%~dp0HANDBUCH.md" set "MANUAL=%~dp0HANDBUCH.md"
 
 if not exist "%VENV_PYTHON%" (
-    echo [1/4] Virtuelle Python-Umgebung erstellen ...
+    echo [1/5] Virtuelle Python-Umgebung erstellen ...
     where py >nul 2>&1
     if not errorlevel 1 (
         py -3 -m venv "%VENV_DIR%"
@@ -49,14 +49,14 @@ if not exist "%~dp0assets\rp_text_studio_icon.svg" (
     goto :failed
 )
 
-echo [2/4] Laufzeit- und Build-Abhaengigkeiten installieren ...
+echo [2/5] Laufzeit- und Build-Abhaengigkeiten installieren ...
 "%VENV_PYTHON%" -m pip install -r "%~dp0requirements-build.txt"
 if errorlevel 1 (
     echo FEHLER: Die Build-Abhaengigkeiten konnten nicht installiert werden.
     goto :failed
 )
 
-echo [3/4] Windows-Icon aus dem Vektorlogo erstellen ...
+echo [3/5] Windows-Icon aus dem Vektorlogo erstellen ...
 "%VENV_PYTHON%" "%~dp0build_icon.py"
 if errorlevel 1 (
     echo FEHLER: Das Windows-Icon konnte nicht erstellt werden.
