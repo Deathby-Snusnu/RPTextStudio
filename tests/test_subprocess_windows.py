@@ -21,10 +21,25 @@ class WindowsSubprocessTests(unittest.TestCase):
 
     def test_github_api_uses_https_without_subprocess(self):
         import github_updates
-        with patch("github_updates.urllib.request.urlopen", return_value=io.BytesIO(b"{}")) as request, \
-             patch("subprocess.run", side_effect=AssertionError("Subprocess called")):
+        class Response(io.BytesIO):
+            status = 200
+
+            def getcode(self):
+                return 200
+
+        response = Response(b"{}")
+        with patch("github_updates.urllib.request.urlopen", return_value=response) as request, \
+             patch("subprocess.run") as run, \
+             patch("subprocess.Popen") as popen:
             github_updates._api("/repos/Deathby-Snusnu/PaladinRP")
-        self.assertTrue(request.call_args.args[0].full_url.startswith("https://"))
+        request.assert_called_once()
+        run.assert_not_called()
+        popen.assert_not_called()
+        args, kwargs = request.call_args
+        url = args[0] if args else kwargs["url"]
+        if hasattr(url, "full_url"):
+            url = url.full_url
+        self.assertTrue(str(url).startswith("https://"))
 
 
 if __name__ == "__main__":

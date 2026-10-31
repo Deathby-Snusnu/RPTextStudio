@@ -27,15 +27,15 @@ class MissingAddonTests(unittest.TestCase):
             "## Interface: 16001\n## Version: 0.1.0\ncore.lua\n", encoding="utf-8")
         (destination / "core.lua").write_text("PRINT('runtime')\n", encoding="utf-8")
 
-    def test_empty_folder_installs_six_addons_with_interface(self):
+    def test_empty_folder_installs_all_addons_with_interface(self):
         self.assertEqual(missing_names(self.target), ADDONS)
         with patch("batch_addon_install.stage", side_effect=self.fake_stage):
             batch = prepare_missing(self.target, self.profile)
         try:
-            self.assertEqual(len(batch.plans), 6)
+            self.assertEqual(tuple(plan.name for plan in batch.plans), ADDONS)
             self.assertTrue(all(not (self.target / name).exists() for name in ADDONS))
             backups = install_missing(batch)
-            self.assertEqual(len(backups), 6)
+            self.assertEqual(len(backups), len(ADDONS))
             for name in ADDONS:
                 self.assertIn("## Interface: 11509",
                               (self.target / name / (name + ".toc")).read_text())
@@ -71,8 +71,9 @@ class MissingAddonTests(unittest.TestCase):
             batch = prepare_missing(self.target, self.profile)
         try:
             self.assertNotIn("JaegerRP", [p.name for p in batch.plans])
-            self.assertEqual(len(batch.plans), 5)
-            self.assertEqual(downloader.call_count, 5)
+            expected_missing = len(ADDONS) - 1
+            self.assertEqual(len(batch.plans), expected_missing)
+            self.assertEqual(downloader.call_count, expected_missing)
             install_missing(batch)
             self.assertEqual((folder / "mywords.lua").read_text(encoding="utf-8"),
                              "persönlicher Text")
