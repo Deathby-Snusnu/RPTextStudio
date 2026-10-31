@@ -71,6 +71,10 @@ def _download(commit: str, name: str, output: Path) -> str:
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if token:
         headers["Authorization"] = "Bearer " + token.strip()
+    from github_request_manager import status as github_status
+    state = github_status()
+    if state["blocked_seconds"] > 0:
+        raise DownloadError("GitHub-Abfragen pausiert. In %d Sekunden erneut versuchen." % state["blocked_seconds"])
     request = Request(url, headers=headers)
     h = sha256()
     size = 0
