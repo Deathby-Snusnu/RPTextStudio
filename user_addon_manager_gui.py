@@ -455,7 +455,7 @@ class UserAddonManagerDialog(QDialog):
         dialog.setIcon(QMessageBox.Question)
         dialog.setText(
             f"{len(names)} ausgewählte AddOn(s) aus {self.channel.currentText()} "
-            "nacheinander herunterladen und prüfen?\\n\\n"
+            "nacheinander herunterladen und prüfen?\n\n"
             "Jedes AddOn erhält eine eigene Änderungsvorschau. "
             "Vorhandene Texte bleiben geschützt und jede Ersetzung "
             "muss ausdrücklich bestätigt werden. WoW-Dateien werden erst "
