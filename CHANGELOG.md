@@ -5,6 +5,7 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
 
+- UI-Dialoge zeigen mehrzeilige Meldungen wieder mit echten Zeilenumbrüchen: Bestätigung des AddOn-Downloads und Warnungen zu ungültigen Übersetzungen. Ein AST-basierter Regressionstest prüft sichtbare Qt-Texte auf versehentlich verdoppelte Escape-Sequenzen.
 - KriegerRP als vertrauenswürdige `WARRIOR`-Klassenquelle `Deathby-Snusnu/KriegerRP` in den AddOn-Katalog aufgenommen.
 - Der bestehende geschützte Download-, Prüf- und Bestandschutz-Ablauf gilt nach dem Merge des KriegerRP-Repositories auch für das neue AddOn. Katalog-Regressionstest hinzugefügt.
 - Der Makro-Generator lehnt passive oder nicht eigenständig wirkbare KriegerRP-Schlüssel wie `TACTICAL_MASTERY` und `DEVASTATE` ausdrücklich ab.
