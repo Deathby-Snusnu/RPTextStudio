@@ -7,7 +7,7 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 - KriegerRP als vertrauenswürdige `WARRIOR`-Klassenquelle `Deathby-Snusnu/KriegerRP` in den AddOn-Katalog aufgenommen.
 - Der bestehende geschützte Download-, Prüf- und Bestandschutz-Ablauf gilt nach dem Merge des KriegerRP-Repositories auch für das neue AddOn. Katalog-Regressionstest hinzugefügt.
-- Dokumentiert, dass passive RP-Schlüssel wie `TACTICAL_MASTERY` nur erzählerisch ausgegeben und nicht als wirkbare `/cast`-Makros betrachtet werden dürfen.
+- Der Makro-Generator lehnt passive oder nicht eigenständig wirkbare KriegerRP-Schlüssel wie `TACTICAL_MASTERY` und `DEVASTATE` ausdrücklich ab.
 
 GitHub veröffentlichte zuletzt `v0.2.2` am 28.10.2026. Der Quellstand
 dieses Tags und der veröffentlichte Installer weisen intern noch `0.2.1`
