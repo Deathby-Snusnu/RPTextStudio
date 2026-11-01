@@ -5,6 +5,10 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
 
+- KriegerRP als vertrauenswürdige `WARRIOR`-Klassenquelle `Deathby-Snusnu/KriegerRP` in den AddOn-Katalog aufgenommen.
+- Der bestehende geschützte Download-, Prüf- und Bestandschutz-Ablauf gilt nach dem Merge des KriegerRP-Repositories auch für das neue AddOn. Katalog-Regressionstest hinzugefügt.
+- Dokumentiert, dass passive RP-Schlüssel wie `TACTICAL_MASTERY` nur erzählerisch ausgegeben und nicht als wirkbare `/cast`-Makros betrachtet werden dürfen.
+
 GitHub veröffentlichte zuletzt `v0.2.2` am 28.10.2026. Der Quellstand
 dieses Tags und der veröffentlichte Installer weisen intern noch `0.2.1`
 aus. Vorhandene Build-Metadaten und Installer bleiben bis zu einem neuen
