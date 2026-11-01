@@ -638,7 +638,7 @@ class Studio(QMainWindow):
             for lang, value in results.items():
                 problems = inspect_translation(source, value)
                 if problems:
-                    QMessageBox.warning(self, "Ungültige Übersetzung", "\\n".join(problems))
+                    QMessageBox.warning(self, "Ungültige Übersetzung", "\n".join(problems))
                     return False
                 target = self.translation_path(lang)
                 if target is None:
