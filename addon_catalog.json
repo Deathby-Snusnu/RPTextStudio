@@ -52,6 +52,16 @@
       "description": "Rollenspieltexte für Magier"
     },
     {
+      "id": "KriegerRP",
+      "title": "Krieger RP",
+      "repository": "Deathby-Snusnu/KriegerRP",
+      "supported_clients": [],
+      "classes": [
+        "WARRIOR"
+      ],
+      "description": "Rollenspieltexte für Krieger: Fähigkeiten, volkstypische Texte und Ambient"
+    },
+    {
       "id": "RPChatMod",
       "title": "RP Chat Mod",
       "repository": "Deathby-Snusnu/RPChatMod",
