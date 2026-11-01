@@ -13,6 +13,7 @@ FILENAME = '.rptextstudio-spells.json'
 COMMANDS = {'HexerRP': '/wrp', 'PaladinRP': '/prp', 'JaegerRP': '/jrp', 'DruidenRP': '/drp'}
 SLASH_PATTERN = re.compile(r"^\s*SLASH_([A-Z0-9_]+)1\s*=\s*[\"'](/[-a-z0-9]+)[\"']", re.M)
 KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
+NON_CASTABLE_KEYS = {"KriegerRP": {"TACTICAL_MASTERY", "DEVASTATE"}}
 
 
 def _has_handler_assignment(content: str, handler: str) -> bool:
@@ -95,6 +96,8 @@ def validate_entry(addon: str, spell: str, key: str, known_keys: list[str], comm
         raise ValueError('Ungültiger RP-Schlüssel.')
     if key not in known_keys:
         raise ValueError(f'RP-Schlüssel {key} fehlt in den geladenen Textpools.')
+    if key in NON_CASTABLE_KEYS.get(addon, set()):
+        raise ValueError(f'RP-Schlüssel {key} ist passiv oder nicht eigenständig wirkbar. Nur /krp als Erzähltext verwenden.')
 
 
 def make_macro(addon: str, spell: str, key: str, known_keys: list[str], commands=None) -> str:

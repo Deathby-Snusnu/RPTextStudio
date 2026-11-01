@@ -332,3 +332,22 @@ RP Text Studio erzeugt keine neuen AddOn-Quellcodeprojekte mehr. Bestehende
 RP-AddOns lassen sich weiterhin öffnen, bearbeiten, übersetzen, prüfen,
 installieren und aktualisieren. Die lokale AddOn-Erkennung über `.toc`
 und `addons.json` bleibt erhalten.
+
+### KriegerRP im GitHub-Katalog
+
+`KriegerRP` gehört mit der Klassenkennung `WARRIOR` und dem
+Quell-Repository [Deathby-Snusnu/KriegerRP](https://github.com/Deathby-Snusnu/KriegerRP)
+zum geschützten AddOn-Katalog (Änderung in
+[PR #44](https://github.com/Deathby-Snusnu/RPTextStudio/pull/44)).
+Bei bestätigter Installation werden dieselben Download-, Prüf- und
+Bestandsschutz-Regeln wie bei anderen AddOns verwendet.
+Die enthaltenen Texte können nach deDE, enUS und frFR getrennt
+bearbeitet werden. Die enthaltenen /krp-Schlüssel sind im
+Projektquellcode definiert; passive oder nicht eigenständig wirkbare Schlüssel wie `TACTICAL_MASTERY`
+und `DEVASTATE` werden vom Makro-Generator **zurückgewiesen**. Sie bleiben
+als manuell aufrufbare RP-Texte verfügbar.
+
+Die Erstversion wird in
+[KriegerRP PR #1](https://github.com/Deathby-Snusnu/KriegerRP/pull/1)
+entwickelt. Bis zu deren Merge kann der GitHub-Updater im `main`-Branch
+noch keinen vollständigen KriegerRP-Release beziehen.
