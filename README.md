@@ -343,8 +343,9 @@ Bei bestätigter Installation werden dieselben Download-, Prüf- und
 Bestandsschutz-Regeln wie bei anderen AddOns verwendet.
 Die enthaltenen Texte können nach deDE, enUS und frFR getrennt
 bearbeitet werden. Die enthaltenen /krp-Schlüssel sind im
-Projektquellcode definiert; passive Schlüssel wie `TACTICAL_MASTERY`
-dürfen nicht als aktiv wirkbare Zauber gemappt werden.
+Projektquellcode definiert; passive oder nicht eigenständig wirkbare Schlüssel wie `TACTICAL_MASTERY`
+und `DEVASTATE` werden vom Makro-Generator **zurückgewiesen**. Sie bleiben
+als manuell aufrufbare RP-Texte verfügbar.
 
 Die Erstversion wird in
 [KriegerRP PR #1](https://github.com/Deathby-Snusnu/KriegerRP/pull/1)
