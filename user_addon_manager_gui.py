@@ -307,7 +307,7 @@ class UserAddonManagerDialog(QDialog):
             return
         if QMessageBox.question(self, "Downloads vorbereiten",
             f"{len(selected)} ausgewählte AddOns aus {self.channel.currentText()} "
-            "herunterladen und sicher prüfen?\\n\\n"
+            "herunterladen und sicher prüfen?\n\n"
             "WoW wird erst nach einer zweiten Bestätigung verändert.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
             return
