@@ -31,6 +31,80 @@ class DynamicSpellDiscoveryTest(unittest.TestCase):
                 candidate_keys(files, "MagierRP"), commands=commands),
                 "#showtooltip Feuerball\n/cast Feuerball\n/mrp fireball")
 
+
+    def test_dotted_slashcmdlist_handlers_are_discovered(self):
+        # Existing JaegerRP, HexerRP and DruidenRP use dot notation.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            files = {}
+            for addon, slash, key in (
+                ("JaegerRP", "/jrp", "RAPTOR_STRIKE"),
+                ("HexerRP", "/wrp", "SHADOW_BOLT"),
+                ("DruidenRP", "/drp", "MARK"),
+            ):
+                directory = root / addon / "core"
+                directory.mkdir(parents=True)
+                (directory / "Commands.lua").write_text(
+                    f'SLASH_{addon.upper()}1 = "{slash}"\n'
+                    f'SlashCmdList.{addon.upper()} = addon.HandleCommand\n',
+                    encoding="utf-8",
+                )
+                locale = root / addon / "locales" / "deDE"
+                locale.mkdir(parents=True)
+                file = locale / "Texts.lua"
+                files[file] = parse_pools(
+                    "addon.localeData.deDE.texts = { "
+                    + key + ' = { gruppe = { "RP-Text", }, }, }'
+                )
+            commands = discover_commands(root, files)
+            self.assertEqual(commands, {
+                "DruidenRP": "/drp", "HexerRP": "/wrp", "JaegerRP": "/jrp"
+            })
+            self.assertEqual(
+                make_macro("JaegerRP", "Raptorstoß", "RAPTOR_STRIKE",
+                           candidate_keys(files, "JaegerRP"), commands=commands),
+                "#showtooltip Raptorstoß\n/cast Raptorstoß\n/jrp raptor_strike"
+            )
+
+    def test_dotted_handler_in_comments_or_literals_does_not_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "FakeRP" / "core"
+            directory.mkdir(parents=True)
+            (directory / "Commands.lua").write_text(
+                'SLASH_FAKERP1 = "/fake"\n'
+                '-- SlashCmdList.FAKERP = addon.HandleCommand\n'
+                'local example = "SlashCmdList.FAKERP = handler"\n',
+                encoding="utf-8",
+            )
+            locale = root / "FakeRP" / "locales" / "deDE"
+            locale.mkdir(parents=True)
+            path = locale / "Texts.lua"
+            files = {path: parse_pools(
+                'addon.localeData.deDE.texts = { TEST = { gruppe = {"Text",},},}'
+            )}
+            self.assertEqual(discover_commands(root, files), {})
+
+    def test_comparison_only_dotted_handler_does_not_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "FakeRP" / "core"
+            directory.mkdir(parents=True)
+            (directory / "Commands.lua").write_text(
+                'SLASH_FAKERP1 = "/fake"\n'
+                'if SlashCmdList.FAKERP == nil then\n'
+                '    print("handler is missing")\n'
+                'end\n',
+                encoding="utf-8",
+            )
+            locale = root / "FakeRP" / "locales" / "deDE"
+            locale.mkdir(parents=True)
+            path = locale / "Texts.lua"
+            files = {path: parse_pools(
+                'addon.localeData.deDE.texts = { TEST = { gruppe = {"Text",},},}'
+            )}
+            self.assertEqual(discover_commands(root, files), {})
+
     def test_no_unregistered_command(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

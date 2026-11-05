@@ -5,6 +5,8 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
 
+- Der Zauber-Manager erkennt nun auch `SlashCmdList.NAME`-Registrierungen (JaegerRP, HexerRP, DruidenRP) neben `SlashCmdList["NAME"]`. Die Prüfung ignoriert Kommentare und Zeichenketten; Regressionstests für beide Schreibweisen ergänzt.
+
 - PriesterRP im vertrauenswürdigen Katalog und Makro-Manager vorbereitet (`PRIEST`, `/prrp`). Der GitHub-Download nutzt das eigenständige Repository `Deathby-Snusnu/PriesterRP`. `LIGHTWELL_RENEW` ist bewusst als nicht direkt wirkbarer Makro-Schlüssel gesperrt.
 - UI-Dialoge zeigen mehrzeilige Meldungen wieder mit echten Zeilenumbrüchen: Bestätigung des AddOn-Downloads und Warnungen zu ungültigen Übersetzungen. Ein AST-basierter Regressionstest prüft sichtbare Qt-Texte auf versehentlich verdoppelte Escape-Sequenzen.
 - KriegerRP als vertrauenswürdige `WARRIOR`-Klassenquelle `Deathby-Snusnu/KriegerRP` in den AddOn-Katalog aufgenommen.
