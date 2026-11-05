@@ -62,6 +62,16 @@
       "description": "Rollenspieltexte für Krieger: Fähigkeiten, volkstypische Texte und Ambient"
     },
     {
+      "id": "PriesterRP",
+      "title": "Priester RP",
+      "repository": "Deathby-Snusnu/PriesterRP",
+      "supported_clients": [],
+      "classes": [
+        "PRIEST"
+      ],
+      "description": "Priester-Texte: Heilung, Disziplin, Schatten, Rassenstimmen und vorgemerktes Ambient"
+    },
+    {
       "id": "RPChatMod",
       "title": "RP Chat Mod",
       "repository": "Deathby-Snusnu/RPChatMod",
