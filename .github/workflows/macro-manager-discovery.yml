@@ -1,0 +1,16 @@
+name: Macro manager discovery
+on:
+  pull_request:
+  push:
+jobs:
+  macro-discovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dynamic commands and macro validation
+        run: python -m unittest discover -s tests -p 'test_dynamic_spell_discovery.py' -v
+      - name: Spell manager tests
+        run: python -m unittest discover -s tests -p 'test_spell_manager.py' -v
