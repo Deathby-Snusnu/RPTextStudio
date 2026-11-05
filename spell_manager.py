@@ -17,18 +17,34 @@ NON_CASTABLE_KEYS = {"KriegerRP": {"TACTICAL_MASTERY", "DEVASTATE"}}
 
 
 def _has_handler_assignment(content: str, handler: str) -> bool:
+    """Find live SlashCmdList registrations in bracket or dot notation.
+
+    Both `SlashCmdList["NAME"]` and `SlashCmdList.NAME` are standard Lua.
+    The lexer ignores comments and string literals, so text containing
+    either spelling is not mistaken for a live registration.
+    """
     try:
         tokens = lex(content)
     except ParseError:
         return False
-    for index in range(len(tokens) - 4):
-        target = tokens[index:index + 5]
-        if ([token.value for token in target[:2]] == ["SlashCmdList", "["]
-                and target[2].kind == "string"
-                and target[3].value == "]"
-                and target[4].value == "="
-                and decode_string(target[2].value) == handler
-                and (index == 0 or tokens[index - 1].value not in {".", ":"})):
+    for index, token in enumerate(tokens):
+        if token.value != "SlashCmdList" or token.kind != "ident":
+            continue
+        if index > 0 and tokens[index - 1].value in {".", ":"}:
+            continue
+        rest = tokens[index + 1:index + 5]
+        if (len(rest) >= 3
+                and rest[0].value == "."
+                and rest[1].kind == "ident"
+                and rest[1].value == handler
+                and rest[2].value == "="):
+            return True
+        if (len(rest) >= 4
+                and rest[0].value == "["
+                and rest[1].kind == "string"
+                and decode_string(rest[1].value) == handler
+                and rest[2].value == "]"
+                and rest[3].value == "="):
             return True
     return False
 
