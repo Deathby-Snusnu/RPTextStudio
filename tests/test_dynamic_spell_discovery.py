@@ -85,6 +85,26 @@ class DynamicSpellDiscoveryTest(unittest.TestCase):
             )}
             self.assertEqual(discover_commands(root, files), {})
 
+    def test_comparison_only_dotted_handler_does_not_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "FakeRP" / "core"
+            directory.mkdir(parents=True)
+            (directory / "Commands.lua").write_text(
+                'SLASH_FAKERP1 = "/fake"\n'
+                'if SlashCmdList.FAKERP == nil then\n'
+                '    print("handler is missing")\n'
+                'end\n',
+                encoding="utf-8",
+            )
+            locale = root / "FakeRP" / "locales" / "deDE"
+            locale.mkdir(parents=True)
+            path = locale / "Texts.lua"
+            files = {path: parse_pools(
+                'addon.localeData.deDE.texts = { TEST = { gruppe = {"Text",},},}'
+            )}
+            self.assertEqual(discover_commands(root, files), {})
+
     def test_no_unregistered_command(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

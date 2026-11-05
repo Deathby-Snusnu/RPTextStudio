@@ -32,19 +32,21 @@ def _has_handler_assignment(content: str, handler: str) -> bool:
             continue
         if index > 0 and tokens[index - 1].value in {".", ":"}:
             continue
-        rest = tokens[index + 1:index + 5]
+        rest = tokens[index + 1:index + 6]
         if (len(rest) >= 3
                 and rest[0].value == "."
                 and rest[1].kind == "ident"
                 and rest[1].value == handler
-                and rest[2].value == "="):
+                and rest[2].value == "="
+                and (len(rest) < 4 or rest[3].value != "=")):
             return True
         if (len(rest) >= 4
                 and rest[0].value == "["
                 and rest[1].kind == "string"
                 and decode_string(rest[1].value) == handler
                 and rest[2].value == "]"
-                and rest[3].value == "="):
+                and rest[3].value == "="
+                and (len(rest) < 5 or rest[4].value != "=")):
             return True
     return False
 
@@ -183,4 +185,3 @@ def discover_commands(root: Path, files: dict | None = None) -> dict[str, str]:
             if addon in found:
                 break
     return found
-
