@@ -18,7 +18,7 @@ class PriestCatalogTests(unittest.TestCase):
             validate_entry("PriesterRP", "Lichtbrunnen", "LIGHTWELL_RENEW", ["LIGHTWELL_RENEW"])
     def test_input_injection_disallowed(self):
         with self.assertRaises(ValueError):
-            make_macro("PriesterRP", "Erneuerung\\n/yell", "RENEW", ["RENEW"])
+            make_macro("PriesterRP", "Erneuerung\n/yell", "RENEW", ["RENEW"])
 
 if __name__ == "__main__":
     unittest.main()
