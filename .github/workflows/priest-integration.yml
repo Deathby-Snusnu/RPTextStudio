@@ -1,0 +1,23 @@
+name: RPTextStudio priest integration
+on:
+  push:
+    paths:
+      - 'addon_catalog.json'
+      - 'spell_manager.py'
+      - 'tests/test_priest_catalog_entry.py'
+      - '.github/workflows/priest-integration.yml'
+  pull_request:
+    paths:
+      - 'addon_catalog.json'
+      - 'spell_manager.py'
+      - 'tests/test_priest_catalog_entry.py'
+      - '.github/workflows/priest-integration.yml'
+jobs:
+  catalog-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p 'test_priest_catalog_entry.py' -v
