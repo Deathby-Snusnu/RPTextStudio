@@ -5,6 +5,7 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
 
+- PriesterRP im vertrauenswürdigen Katalog und Makro-Manager vorbereitet (`PRIEST`, `/prrp`). Der GitHub-Download benötigt das noch anzulegende eigenständige PriesterRP-Repository. `LIGHTWELL_RENEW` ist bewusst als nicht direkt wirkbarer Makro-Schlüssel gesperrt.
 - UI-Dialoge zeigen mehrzeilige Meldungen wieder mit echten Zeilenumbrüchen: Bestätigung des AddOn-Downloads und Warnungen zu ungültigen Übersetzungen. Ein AST-basierter Regressionstest prüft sichtbare Qt-Texte auf versehentlich verdoppelte Escape-Sequenzen.
 - KriegerRP als vertrauenswürdige `WARRIOR`-Klassenquelle `Deathby-Snusnu/KriegerRP` in den AddOn-Katalog aufgenommen.
 - Der bestehende geschützte Download-, Prüf- und Bestandschutz-Ablauf gilt nach dem Merge des KriegerRP-Repositories auch für das neue AddOn. Katalog-Regressionstest hinzugefügt.
