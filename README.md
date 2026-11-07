@@ -3,7 +3,7 @@
 ![RP Text Studio – Texte gestalten. Welten erzählen.](assets/rp_text_studio_logo.svg)
 
 Python-/PySide6-Desktopeditor für statische RP-Textpools, unter anderem von
-**RPChatMod, HexerRP, PaladinRP, JaegerRP, DruidenRP und MagierRP**.
+**RPChatMod, HexerRP, PaladinRP, JaegerRP, DruidenRP, MagierRP, KriegerRP und PriesterRP**.
 RPControlCenter enthält keine entsprechenden Textpools.
 
 ## Dokumentation
@@ -17,8 +17,8 @@ Weitere Anleitungen: [Anwender-Modus](ANWENDER-ADDON-MODUS.md),
 [Client-Profile](WOW-CLIENT-PROFILE.md), [Text-Merge-Vorschau](RP-TEXT-MERGE.md)
 und [Windows-Installer](WINDOWS-INSTALLER.md).
 
-Der Editor liegt unter `apps\RPTextStudio`, die sieben AddOns des aktuellen
-Arbeitsstands unter `addons`.
+Der Editor liegt unter `apps\RPTextStudio`, die neun Ingame-AddOns
+(einschließlich RPControlCenter) unter `addons`.
 Beim Öffnen sind sowohl der Projektstamm als auch dessen `addons`-Ordner
 möglich. Entpackte Installations-ZIPs mit direkten AddOn-Unterordnern bleiben
 unterstützt. Die drei Text-, Zauber- und Profilregister werden im jeweiligen
@@ -347,7 +347,6 @@ Projektquellcode definiert; passive oder nicht eigenständig wirkbare Schlüssel
 und `DEVASTATE` werden vom Makro-Generator **zurückgewiesen**. Sie bleiben
 als manuell aufrufbare RP-Texte verfügbar.
 
-Die Erstversion wird in
-[KriegerRP PR #1](https://github.com/Deathby-Snusnu/KriegerRP/pull/1)
-entwickelt. Bis zu deren Merge kann der GitHub-Updater im `main`-Branch
-noch keinen vollständigen KriegerRP-Release beziehen.
+KriegerRP ist inzwischen im Hauptzweig des eigenen Repositories enthalten.
+Neuere Text-Erweiterungen bleiben bis zu ihrem jeweiligen Merge in separaten
+Pull Requests. Für PriesterRP gilt derselbe geschützte Installationsablauf.
