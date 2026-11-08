@@ -1,9 +1,9 @@
 """Conservative install of a verified GitHub staging directory.
 
-Existing files are retained by default; individually approved replacements
-and the TOC Interface line are the explicit exceptions. New runtime files are
-copied and an existing addon folder is backed up. No automatic text merge is
-performed.
+Existing non-TOC files are retained by default; individually approved replacements
+and the complete verified upstream TOC are the explicit exceptions. The TOC
+Interface is adapted to the selected client. New runtime files are copied and
+the existing addon folder is backed up. No automatic text merge is performed.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -99,7 +99,9 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     if len(selected) != len(approved_overwrites) or any(rel not in protected for rel in selected):
         raise InstallError("Ungültige Auswahl geschützter Dateien.")
     current_toc = old[old_toc].read_text(encoding="utf-8-sig") if old_toc is not None else upstream
-    adapted = preview_toc(current_toc, profile.interface, compatible=True)
+    # A changed upstream TOC (version, file list, metadata) must itself count
+    # as an update. Keeping the old TOC would leave new Lua files unloaded.
+    adapted = preview_toc(upstream, profile.interface, compatible=True)
     return SafePlan(name, target, staged, profile.interface, new, protected,
                     adapted != current_toc,
                     tuple(sorted((k, _hash(v)) for k, v in src.items())),
@@ -171,12 +173,14 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
             plan.name + ".toc",
         )
         toc = ready / toc_rel
-        original_bytes = toc.read_bytes()
-        has_bom = original_bytes.startswith(b"\xef\xbb\xbf")
-        original = original_bytes.decode("utf-8-sig")
-        changed = preview_toc(original, plan.interface, compatible=True)
-        if changed != original:
-            toc.write_bytes((b"\xef\xbb\xbf" if has_bom else b"") + changed.encode("utf-8"))
+        # Write the complete reviewed upstream TOC, including new file entries
+        # and the current version. Preserve its BOM/newlines, and adapt only
+        # the Interface value to the selected WoW client.
+        upstream_bytes = incoming[plan.name + ".toc"].read_bytes()
+        upstream_toc = upstream_bytes.decode("utf-8-sig")
+        changed = preview_toc(upstream_toc, plan.interface, compatible=True)
+        toc.write_bytes((b"\xef\xbb\xbf" if upstream_bytes.startswith(b"\xef\xbb\xbf") else b"")
+                        + changed.encode("utf-8"))
         if preview_safe_install(plan.name, plan.source, target, profile,
                                 approved_overwrites=plan.approved_overwrites) != plan:
             raise InstallError("Dateien während der Vorbereitung geändert.")
