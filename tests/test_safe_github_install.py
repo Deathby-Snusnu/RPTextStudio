@@ -40,6 +40,8 @@ class SafeGitHubInstallTests(unittest.TestCase):
         self.assertEqual((existing / "MyCustom.lua").read_text(), "OWN WORDS")
         self.assertEqual((existing / "NewFeature.lua").read_text(), "NEW")
         self.assertIn("## Interface: 11509", (existing / "JaegerRP.toc").read_text())
+        self.assertIn("## Version: 0.5.0", (existing / "JaegerRP.toc").read_text())
+        self.assertIn("Core.lua", (existing / "JaegerRP.toc").read_text())
         self.assertEqual((backup / "JaegerRP" / "Core.lua").read_text(), "LOCAL CODE")
         rollback(self.target, backup)
         self.assertFalse((existing / "NewFeature.lua").exists())
@@ -57,9 +59,9 @@ class SafeGitHubInstallTests(unittest.TestCase):
         guarded = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
         self.assertEqual(guarded.protected, ("Core.lua",))
         self.assertFalse(guarded.new_files)
-        self.assertFalse(guarded.toc_changed)
-        with self.assertRaises(Exception):
-            install_safe(guarded, self.profile)
+        self.assertTrue(guarded.toc_changed)
+        # TOC metadata can be updated without overriding protected Lua files.
+        self.assertFalse(guarded.approved_overwrites)
         self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CHANGES")
 
         approved = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
@@ -68,8 +70,12 @@ class SafeGitHubInstallTests(unittest.TestCase):
         backup = install_safe(approved, self.profile)
         self.assertEqual((existing / "Core.lua").read_text(), "NEW ENGINE")
         self.assertEqual((existing / "Personal.lua").read_text(), "KEEP PERSONAL TEXT")
-        self.assertEqual((existing / "JaegerRP.toc").read_text(), old_toc)
+        self.assertEqual(
+            (existing / "JaegerRP.toc").read_text(),
+            "## Interface: 11509\n## Version: 0.5.0\nCore.lua\n",
+        )
         self.assertEqual((backup / "JaegerRP" / "Core.lua").read_text(), "LOCAL CHANGES")
+        self.assertEqual((backup / "JaegerRP" / "JaegerRP.toc").read_text(), old_toc)
         rollback(self.target, backup)
         self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CHANGES")
         self.assertEqual((existing / "Personal.lua").read_text(), "KEEP PERSONAL TEXT")
@@ -142,8 +148,60 @@ class SafeGitHubInstallTests(unittest.TestCase):
         self.assertEqual({path.name for path in existing.iterdir()}, {"core.lua", "jaegerRP.TOC"})
         self.assertEqual(
             (existing / "jaegerRP.TOC").read_bytes(),
-            b"\xef\xbb\xbf## Interface: 11509\r\n## Version: local\nKeep\r\n",
+            b"## Interface: 11509\n## Version: 0.5.0\nCore.lua\n",
         )
+
+    def test_toc_only_update_enables_existing_emote_volumes(self):
+        """Regression: 0.4.1 -> 0.6.1 with all new Lua files already present."""
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf8")
+        (existing / "Personal.lua").write_text("OWN ROLEPLAY TEXT", encoding="utf8")
+        old_toc = "## Interface: 11509\\n## Version: 0.4.1\\nCore.lua\\n"
+        (existing / "JaegerRP.toc").write_text(old_toc, encoding="utf8")
+        volumes = [f"locales/deDE/SpokenEmotes{i:02d}.lua" for i in range(1, 6)]
+        for rel in volumes:
+            for base in (self.source, existing):
+                path = base / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("-- unchanged spoken emotes", encoding="utf8")
+        upstream_toc = ("## Interface: 16001\\n## Version: 0.6.1\\nCore.lua\\n"
+                        + "".join(rel.replace("/", "\\\\") + "\\n" for rel in volumes))
+        (self.source / "JaegerRP.toc").write_text(upstream_toc, encoding="utf8")
+
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(plan.new_files, ())
+        self.assertEqual(plan.protected, ())
+        self.assertTrue(plan.toc_changed)
+
+        backup = install_safe(plan, self.profile)
+        installed_toc = (existing / "JaegerRP.toc").read_text(encoding="utf8")
+        self.assertIn("## Interface: 11509", installed_toc)
+        self.assertIn("## Version: 0.6.1", installed_toc)
+        for rel in volumes:
+            self.assertIn(rel.replace("/", "\\\\"), installed_toc)
+            self.assertTrue((existing / rel).is_file())
+        self.assertEqual((existing / "Personal.lua").read_text(), "OWN ROLEPLAY TEXT")
+        self.assertEqual((backup / "JaegerRP" / "JaegerRP.toc").read_text(), old_toc)
+        rollback(self.target, backup)
+        self.assertEqual((existing / "JaegerRP.toc").read_text(), old_toc)
+        self.assertEqual((existing / "Personal.lua").read_text(), "OWN ROLEPLAY TEXT")
+
+    def test_identical_upstream_toc_after_interface_adaptation_is_noop(self):
+        """Client-specific Interface alone must not trigger repeated updates."""
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf8")
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\\n## Version: 0.5.0\\nCore.lua\\n",
+            encoding="utf8",
+        )
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(plan.new_files, ())
+        self.assertEqual(plan.protected, ())
+        self.assertFalse(plan.toc_changed)
+        with self.assertRaises(Exception):
+            install_safe(plan, self.profile)
 
     def test_new_addon_preview_reports_toc_adaptation_and_creates_target(self):
         self.target.rmdir()
