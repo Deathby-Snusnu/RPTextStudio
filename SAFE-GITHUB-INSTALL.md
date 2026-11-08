@@ -22,17 +22,19 @@
 - Bereits vorhandene, abweichende Dateien bleiben standardmäßig unverändert.
   Sie können einzeln zur Ersetzung durch die geprüfte Fassung freigegeben
   werden; lokale Änderungen an ausgewählten Dateien bleiben dann nur im Backup.
-- Die `## Interface:`-Zeile der bestehenden oder neuen `.toc`-Datei kann
-  nach Bestätigung an das gespeicherte WoW-Client-Profil angepasst werden.
-  Andere TOC-Einträge bleiben erhalten und die TOC ist nicht als vollständige
-  Ersetzung auswählbar.
+- Die vollständige `.toc`-Datei wird nach Vorschau und Bestätigung aus dem
+  geprüften GitHub-Paket übernommen, einschließlich `## Version:` und neuer
+  Lua-Ladeeinträge. Nur `## Interface:` wird an das WoW-Client-Profil angepasst.
+  Frühere eigene TOC-Änderungen bleiben im vollständigen Backup erhalten.
+  Die TOC muss nicht einzeln als geschützte Datei freigegeben werden.
 - Zusätzliche lokale Dateien, unbekannte Dateiendungen und nicht zur
   Ersetzung ausgewählte persönliche Lua-Textlisten bleiben erhalten.
 - Die angezeigte Vorschau wird direkt vor der Installation nochmals durch Dateihashes validiert.
 - Die Installation verwendet einen temporären Ordner im Zielverzeichnis und sichert den vorherigen Stand. Ein Rollback kann über die vorhandene `addon_manager.rollback(...)`-Funktion mit dem Sicherungspfad durchgeführt werden.
 
-**Wichtige Einschränkung:** Ohne ausdrückliche Dateiauswahl erfolgt kein
-vollständiges Update vorhandener Lua-Programmdateien. Ohne vertrauenswürdige
+**Wichtige Einschränkung:** Die TOC wird vollständig aktualisiert, aber ohne
+ausdrückliche Dateiauswahl erfolgt kein vollständiges Update vorhandener
+Lua-Programmdateien. Ohne vertrauenswürdige
 frühere Baseline lässt sich nicht zwischen geändertem Originalcode und
 Benutzeränderungen unterscheiden. Die [Text-Merge-Vorschau](RP-TEXT-MERGE.md)
 ist nicht als automatischer Schreibvorgang eingebunden. Eine reine
@@ -81,4 +83,7 @@ bestmöglich ein Rollback. Unmarkierte Dateien bleiben unverändert.
    zurückspielen (WoW geschlossen). Das Backup vor der Installation nicht löschen.
 
 Für Regressionstests: `python -m unittest discover -s tests -p "test_safe_github_install.py" -v`.
+Ein TOC-only-Update (neue Version/Ladeeinträge bei bereits vorhandenen Lua-Dateien)
+führt nun ebenfalls zur Installationsvorschau und wird mit Backup angewendet.
+Nach dem Einspielen WoW vollständig neu starten und die geladenen AddOns prüfen.
 Es erfolgt **keine automatische Drei-Wege-Zusammenführung** lokaler Texte.
