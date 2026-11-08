@@ -166,7 +166,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("-- unchanged spoken emotes", encoding="utf8")
         upstream_toc = ("## Interface: 16001\n## Version: 0.6.1\nCore.lua\n"
-                        + "".join(rel.replace("/", "\\\\") + "\n" for rel in volumes))
+                        + "".join(rel.replace("/", "\\") + "\n" for rel in volumes))
         (self.source / "JaegerRP.toc").write_text(upstream_toc, encoding="utf8")
 
         plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
@@ -179,7 +179,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         self.assertIn("## Interface: 11509", installed_toc)
         self.assertIn("## Version: 0.6.1", installed_toc)
         for rel in volumes:
-            self.assertIn(rel.replace("/", "\\\\"), installed_toc)
+            self.assertIn(rel.replace("/", "\\"), installed_toc)
             self.assertTrue((existing / rel).is_file())
         self.assertEqual((existing / "Personal.lua").read_text(), "OWN ROLEPLAY TEXT")
         self.assertEqual((backup / "JaegerRP" / "JaegerRP.toc").read_text(), old_toc)
