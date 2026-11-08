@@ -157,7 +157,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing.mkdir()
         (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf8")
         (existing / "Personal.lua").write_text("OWN ROLEPLAY TEXT", encoding="utf8")
-        old_toc = "## Interface: 11509\\n## Version: 0.4.1\\nCore.lua\\n"
+        old_toc = "## Interface: 11509\n## Version: 0.4.1\nCore.lua\n"
         (existing / "JaegerRP.toc").write_text(old_toc, encoding="utf8")
         volumes = [f"locales/deDE/SpokenEmotes{i:02d}.lua" for i in range(1, 6)]
         for rel in volumes:
@@ -165,8 +165,8 @@ class SafeGitHubInstallTests(unittest.TestCase):
                 path = base / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("-- unchanged spoken emotes", encoding="utf8")
-        upstream_toc = ("## Interface: 16001\\n## Version: 0.6.1\\nCore.lua\\n"
-                        + "".join(rel.replace("/", "\\\\") + "\\n" for rel in volumes))
+        upstream_toc = ("## Interface: 16001\n## Version: 0.6.1\nCore.lua\n"
+                        + "".join(rel.replace("/", "\\\\") + "\n" for rel in volumes))
         (self.source / "JaegerRP.toc").write_text(upstream_toc, encoding="utf8")
 
         plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
@@ -193,7 +193,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing.mkdir()
         (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf8")
         (existing / "JaegerRP.toc").write_text(
-            "## Interface: 11509\\n## Version: 0.5.0\\nCore.lua\\n",
+            "## Interface: 11509\n## Version: 0.5.0\nCore.lua\n",
             encoding="utf8",
         )
         plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
