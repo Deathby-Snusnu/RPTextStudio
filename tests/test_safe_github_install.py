@@ -146,9 +146,12 @@ class SafeGitHubInstallTests(unittest.TestCase):
         install_safe(plan, self.profile)
         self.assertEqual((existing / "core.lua").read_bytes(), b"LOCAL CODE")
         self.assertEqual({path.name for path in existing.iterdir()}, {"core.lua", "jaegerRP.TOC"})
+        # Keep upstream line endings (LF on Linux, CRLF on Windows).
         self.assertEqual(
             (existing / "jaegerRP.TOC").read_bytes(),
-            b"## Interface: 11509\n## Version: 0.5.0\nCore.lua\n",
+            (self.source / "JaegerRP.toc").read_bytes().replace(
+                b"## Interface: 16001", b"## Interface: 11509", 1
+            ),
         )
 
     def test_toc_only_update_enables_existing_emote_volumes(self):
