@@ -5,6 +5,8 @@ Versionen erhalten kein nachträglich angenommenes Release-Datum.
 
 ## Aktueller Quellstand: APP_VERSION 1.0.0 (unveröffentlicht)
 
+- GitHub-Updates übernehmen nach Vorschau/Bestätigung die vollständige neue AddOn-TOC (Version und Lua-Ladereihenfolge) und passen nur `## Interface:` ans WoW-Profil an. Reine TOC-Updates werden erkannt, selbst wenn alle Lua-Dateien bereits vorhanden sind. Der Schutz bestehender Lua-Dateien und Backup/Rollback bleiben erhalten. Regressionstests für TOC-only-Updates, Datei-/Benutzertextschutz und No-op ergänzt.
+
 - Der Zauber-Manager erkennt nun auch `SlashCmdList.NAME`-Registrierungen (JaegerRP, HexerRP, DruidenRP) neben `SlashCmdList["NAME"]`. Die Prüfung ignoriert Kommentare und Zeichenketten; Regressionstests für beide Schreibweisen ergänzt.
 
 - PriesterRP im vertrauenswürdigen Katalog und Makro-Manager vorbereitet (`PRIEST`, `/prrp`). Der GitHub-Download nutzt das eigenständige Repository `Deathby-Snusnu/PriesterRP`. `LIGHTWELL_RENEW` ist bewusst als nicht direkt wirkbarer Makro-Schlüssel gesperrt.
