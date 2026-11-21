@@ -1,3 +1,9 @@
+## Sicherheitshinweis bei gemischten AddOn-Versionen
+
+Beim geschützten GitHub-Update werden vorhandene, abweichende Lua-Dateien weiterhin **nicht ohne Einzelzustimmung überschrieben**. Falls eine Datei in der neuen TOC-Ladeliste steht, aber wegen lokaler Änderungen bewusst auf dem alten Stand bleibt, kann die installierte AddOn-Version trotz aktueller TOC **funktional unvollständig** sein. Die Vorschau `SafePlan.pending_runtime_updates` weist diese konkreten Dateipfade nun aus. Zusätzlich enthält das Backup-`manifest.json` die Felder `pending_runtime_updates` und `runtime_update_complete` für die nachträgliche Diagnose.
+
+Das ist bewusst **keine automatische Zusammenführung oder Überschreibung** persönlicher Texte. Zur vollständigen Aktualisierung müssen die gemeldeten Dateien einzeln geprüft und bei Bedarf für eine gesicherte Ersetzung freigegeben werden. Solange Pfade als ausstehend gekennzeichnet sind, gilt eine neue TOC-Versionsnummer allein nicht als Nachweis eines vollständigen Runtime-Updates. Die vorhandene Vorschau-/Sicherungs-/Rollback-Logik bleibt unverändert.
+
 ## MusicRP und Versionsupdates (0.1.3)
 
 Die AddOns `MagierRP` und `KriegerRP` führen ihre aktuelle Version in der jeweiligen `.toc`-Datei. RPTextStudio vergleicht numerische Versionen (z. B. `0.1.2` und `0.1.3`) und prüft beim GitHub-Staging **alle** referenzierten Runtime-Dateien. Die beiden neuen Dateien `music/CreativeVoices.lua` und `music/MusicRP.lua` werden als reguläre Lua-Runtimedateien inklusive Unterordner übernommen. Ein fehlender Dateipfad in der TOC führt vor der Installation zum Abbruch.

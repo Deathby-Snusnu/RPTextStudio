@@ -35,6 +35,8 @@ class SafePlan:
     target_hashes: tuple[tuple[str, str], ...]
     # Explicit, individually reviewed exceptions to the default file protection.
     approved_overwrites: tuple[str, ...] = ()
+    # Changed upstream runtime files kept locally: an update may be incomplete.
+    pending_runtime_updates: tuple[str, ...] = ()
 
 def _validate(name: str, staged: Path, target: Path, profile: ClientProfile):
     if name not in known_addons():
@@ -102,11 +104,22 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     # A changed upstream TOC (version, file list, metadata) must itself count
     # as an update. Keeping the old TOC would leave new Lua files unloaded.
     adapted = preview_toc(upstream, profile.interface, compatible=True)
+    # Warn about upstream Lua/XML dependencies left at their local revisions.
+    # A new TOC alone does not make a mixed-version installation complete.
+    toc_refs = {
+        line.strip().replace("\\", "/").casefold()
+        for line in upstream.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    pending = tuple(sorted(
+        rel for rel in protected
+        if rel not in selected and rel.casefold() in toc_refs
+    ))
     return SafePlan(name, target, staged, profile.interface, new, protected,
                     adapted != current_toc,
                     tuple(sorted((k, _hash(v)) for k, v in src.items())),
                     tuple(sorted((k, _hash(v)) for k, v in old.items())),
-                    selected)
+                    selected, pending)
 
 def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
     """Apply an unchanged reviewed plan and return its backup directory.
@@ -138,6 +151,8 @@ def install_safe(plan: SafePlan, profile: ClientProfile) -> Path:
         "timestamp": token, "names": [plan.name],
         "previously_installed": [plan.name] if dest.exists() else [],
         "status": "installing",
+        "pending_runtime_updates": list(plan.pending_runtime_updates),
+        "runtime_update_complete": not plan.pending_runtime_updates,
     }
 
     def write_manifest() -> None:

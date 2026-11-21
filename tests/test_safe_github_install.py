@@ -48,6 +48,63 @@ class SafeGitHubInstallTests(unittest.TestCase):
         self.assertEqual((existing / "Core.lua").read_text(), "LOCAL CODE")
         self.assertEqual((existing / "JaegerRP.toc").read_text().splitlines()[0], "## Interface: 16001")
 
+    def test_incomplete_runtime_update_is_explicit_in_plan_and_backup(self):
+        """Never report a fully upgraded runtime if a TOC-listed Lua file stays local."""
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
+        )
+        (existing / "Core.lua").write_text("USER MODIFIED ENGINE", encoding="utf-8")
+        (existing / "MyCustom.lua").write_text("UNTOUCHED PERSONAL WORDS", encoding="utf-8")
+        (self.source / "music").mkdir()
+        (self.source / "music" / "MusicRP.lua").write_text("-- new music", encoding="utf-8")
+        (self.source / "JaegerRP.toc").write_text(
+            "## Interface: 16001\n## Version: 0.5.0\nCore.lua\nmusic\\MusicRP.lua\n",
+            encoding="utf-8",
+        )
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertEqual(plan.pending_runtime_updates, ("Core.lua",))
+        self.assertIn("music/MusicRP.lua", plan.new_files)
+        backup = install_safe(plan, self.profile)
+        manifest = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["pending_runtime_updates"], ["Core.lua"])
+        self.assertFalse(manifest["runtime_update_complete"])
+        self.assertEqual((existing / "Core.lua").read_text(), "USER MODIFIED ENGINE")
+        self.assertEqual((existing / "MyCustom.lua").read_text(), "UNTOUCHED PERSONAL WORDS")
+        self.assertTrue((existing / "music" / "MusicRP.lua").exists())
+        rollback(self.target, backup)
+        self.assertEqual((existing / "Core.lua").read_text(), "USER MODIFIED ENGINE")
+
+    def test_approved_runtime_replacement_clears_incomplete_flag(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
+        )
+        (existing / "Core.lua").write_text("LOCAL CODE", encoding="utf-8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
+                                    approved_overwrites=("Core.lua",))
+        self.assertEqual(plan.pending_runtime_updates, ())
+        backup = install_safe(plan, self.profile)
+        manifest = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
+        self.assertTrue(manifest["runtime_update_complete"])
+        self.assertEqual(manifest["pending_runtime_updates"], [])
+        self.assertEqual((existing / "Core.lua").read_text(), "NEW ENGINE")
+
+    def test_protected_unreferenced_custom_file_is_not_runtime_pending(self):
+        existing = self.target / "JaegerRP"
+        existing.mkdir()
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
+        )
+        (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf-8")
+        (existing / "Custom.lua").write_text("MY TEXT", encoding="utf-8")
+        (self.source / "Custom.lua").write_text("UPSTREAM DEFAULT", encoding="utf-8")
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertIn("Custom.lua", plan.protected)
+        self.assertEqual(plan.pending_runtime_updates, ())
+
     def test_explicitly_approved_replacement_creates_backup_and_rolls_back(self):
         existing = self.target / "JaegerRP"
         existing.mkdir()
