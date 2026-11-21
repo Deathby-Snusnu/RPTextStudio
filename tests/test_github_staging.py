@@ -38,8 +38,8 @@ class GitHubStagingTests(unittest.TestCase):
     def test_musicrp_nested_lua_files_survive_staging(self):
         content = {
             "owner-MagierRP-abc/MagierRP.toc": (
-                "## Version: 0.1.3\\n## Interface: 16001\\n"
-                "music\\\\CreativeVoices.lua\\nmusic\\\\MusicRP.lua\\nMagierRP.lua\\n"
+                "## Version: 0.1.3\n## Interface: 16001\n"
+                "music\\CreativeVoices.lua\nmusic\\MusicRP.lua\nMagierRP.lua\n"
             ),
             "owner-MagierRP-abc/music/CreativeVoices.lua": "-- creative voices",
             "owner-MagierRP-abc/music/MusicRP.lua": "-- music dialogue",
