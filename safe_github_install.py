@@ -107,7 +107,7 @@ def preview_safe_install(name: str, staged: Path, target: Path, profile: ClientP
     # Warn about upstream Lua/XML dependencies left at their local revisions.
     # A new TOC alone does not make a mixed-version installation complete.
     toc_refs = {
-        line.strip().replace("\\\\", "/").casefold()
+        line.strip().replace("\\", "/").casefold()
         for line in upstream.splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     }
