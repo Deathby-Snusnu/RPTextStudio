@@ -46,12 +46,21 @@ class GitHubStagingTests(unittest.TestCase):
             "owner-MagierRP-abc/MagierRP.lua": "-- bootstrap",
             "owner-MagierRP-abc/tests/unused.lua": "-- not runtime",
         }
-        entries, version, interface = _validate_zip(self.archive(content), "MagierRP")
-        self.assertEqual((version, interface), ("0.1.3", "16001"))
-        self.assertEqual(set(entries), {
-            "MagierRP.toc", "MagierRP.lua",
-            "music/CreativeVoices.lua", "music/MusicRP.lua",
-        })
+        archive = self.archive(content)
+        destination = self.root / "prepared-MagierRP"
+        def fetch(commit, name, output):
+            output.write_bytes(archive.read_bytes())
+            return "x" * 64
+        with patch("github_staging._resolve", return_value=("a" * 40, "0.1.3")), \
+             patch("github_staging._download", side_effect=fetch):
+            result = stage("MagierRP", "stable", destination)
+        self.assertEqual((result.version, result.interface), ("0.1.3", "16001"))
+        self.assertEqual(
+            {p.relative_to(destination).as_posix(): p.read_text()
+             for p in destination.rglob("*") if p.is_file()},
+            {path.split("/", 1)[1]: data for path, data in content.items()
+             if "/tests/" not in path},
+        )
 
     def test_blocks_traversal(self):
         content = self.valid()
