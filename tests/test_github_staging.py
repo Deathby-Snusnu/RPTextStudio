@@ -35,6 +35,24 @@ class GitHubStagingTests(unittest.TestCase):
         self.assertEqual(interface, "16001")
         self.assertEqual(set(entries), {"HexerRP.toc", "HexerRP.lua"})
 
+    def test_musicrp_nested_lua_files_survive_staging(self):
+        content = {
+            "owner-MagierRP-abc/MagierRP.toc": (
+                "## Version: 0.1.3\\n## Interface: 16001\\n"
+                "music\\\\CreativeVoices.lua\\nmusic\\\\MusicRP.lua\\nMagierRP.lua\\n"
+            ),
+            "owner-MagierRP-abc/music/CreativeVoices.lua": "-- creative voices",
+            "owner-MagierRP-abc/music/MusicRP.lua": "-- music dialogue",
+            "owner-MagierRP-abc/MagierRP.lua": "-- bootstrap",
+            "owner-MagierRP-abc/tests/unused.lua": "-- not runtime",
+        }
+        entries, version, interface = _validate_zip(self.archive(content), "MagierRP")
+        self.assertEqual((version, interface), ("0.1.3", "16001"))
+        self.assertEqual(set(entries), {
+            "MagierRP.toc", "MagierRP.lua",
+            "music/CreativeVoices.lua", "music/MusicRP.lua",
+        })
+
     def test_blocks_traversal(self):
         content = self.valid()
         content["owner-HexerRP-abc/../escape.lua"] = "bad"
