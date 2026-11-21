@@ -53,14 +53,14 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing = self.target / "JaegerRP"
         existing.mkdir()
         (existing / "JaegerRP.toc").write_text(
-            "## Interface: 11509\\n## Version: 0.4.0\\nCore.lua\\n", encoding="utf-8"
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
         )
         (existing / "Core.lua").write_text("USER MODIFIED ENGINE", encoding="utf-8")
         (existing / "MyCustom.lua").write_text("UNTOUCHED PERSONAL WORDS", encoding="utf-8")
         (self.source / "music").mkdir()
         (self.source / "music" / "MusicRP.lua").write_text("-- new music", encoding="utf-8")
         (self.source / "JaegerRP.toc").write_text(
-            "## Interface: 16001\\n## Version: 0.5.0\\nCore.lua\\nmusic\\\\MusicRP.lua\\n",
+            "## Interface: 16001\n## Version: 0.5.0\nCore.lua\nmusic\\MusicRP.lua\n",
             encoding="utf-8",
         )
         plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
@@ -80,7 +80,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing = self.target / "JaegerRP"
         existing.mkdir()
         (existing / "JaegerRP.toc").write_text(
-            "## Interface: 11509\\n## Version: 0.4.0\\nCore.lua\\n", encoding="utf-8"
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
         )
         (existing / "Core.lua").write_text("LOCAL CODE", encoding="utf-8")
         plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile,
@@ -96,7 +96,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing = self.target / "JaegerRP"
         existing.mkdir()
         (existing / "JaegerRP.toc").write_text(
-            "## Interface: 11509\\n## Version: 0.4.0\\nCore.lua\\n", encoding="utf-8"
+            "## Interface: 11509\n## Version: 0.4.0\nCore.lua\n", encoding="utf-8"
         )
         (existing / "Core.lua").write_text("NEW ENGINE", encoding="utf-8")
         (existing / "Custom.lua").write_text("MY TEXT", encoding="utf-8")
