@@ -1,3 +1,9 @@
+## MusicRP und Versionsupdates (0.1.3)
+
+Die AddOns `MagierRP` und `KriegerRP` führen ihre aktuelle Version in der jeweiligen `.toc`-Datei. RPTextStudio vergleicht numerische Versionen (z. B. `0.1.2` und `0.1.3`) und prüft beim GitHub-Staging **alle** referenzierten Runtime-Dateien. Die beiden neuen Dateien `music/CreativeVoices.lua` und `music/MusicRP.lua` werden als reguläre Lua-Runtimedateien inklusive Unterordner übernommen. Ein fehlender Dateipfad in der TOC führt vor der Installation zum Abbruch.
+
+Im **Development-Kanal** ist eine neue TOC-Version nach Merge in den GitHub-Hauptbranch sichtbar. Im **Stable-Kanal** muss zusätzlich ein Release mit numerischem Tag (z. B. `v0.1.3`) und passender TOC-Version veröffentlicht sein. Ein Merge erzeugt keinen GitHub-Release. Installation und Updates erfolgen weiterhin ausschließlich mit Vorschau und Sicherung.
+
 # RP Text Studio 1.0.0 (Quellstand, unveröffentlicht)
 
 ![RP Text Studio – Texte gestalten. Welten erzählen.](assets/rp_text_studio_logo.svg)
