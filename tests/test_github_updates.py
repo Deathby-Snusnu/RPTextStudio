@@ -14,6 +14,7 @@ class VersionCheckerTests(unittest.TestCase):
 
     def test_numeric_comparison(self):
         self.assertEqual(updates.compare_versions("0.3.9", "0.3.10"), -1)
+        self.assertEqual(updates.compare_versions("0.1.2", "0.1.3"), -1)
         self.assertEqual(updates.compare_versions("0.3.10", "0.3.9"), 1)
         self.assertEqual(updates.compare_versions("0.2", "0.2.0"), 0)
         self.assertIsNone(updates.compare_versions("v1.2", "1.2"))
