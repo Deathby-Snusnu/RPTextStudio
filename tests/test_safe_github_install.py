@@ -76,6 +76,45 @@ class SafeGitHubInstallTests(unittest.TestCase):
         rollback(self.target, backup)
         self.assertEqual((existing / "Core.lua").read_text(), "USER MODIFIED ENGINE")
 
+    def test_nested_runtime_case_variants_are_reported_and_protected(self):
+        """TOC backslashes and Windows casing must not hide a stale runtime file."""
+        existing = self.target / "JaegerRP"
+        (existing / "Music").mkdir(parents=True)
+        (existing / "JaegerRP.toc").write_text(
+            "## Interface: 11509\n## Version: 0.4.0\nMusic\\MusicRP.lua\n",
+            encoding="utf-8",
+        )
+        (existing / "Music" / "MusicRP.lua").write_text(
+            "MY CUSTOM SONG POOL", encoding="utf-8"
+        )
+        (self.source / "music").mkdir()
+        (self.source / "music" / "MusicRP.lua").write_text(
+            "NEW MUSIC ENGINE", encoding="utf-8"
+        )
+        (self.source / "JaegerRP.toc").write_text(
+            "## Interface: 16001\n## Version: 0.5.0\nmusic\\MusicRP.lua\n",
+            encoding="utf-8",
+        )
+
+        plan = preview_safe_install("JaegerRP", self.source, self.target, self.profile)
+        self.assertIn("music/MusicRP.lua", plan.protected)
+        self.assertEqual(plan.pending_runtime_updates, ("music/MusicRP.lua",))
+        backup = install_safe(plan, self.profile)
+        manifest = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
+        self.assertFalse(manifest["runtime_update_complete"])
+        self.assertEqual((existing / "Music" / "MusicRP.lua").read_text(), "MY CUSTOM SONG POOL")
+        rollback(self.target, backup)
+
+        approved = preview_safe_install(
+            "JaegerRP", self.source, self.target, self.profile,
+            approved_overwrites=("music/MusicRP.lua",),
+        )
+        self.assertEqual(approved.pending_runtime_updates, ())
+        backup = install_safe(approved, self.profile)
+        self.assertEqual((existing / "Music" / "MusicRP.lua").read_text(), "NEW MUSIC ENGINE")
+        rollback(self.target, backup)
+        self.assertEqual((existing / "Music" / "MusicRP.lua").read_text(), "MY CUSTOM SONG POOL")
+
     def test_approved_runtime_replacement_clears_incomplete_flag(self):
         existing = self.target / "JaegerRP"
         existing.mkdir()
