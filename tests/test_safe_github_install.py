@@ -81,7 +81,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
         existing = self.target / "JaegerRP"
         (existing / "Music").mkdir(parents=True)
         (existing / "JaegerRP.toc").write_text(
-            "## Interface: 11509\\n## Version: 0.4.0\\nMusic\\\\MusicRP.lua\\n",
+            "## Interface: 11509\n## Version: 0.4.0\nMusic\\MusicRP.lua\n",
             encoding="utf-8",
         )
         (existing / "Music" / "MusicRP.lua").write_text(
@@ -92,7 +92,7 @@ class SafeGitHubInstallTests(unittest.TestCase):
             "NEW MUSIC ENGINE", encoding="utf-8"
         )
         (self.source / "JaegerRP.toc").write_text(
-            "## Interface: 16001\\n## Version: 0.5.0\\nmusic\\\\MusicRP.lua\\n",
+            "## Interface: 16001\n## Version: 0.5.0\nmusic\\MusicRP.lua\n",
             encoding="utf-8",
         )
 
